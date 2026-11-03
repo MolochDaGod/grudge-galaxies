@@ -1,0 +1,8 @@
+/kits/*
+  Cache-Control: public, max-age=604800, immutable
+/ui/*
+  Cache-Control: public, max-age=604800
+/*.js
+  Cache-Control: public, max-age=3600
+/config.js
+  Cache-Control: no-cache
