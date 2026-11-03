@@ -2,15 +2,27 @@ name: Deploy frontend to Cloudflare Pages
 on:
   push:
     branches: [main]
-    paths: ['dist/**']
   workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Skip (Cloudflare secrets not set; use the Pages Git integration instead)
+        if: env.HAS_CF != 'true'
+        run: echo "CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set, nothing to do."
       - uses: cloudflare/wrangler-action@v3
+        if: env.HAS_CF == 'true'
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=grudge-galaxies
+  check-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: cd server && npm install --no-audit --no-fund && node --check server.js

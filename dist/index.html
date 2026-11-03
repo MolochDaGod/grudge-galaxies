@@ -1,5 +1,7 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><script src="config.js"></script><script src="shim.js"></script></head><body>
-<title>SWG Terrain Atlas</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><link rel="icon" href="favicon.svg" type="image/svg+xml"><script src="config.js"></script><script src="shim.js"></script></head><body>
+<title>Grudge Galaxies</title>
+<meta name="description" content="Grudge Galaxies: a sandbox MMO across the worlds of a galaxy, from Grudge Studio.">
+<meta name="theme-color" content="#120d0a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Cinzel:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -437,6 +439,8 @@ body.hud-edit [data-panel] *{pointer-events:none!important}body.hud-edit #ghTarg
   .zoom{top:auto;bottom:calc(50% + 10px)}
 }
 @media (prefers-reduced-motion:reduce){#fade{transition:none}}
+#huntBar{position:fixed;left:0;top:0;z-index:30;pointer-events:none;text-align:center;font:600 11px/1.2 'Saira Condensed',system-ui,sans-serif;color:#f3e6c8;text-shadow:0 1px 2px #000;transition:opacity .15s}
+#huntBar i{display:block;width:84px;height:6px;margin:3px auto 0;background:#1b1410;border:1px solid #6b4b2a;border-radius:3px;overflow:hidden}#huntBar s{display:block;height:100%;background:linear-gradient(#e0533d,#a1271a);text-decoration:none}
 </style>
 
 <canvas id="gl" aria-label="3D galaxy and planet viewer"></canvas>
@@ -445,7 +449,7 @@ body.hud-edit [data-panel] *{pointer-events:none!important}body.hud-edit #ghTarg
 
 <header class="bar">
   <div class="bar-left">
-    <span class="brand">Terrain Atlas</span>
+    <span class="brand">Grudge Galaxies</span>
     <nav id="crumbs" aria-label="View level"></nav>
   </div>
   <div class="tools">
@@ -1294,7 +1298,7 @@ function renderInfo(){
   box.querySelector('.x').onclick=()=>{selPlacement=null;if(selMarker)selMarker.visible=false;if(!selPlacement)curPoi=level==='ground'?curPoi:null;if(level!=='ground'&&pinSelRing)pinSelRing.visible=false;box.hidden=true;if(level!=='ground')renderList()};
 }
 const HINTS={galaxy:'Drag to orbit · scroll to zoom · click a system',system:'Click the bright world to enter orbit · Esc back',planet:'Click a pin or a POI in the list · Esc back',
-  play:'W S walk · A D turn · drag to look · scroll to zoom · Shift run · Esc overhead',overhead:'Drag to pan · right-drag or Shift-drag to rotate and tilt · F free roam · Esc planet',roam:'W A S D move · drag to look · Q / E down, up · Shift fast · Esc overhead'};
+  play:'W A S D move · Q E turn · right-drag to look · scroll to zoom · Shift run · Space jump · Esc menu · P leave play',overhead:'Drag to pan · right-drag or Shift-drag to rotate and tilt · F free roam · Esc planet',roam:'W A S D move · drag to look · Q / E down, up · Shift fast · Esc overhead'};
 function renderUI(){
   crumbs();renderList();renderInfo();
   $('#hint').textContent=HINTS[level==='ground'?groundMode:level];
@@ -1382,7 +1386,8 @@ function click(x,y){if(rts.on&&level==='ground'&&groundMode==='play'){rtsClick(x
 }
 const keys=new Set();
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase();keys.add(k);
-  if(k==='escape'){if(!cr.hidden){closeCreator();return}goUp()}
+  // in play, Esc with nothing open brings up the game menu instead of dropping you out of your character
+  if(k==='escape'){if(!cr.hidden){closeCreator();return}if(level==='ground'&&groundMode==='play'&&CH){openWin('menu');return}goUp()}
   else if(k==='f'&&level==='ground'&&groundMode!=='play')groundMode==='roam'?exitRoam():enterRoam();
   else if(k==='p'&&level==='ground'){groundMode==='play'?exitPlay():(groundMode==='roam'&&(groundMode='overhead'),enterPlay())}});
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
@@ -1442,7 +1447,7 @@ function frame(now){
   if(level==='ground'&&skyMesh)skyMesh.position.copy(cam.position);
   if(level==='ground')updateNpcToons(dt);
   gameTick(dt);
-  renderer.render(scene,cam);labels(labelItems());drawMini();
+  tickKitCull();renderer.render(scene,cam);labels(labelItems());drawMini();
   requestAnimationFrame(frame);
 }
 
@@ -1761,6 +1766,13 @@ function updateNpcToons(dt){
   for(const n of near){if(npcToons.has(n.i))continue;if(spawned>=3)break;spawned++;const spec=creatureFor(n.p);if(!spec)continue;const obj=spawnCreature(n.p,spec);if(!obj)continue;
     obj.traverse(m=>{m.userData.placement=n.i});toonGroup.add(obj);npcToons.set(n.i,obj);thinkCreature(obj,0,groundWorld);hideMarker(n.i,true)}
 }
+/* skinned clones (NPCs, animals, peers, mounts) each own a bone texture; free it once the clone has left the scene.
+   three.js rebuilds it on demand if the same clone is shown again. */
+const SKINNED=new Set();
+{const _clone=THREE.SkeletonUtils.clone;THREE.SkeletonUtils.clone=function(src){const c=_clone.call(this,src);c.traverse(o=>{if(o.isSkinnedMesh)SKINNED.add(o)});return c}}
+function inScene(o){while(o){if(o===scene)return true;o=o.parent}return false}
+setInterval(()=>{for(const o of SKINNED){if(inScene(o)){o.userData._shown=1;continue}if(!o.userData._shown&&!(o.skeleton&&o.skeleton.boneTexture))continue;
+  if(o.skeleton&&o.skeleton.boneTexture){o.skeleton.boneTexture.dispose();o.skeleton.boneTexture=null}SKINNED.delete(o)}},5000);
 function clearNpcToons(){for(const [i,obj] of npcToons){toonGroup.remove(obj);hideMarker(i,false)}npcToons.clear()}
 
 /* ================= Grudge asset library: buildings, castles, space terminals, NPCs and monsters ================= */
@@ -1845,7 +1857,9 @@ function toonOneShot(inst,kind){if(!inst||!inst.userData.mixer)return;const u=in
   if(kind==='hit'){if(u.once>0&&u.state!=='hit')return;return toonPlay(inst,'hit',.1,{once:true,hold:.9,speed:1.3})}
   if(kind==='dance')return toonPlay(inst,Math.random()<.5?'dance':'dance2',.3,{once:true,hold:10});
   if(kind==='sit')return toonPlay(inst,'sit',.4,{once:true,hold:1e9});
-  return toonPlay(inst,kind,.2,{once:true})}
+  if(kind==='stagger')return toonPlay(inst,u.clips.stagger?'stagger':'hit',.08,{once:true,hold:1.1});
+  const em={wave:'pointing',point:'pointing',flex:'powerUp',strut:'swagger',look:'lookAround',cheer:'bboy',spin:'soulSpin'}[kind];
+  return toonPlay(inst,em&&u.clips[em]?em:kind,.2,{once:true})}
 function toonAnimate(inst,amt){const u=inst.userData,now=performance.now(),dt=Math.min(.1,(now-u.last)/1000);u.last=now;
   if(u.once>0){u.once-=dt;if(amt>0&&!/^hit/.test(u.state||'')&&!ATTACK_STATES.test(u.state||''))u.once=0}
   if(u.once<=0)toonPlay(inst,locoClip(u,amt),.25,{speed:amt>1.5?1:amt>0?1.05:1});u.mixer.update(dt)}
@@ -1921,7 +1935,11 @@ function castleRing(w,poi,emit){
   if(R>70)emit('catapult_orc',{x:poi.x-R*.4,z:poi.z+R*.3,gy:poi.base,yaw:(gateA*180/Math.PI)},{fit:'uni',len:7});
 }
 
-const kitMeshes=[];
+const kitMeshes=[],KIT_CELL=640;
+const _kf=new THREE.Frustum(),_km=new THREE.Matrix4();
+function tickKitCull(){if(level!=='ground'||!kitMeshes.length)return;const far0=quality==='low'?1300:quality==='medium'?1900:2600;
+  const far=groundMode==='overhead'?Math.max(far0,ctl.dist*2.2):far0,cp=cam.position;cam.updateMatrixWorld();_km.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_kf.setFromProjectionMatrix(_km);
+  for(const im of kitMeshes){const c=im.userData.cull;if(!c)continue;im.visible=c.center.distanceTo(cp)-c.radius<far&&_kf.intersectsSphere(c)}}
 function applyKits(w){
   if(!kitReady){kitWaiters.push(()=>{if(groundWorld===w)applyKits(w)});return}
   if(w.kitsApplied)return;w.kitsApplied=true;
@@ -1934,9 +1952,14 @@ function applyKits(w){
         emit(c.k,{x,z,gy:groundH(w,x,z)+(c.k==='xwing'?.4:0),yaw:p.yaw!=null?p.yaw+(c.yaw||0)*57.3:(c.yaw||0)*57.3},{fit:c.h?'h':'uni',h:c.h,len:c.len},i)});hide.push(i);return}
     emit(r.k,p,r,i);hide.push(i)});
   w.pois.forEach(poi=>{if(poi.cat==='military')castleRing(w,poi,(k,p,rule)=>emit(k,p,rule,-1))});
-  for(const [k,g] of groups){const n=g.ms.length;
-    for(const part of g.proto.parts){const im=new THREE.InstancedMesh(part.geo,part.mat,n);for(let j=0;j<n;j++){M.fromArray(g.ms[j]).multiply(part.m);im.setMatrixAt(j,M)}
-      im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.userData.pidx=g.pidx;G.ground.add(im);kitMeshes.push(im)}}
+  // split each kit into map cells so far-away and off-screen buildings are skipped (see tickKitCull)
+  for(const [k,g] of groups){const cells=new Map();
+    g.ms.forEach((m,j)=>{const key=Math.floor(m[12]/KIT_CELL)+','+Math.floor(m[14]/KIT_CELL);(cells.get(key)||cells.set(key,[]).get(key)).push(j)});
+    for(const idx of cells.values()){const n=idx.length;let cx=0,cy=0,cz=0;for(const j of idx){cx+=g.ms[j][12];cy+=g.ms[j][13];cz+=g.ms[j][14]}cx/=n;cy/=n;cz/=n;
+      let r=0;for(const j of idx){const m=g.ms[j],sc=Math.hypot(m[0],m[1],m[2]);r=Math.max(r,Math.hypot(m[12]-cx,m[13]-cy,m[14]-cz)+sc*(g.proto.size&&g.proto.size.isVector3?g.proto.size.length()*.5:40))}
+      const sphere=new THREE.Sphere(new V3(cx,cy,cz),r+20);
+      for(const part of g.proto.parts){const im=new THREE.InstancedMesh(part.geo,part.mat,n);idx.forEach((j,q)=>{M.fromArray(g.ms[j]).multiply(part.m);im.setMatrixAt(q,M)});
+        im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.userData.pidx=idx.map(j=>g.pidx[j]);im.userData.cull=sphere;G.ground.add(im);kitMeshes.push(im)}}}
   if(pads.length){PAD_TEX=PAD_TEX||padTexture();const pm=new THREE.InstancedMesh(new THREE.CylinderGeometry(1,1,.6,40),[new THREE.MeshLambertMaterial({color:0x7d8086}),new THREE.MeshLambertMaterial({map:PAD_TEX}),new THREE.MeshLambertMaterial({color:0x7d8086})],pads.length);
     pads.forEach((pd,j)=>{M.compose(new V3(pd.x,pd.gy+.3,-pd.z),new THREE.Quaternion(),new V3(pd.r,1,pd.r));pm.setMatrixAt(j,M)});pm.instanceMatrix.needsUpdate=true;pm.userData.pidx=pads.map(p=>p.i);G.ground.add(pm);kitMeshes.push(pm)}
   // hide the stand-in boxes (and any roofs) for everything a kit now represents
@@ -2059,8 +2082,11 @@ const Store={mode:'local',col:null,
   async init(){try{const use=window.claude&&window.claude.use;if(!use)return;const to=new Promise(r=>setTimeout(()=>r(null),8000));
       const [db,user]=await Promise.race([Promise.all([use('db'),use('user')]),to.then(()=>[null,null])]);if(!db||!user)return;const id=await user.id();if(!id)return;
       this.col=db.collection('data/users/'+id+'/chars');this.mode='cloud'}catch(e){console.warn('db unavailable',e)}},
-  async list(){if(this.mode==='cloud'){try{const s=await this.col.get();return s.docs.map(d=>d.data()).filter(Boolean)}catch(e){console.warn(e)}}
-    try{return JSON.parse(localStorage.getItem('swgatlas.chars')||'[]')}catch(e){return[]}},
+  local(){try{return JSON.parse(localStorage.getItem('swgatlas.chars')||'[]')}catch(e){return[]}},
+  // cloud saves win, but a character saved in this browser while the server was unreachable is kept (newest copy wins) and uploaded
+  async list(){const loc=this.local();if(this.mode==='cloud'){try{const s=await this.col.get(),cloud=s.docs.map(d=>d.data()).filter(Boolean),by=new Map(cloud.map(c=>[c.id,c]));
+        for(const c of loc){const k=by.get(c.id);if(!k||(c.played||0)>(k.played||0)){by.set(c.id,c);this.col.doc(c.id).set(c).catch(()=>{})}}return[...by.values()].slice(0,8)}catch(e){console.warn(e)}}
+    return loc},
   async save(ch){const data=JSON.parse(JSON.stringify(ch));if(this.mode==='cloud'){try{await this.col.doc(ch.id).set(data);return true}catch(e){console.warn(e)}}
     try{const all=JSON.parse(localStorage.getItem('swgatlas.chars')||'[]').filter(c=>c.id!==ch.id);all.push(data);localStorage.setItem('swgatlas.chars',JSON.stringify(all));return true}catch(e){return false}},
   async del(id){if(this.mode==='cloud'){try{await this.col.doc(id).delete()}catch(e){console.warn(e)}}
@@ -2232,11 +2258,11 @@ function drawHarvesters(){harvGroup.clear();if(!CH||!groundWorld)return;if(!harv
 const combat={p:null,cd:0,ecd:0};
 function npcStats(p){const g=p.g;if(g.maxHp)return;const base=g.kind==='boss'?(g.boss.hp||5000):g.kind==='hostile'?(g.enemy.hp||200):300;g.maxHp=Math.round(base*(.6+g.tier*.25));g.hp=g.maxHp;g.dmg=g.kind==='boss'?60+g.tier*15:g.kind==='hostile'?((g.enemy.damage||12)*1.2):8}
 function startAttack(p){if(play.mount)dismount(true);if(groundMode!=='play')return toast('Switch to Play to fight.');npcStats(p);if(p.dead)return;combat.p=p;combat.cd=0;renderHud()}
-function tickCombat(dt){const p=combat.p;if(!p){if(CH&&CH.hp!=null){const st=charStats();CH.hp=Math.min(st.maxHp,CH.hp+st.maxHp*.02*dt)}return}
+function tickCombat(dt){const p=combat.p;if(!p){if(hunt.t>0){hunt.t-=dt;return}if(CH&&CH.hp!=null){const st=charStats();CH.hp=Math.min(st.maxHp,CH.hp+st.maxHp*.02*dt)}return}
   const st=charStats(),d=Math.hypot(p.x-play.x,p.z-play.z);const cre=[...npcToons.entries()].find(([i])=>groundWorld.placements[i]===p);if(cre){const u=cre[1].userData;u.target={x:play.x+(p.x-play.x)/Math.max(d,1)*2,z:play.z+(p.z-play.z)/Math.max(d,1)*2};u.combat=true}
   combat.cd-=dt;combat.ecd-=dt;if(d>60){combat.p=null;floatMsg('Target out of range');return renderHud()}
   if(d<=st.range+2&&combat.cd<=0){combat.cd=1.6;const dmg=Math.round(st.dmg*mmDmgMul()*(.8+Math.random()*.4));p.g.hp-=dmg;floatMsg(`You hit ${p.g.name} for ${dmg}`);if(play.model){play.model.userData.swing=.4;toonOneShot(play.model,'attack')}if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'hit')}
-  if(d<=(p.g.kind==='hostile'&&/beasts|reptiles|spiders|dragons/.test(p.g.cat)?4:14)&&combat.ecd<=0&&p.g.kind!=='friendly'){combat.ecd=2;const dm=Math.round(p.g.dmg*enemyMul(p)/mmDefMul()*(.7+Math.random()*.6)*(600/(600+st.def)));CH.hp-=dm;floatMsg(`${p.g.name} hits you for ${dm}`);if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'attack');if(play.model&&Math.random()<.5)setTimeout(()=>toonOneShot(play.model,'hit'),250)}
+  if(d<=(p.g.kind==='hostile'&&/beasts|reptiles|spiders|dragons/.test(p.g.cat)?4:14)&&combat.ecd<=0&&p.g.kind!=='friendly'){combat.ecd=2;const dm=Math.round(p.g.dmg*enemyMul(p)/mmDefMul()*(.7+Math.random()*.6)*(600/(600+st.def)));CH.hp-=dm;floatMsg(`${p.g.name} hits you for ${dm}`);if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'attack');if(play.model){const heavy=dm>charStats().maxHp*.12;if(heavy||Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,heavy?'stagger':'hit'),250)}}
   if(p.g.hp<=0)killNpc(p);if(CH.hp<=0)incapacitate();renderHud()}
 function killNpc(p){mmOnKill(p);p.dead=true;combat.p=null;const g=p.g,xp=Math.round(40*g.tier*(g.kind==='boss'?5:1));gainXP('combat',xp,'defeated '+g.name);gainXP(CLASS_WEAPON_XP[CH.cls]||'unarmed',Math.round(xp*.8),'');const cr=Math.round((20+g.tier*25)*(g.kind==='boss'?8:1)*(.6+Math.random()*.8));CH.credits+=cr;floatMsg(`Looted ${cr} credits`);
   const i=groundWorld.placements.indexOf(p),obj=npcToons.get(i);if(obj){toonGroup.remove(obj);npcToons.delete(i)}
@@ -2337,9 +2363,13 @@ async function winChars(B){$('#gwTitle').textContent='Characters';B.innerHTML='<
   B.querySelectorAll('[data-delok]').forEach(b=>b.onclick=async()=>{await Store.del(b.dataset.delok);confirmDel=null;if(CH&&CH.id===b.dataset.delok)CH=null;renderWin()});
   $('#mNew')&&($('#mNew').onclick=()=>{closeWin();creating=true;openCreator()})}
 let creating=false;
-async function playCharacter(c){CH=migrate(c);CH.played=Date.now();syncLook();closeWin();const w=WORLDS.find(x=>x.id===c.planet)||WORLDS[0];const poi=nearestPoi(w,c.pos.x,c.pos.z);
-  pendingSpawn={x:c.pos.x,z:c.pos.z};pendingPlay=true;if(level==='ground'&&groundWorld===w){exitPlay();enterPlay();return}
-  if(level==='ground')exitPlay();if(level!=='planet'||curWorld!==w){while(busy)await sleep(60);await goPlanet(w,poi)}while(busy)await sleep(60);goGround(poi)}
+async function playCharacter(c){
+  // leave play first so the character being switched away from is saved with its own position, not the new one's
+  if(level==='ground'&&groundMode==='play')exitPlay();
+  if(CH&&c&&c.id===CH.id)c=CH;  // same character: keep the position exitPlay just saved, not an older list copy
+  CH=migrate(c);CH.played=Date.now();syncLook();closeWin();const w=WORLDS.find(x=>x.id===c.planet)||WORLDS[0];const poi=nearestPoi(w,c.pos.x,c.pos.z);
+  pendingSpawn={x:c.pos.x,z:c.pos.z};if(level==='ground'&&groundWorld===w){pendingPlay=false;enterPlay();return}
+  pendingPlay=true;if(level!=='planet'||curWorld!==w){while(busy)await sleep(60);await goPlanet(w,poi)}while(busy)await sleep(60);goGround(poi)}
 async function saveNow(){if(!CH)return;if(groundMode==='play'&&groundWorld){CH.pos={x:play.x,z:play.z};CH.planet=groundWorld.id}dirty=false;await Store.save(CH)}
 setInterval(()=>{if(dirty)saveNow()},30000);addEventListener('pagehide',()=>{if(dirty)saveNow()});
 
@@ -2501,9 +2531,9 @@ const cds={};
 function currentTarget(){if(combat.p&&!combat.p.dead)return combat.p;return selPlacement&&selPlacement.g&&!selPlacement.dead?selPlacement:null}
 function targetPos(p){const e=[...npcToons.entries()].find(([i])=>groundWorld.placements[i]===p);return e?e[1].userData.pos:{x:p.x,z:p.z}}
 function useAbility(a){if(!CH||groundMode!=='play')return;if(rts.on)return;const t=now();if(cds[a.id]>t)return floatMsg(`${a.name} is cooling down (${Math.ceil(cds[a.id]-t)} s).`);
-  if(a.id==='attack'){const p=currentTarget();if(combat.p){combat.p=null;floatMsg('Auto-attack off');return mmHud()}if(!p||p.g.kind==='friendly')return floatMsg('Select an enemy first (Tab or click).');return startAttack(p)}
+  if(a.id==='attack'){const p=currentTarget();if(combat.p){combat.p=null;floatMsg('Auto-attack off');return mmHud()}if(hunt.auto){hunt.auto=null;floatMsg('Auto-attack off');return mmHud()}if(!p||p.g.kind==='friendly'){const an=nearestAnimal(play.x,play.z,14);if(an){hunt.auto=an;hunt.swing=0;hunt.cur=an;huntBar();floatMsg(`Hunting the ${HUNT_NAME(an.h.id).toLowerCase()}`);return}return floatMsg('Select an enemy first (Tab or click), or walk up to a wild animal to hunt it.')}return startAttack(p)}
   const c=a.cost||{};if(c.a&&CH.act<c.a)return floatMsg(`Not enough Action for ${a.name}.`);if(c.m&&CH.mind<c.m)return floatMsg(`Not enough Mind for ${a.name}.`);
-  if(a.hit||a.debuff){const p=currentTarget();if(!p||p.g.kind==='friendly')return floatMsg(`${a.name} needs an enemy target.`);npcStats(p);const tp=targetPos(p),d=Math.hypot(tp.x-play.x,tp.z-play.z),st=charStats(),range=a.hit&&a.hit.range||st.range+2;
+  if(a.hit||a.debuff){const p=currentTarget();if((!p||p.g.kind==='friendly')&&a.hit){const an=nearestAnimal(play.x,play.z,a.hit.range||14);if(an){if(c.a)CH.act-=c.a;if(c.m)CH.mind-=c.m;cds[a.id]=t+(a.cd||0);return huntStrike(an,a.hit.mult,abilAnim(a)||'attack')}}if(!p||p.g.kind==='friendly')return floatMsg(`${a.name} needs an enemy target.`);npcStats(p);const tp=targetPos(p),d=Math.hypot(tp.x-play.x,tp.z-play.z),st=charStats(),range=a.hit&&a.hit.range||st.range+2;
     if(d>range)return floatMsg(`Out of range (${Math.round(d)} m, need ${Math.round(range)} m).`);
     if(a.hit){const dmg=Math.round(st.dmg*a.hit.mult*mmDmgMul()*(.85+Math.random()*.3));p.g.hp-=dmg;floatMsg(`${a.name} hits ${p.g.name} for ${dmg}`);if(!combat.p)startAttack(p);
       const xpT=CLASS_WEAPON_XP[CH.cls]||'combat';if(Math.random()<.3)gainXP(xpT,8,'');if(p.g.hp<=0)killNpc(p)}
@@ -2592,7 +2622,7 @@ function tickPeers(dt){if(!room)return;presT-=dt;const playing=CH&&level==='grou
     else{pm.obj.position.set(pm.x,by,-pm.z);pm.obj.rotation.y=pm.y+Math.PI;animateAny(pm.obj,now()*7,s.m||0)}}
   for(const id of [...peerModels.keys()])if(!seen.has(id))dropPeer(id);
   const v=new V3();for(const [,pm] of peerModels){v.set(pm.x,groundH(groundWorld,pm.x,pm.z)+2.4,-pm.z).project(cam);const on=v.z<1&&Math.abs(v.x)<1.1&&Math.abs(v.y)<1.1;pm.el.hidden=!on;if(on){pm.el.style.transform=`translate(${(v.x*.5+.5)*innerWidth}px,${(-v.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`}}}
-const EMOTES={dance:'dances',sit:'sits down',taunt:'lets out a battle cry',wave:'waves'};
+const EMOTES={dance:'dances',sit:'sits down',taunt:'lets out a battle cry',wave:'waves',point:'points',flex:'flexes',strut:'struts',look:'looks around',cheer:'cheers',spin:'spins'};
 function chatSend(text){text=text.trim();if(!text)return;if(text[0]==='/'){const [cmd,...rest]=text.slice(1).split(/\s+/);const c=cmd.toLowerCase();
     if(c==='help')return mmLog('Emotes: /'+Object.keys(EMOTES).join(' /')+' /stand · Space jump · L codex · 1-0 abilities · Tab target · B command mode · right-click mouselook · O missions','sys');
     if(EMOTES[c]){if(play.model)toonOneShot(play.model,c);mmLog(`${CH.name} ${EMOTES[c]}.`,'chat');room&&room.emit('emote',{e:c}).catch(()=>{});return}
@@ -2938,7 +2968,7 @@ function tickPlates(){const L=$('#npL');let used=0;if(groundMode==='play'&&groun
   const t=currentTarget();if(t&&t.g&&t.g.kind!=='friendly'){const p=targetPos(t);mark(p.x,p.z,'#ff4a3a','c')}if(route&&route.pts[0])mark(route.pts[0].x,route.pts[0].z,'#6ff0ff','d')}}
 // per-frame
 let hudFxT=0,vigBase=0;
-function tickHud3(dt){const playing=CH&&level==='ground'&&groundMode==='play'&&groundWorld;fx3.classList.toggle('on',!!playing);if(!playing){for(const f of fctItems)f.el.remove();fctItems.length=0;return}
+function tickHud3(dt){const playing=CH&&level==='ground'&&groundMode==='play'&&groundWorld;fx3.classList.toggle('on',!!playing);if(!playing){for(const f of fctItems)f.el.remove();fctItems.length=0;if(zbT>0){zbT=0;$('#zban').classList.remove('show')}return}
   tickFct(dt);tickPlates();tickZone(dt);if(zbT>0){zbT-=dt;if(zbT<=0)$('#zban').classList.remove('show')}
   if(streakT>0){streakT-=dt;if(streakT<=0)streak=0}
   for(let i=feed.length-1;i>=0;i--){feed[i].t+=dt;if(feed[i].t>9){feed[i].el.classList.add('out');if(feed[i].t>10){feed[i].el.remove();feed.splice(i,1)}}}
@@ -3177,12 +3207,57 @@ function tickAnimals(dt){const w=groundWorld,on=level==='ground'&&w&&(groundMode
       spawnHerd(w,x,z,L[Math.random()*L.length|0]);break}}}
   for(const h of herds){if(h.farm&&Math.hypot(h.home.x-px,h.home.z-pz)>480)continue;const S=ANIMAL_SPEC[h.id];
     for(const a of h.members){a.t-=dt;const dP=Math.hypot(a.pos.x-px,a.pos.z-pz);
+      if(a.dead){a.mixer.update(dt);continue}
+      if(a.state==='fight'&&huntFight(a,h,dt,dP,px,pz)){a.obj.position.set(a.pos.x,groundH(w,a.pos.x,a.pos.z),-a.pos.z);a.obj.rotation.y=a.yaw;a.mixer.update(dt);continue}
       if(!h.tame&&S.prey&&dP<16&&a.state!=='flee'){a.state='flee';a.t=4+Math.random()*2;const dx=a.pos.x-px,dz=a.pos.z-pz,dd=Math.hypot(dx,dz)||1;a.target={x:a.pos.x+dx/dd*45,z:a.pos.z+dz/dd*45};animPlay(a,'Gallop',.15);h.home={x:a.target.x,z:a.target.z}}
       else if(!S.prey&&!h.tame&&dP<9&&a.state!=='warn'){a.state='warn';a.t=2;a.target=null;a.yaw=Math.atan2(px-a.pos.x,-(pz-a.pos.z));animPlay(a,'Attack',.15,true)}
       else if(a.t<=0){const r=Math.random();if(r<.4){a.state='graze';a.t=4+Math.random()*7;a.target=null;animPlay(a,'Eating')}else if(r<.65){a.state='idle';a.t=3+Math.random()*5;a.target=null;animPlay(a,Math.random()<.5?'Idle':'Idle_2')}
         else{a.state='walk';a.t=8;const an=Math.random()*TAU,rr=Math.random()*h.R;a.target={x:h.home.x+Math.cos(an)*rr,z:h.home.z+Math.sin(an)*rr};animPlay(a,'Walk')}}
       if(a.target){const dx=a.target.x-a.pos.x,dz=a.target.z-a.pos.z,d=Math.hypot(dx,dz),sp=(a.state==='flee'?7.5:1.3)*dt;if(d<.6){a.target=null;a.t=0}else{const st=Math.min(d,sp);a.pos.x+=dx/d*st;a.pos.z+=dz/d*st;const want=Math.atan2(dx,-dz);let dy=((want-a.yaw+Math.PI)%TAU+TAU)%TAU-Math.PI;a.yaw+=dy*Math.min(1,dt*5)}}
       a.obj.position.set(a.pos.x,groundH(w,a.pos.x,a.pos.z),-a.pos.z);a.obj.rotation.y=a.yaw;if(dP<260)a.mixer.update(dt)}}}
+
+/* ---- hunting: wild animals (not farm stock or town dogs) can be hunted for SWG creature resources ---- */
+const HUNT_NAME=id=>id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()).replace('Shibainu','Shiba Inu');
+function nearestAnimal(x,z,r){let best=null,bd=r;for(const h of herds){if(h.tame)continue;for(const a of h.members){if(a.dead)continue;const d=Math.hypot(a.pos.x-x,a.pos.z-z);if(d<bd){bd=d;best={a,h,d}}}}return best}
+function huntStats(a,h){if(a.hp==null){const S=ANIMAL_SPEC[h.id];a.tier=Math.max(1,Math.round(S.h*1.5+(S.prey?0:2)));a.maxHp=a.hp=Math.round(70+a.tier*55);a.dmg=Math.round(8+a.tier*6)}return a}
+// one strike on an animal: mult is the ability multiplier (1 for auto-attack)
+function huntStrike(t,mult=1,anim='attack'){const {a,h}=t;huntStats(a,h);const st=charStats();const reach=(st.range||3)+3;
+  if(t.d>reach)return floatMsg(`Too far to strike the ${HUNT_NAME(h.id).toLowerCase()} (${Math.round(t.d)} m).`);
+  const dmg=Math.round(st.dmg*mult*mmDmgMul()*(.8+Math.random()*.4));a.hp-=dmg;floatMsg(`You hit the ${HUNT_NAME(h.id).toLowerCase()} for ${dmg}`);
+  if(play.model){play.model.userData.swing=.4;toonOneShot(play.model,anim)}
+  if(a.hp<=0)return huntKill(a,h);
+  animPlay(a,Math.random()<.5?'Idle_HitReact1':'Idle_HitReact2',.08,true);
+  const S=ANIMAL_SPEC[h.id];if(S.prey){a.state='flee';a.t=5;const dx=a.pos.x-play.x,dz=a.pos.z-play.z,dd=Math.hypot(dx,dz)||1;a.target={x:a.pos.x+dx/dd*55,z:a.pos.z+dz/dd*55};setTimeout(()=>a.state==='flee'&&!a.dead&&animPlay(a,'Gallop',.15),350)}
+  else{for(const m of h.members)if(!m.dead&&m.state!=='fight'){huntStats(m,h);m.state='fight';m.cd=.6+Math.random()}}  // the pack joins in
+  hunt.cur=t;hunt.t=6;huntBar()}
+// predators chase and bite; returns true while the animal is fighting
+function huntFight(a,h,dt,dP,px,pz){if(groundMode!=='play'||!CH||dP>60){a.state='idle';a.t=0;return false}
+  const dx=px-a.pos.x,dz=pz-a.pos.z;a.yaw=Math.atan2(dx,-dz);a.cd=(a.cd||0)-dt;
+  if(dP>2.2){const st=Math.min(dP-2,6.5*dt);a.pos.x+=dx/dP*st;a.pos.z+=dz/dP*st;animPlay(a,'Gallop',.15)}
+  else if(a.cd<=0){a.cd=1.8+Math.random()*.6;animPlay(a,'Attack',.1,true);const dm=Math.round(a.dmg/mmDefMul()*(.7+Math.random()*.6)*(600/(600+charStats().def)));CH.hp-=dm;hunt.t=6;
+    floatMsg(`The ${HUNT_NAME(h.id).toLowerCase()} bites you for ${dm}`);if(play.model&&Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,'hit'),200);renderHud();if(CH.hp<=0){for(const m of h.members)if(m.state==='fight')m.state='idle';incapacitate()}}
+  else if(a.cur!==a.acts.Attack||!a.cur.isRunning())animPlay(a,'Idle',.2);
+  return true}
+function huntKill(a,h){a.dead=true;a.state='dead';a.target=null;animPlay(a,'Death',.1,true);hunt.cur=null;huntBar();
+  const xp=25+a.tier*15;gainXP('combat',xp,'hunted a '+HUNT_NAME(h.id).toLowerCase());
+  // loot: meat, hide and bone from this planet's creature resources (realms borrow a core planet's pool)
+  const pools=SWGRES.planets,key=pools[groundWorld.id]?groundWorld.id:Object.keys(pools)[strHash(groundWorld.id)%Object.keys(pools).length],all=(pools[key]||[]).filter(r=>r.t===-1);
+  const got=[];if(all.length)for(const kind of ['meat','hide','bone']){const by=all.filter(r=>CORPSE[kind].test(r.c)),pool=by.length?by:all.filter(r=>r.cl.some(c=>CORPSE[kind].test(c)));if(!pool.length)continue;
+    const r=pool[strHash(h.id+kind+key)%pool.length],m=skillMods(CH),u=Math.round((6+a.tier*5)*(1+(m.hunting||0)/40)*(.8+Math.random()*.4)*(kind==='meat'?1.2:kind==='bone'?.6:1));addRes(r,u);got.push(`${u} ${r.c}`)}
+  if(got.length){toast('Harvested '+got.join(', ')+'.');gainXP('scouting',10+a.tier*6,'')}
+  if(h.members.every(m=>m.dead||m.state!=='fight'))for(const m of h.members)if(m.state==='fight')m.state='idle';
+  setTimeout(()=>{const i=h.members.indexOf(a);if(i>=0){h.members.splice(i,1);WG.remove(a.obj)}},45000);markDirty()}
+// small health bar over the animal you are hunting
+const hunt={cur:null,el:null,t:0,auto:null,swing:0};  // t: seconds of 'in combat' left (no health regen)
+function huntBar(){if(!hunt.el){hunt.el=document.createElement('div');hunt.el.id='huntBar';hunt.el.innerHTML='<b></b><i><s></s></i>';document.body.append(hunt.el)}
+  const t=hunt.cur;hunt.el.hidden=!t||t.a.dead;if(!t||t.a.dead)return;hunt.el.querySelector('b').textContent=HUNT_NAME(t.h.id)+(ANIMAL_SPEC[t.h.id].prey?'':' · hostile');hunt.el.querySelector('s').style.width=Math.max(0,t.a.hp/t.a.maxHp*100)+'%'}
+function tickHuntAuto(dt){const t=hunt.auto;if(!t)return;const d=Math.hypot(t.a.pos.x-play.x,t.a.pos.z-play.z);
+  if(t.a.dead||groundMode!=='play'||!CH||d>40||combat.p){hunt.auto=null;return}hunt.swing-=dt;
+  const reach=(charStats().range||3)+3;if(hunt.swing<=0&&d<=reach){hunt.swing=1.6;t.d=d;huntStrike(t)}}
+function tickHuntBar(){const t=hunt.cur;if(!t||!hunt.el||hunt.el.hidden)return;if(t.a.dead||groundMode!=='play'||Math.hypot(t.a.pos.x-play.x,t.a.pos.z-play.z)>70){hunt.cur=null;hunt.el.hidden=true;return}
+  const v=new V3(t.a.pos.x,groundH(groundWorld,t.a.pos.x,t.a.pos.z)+ANIMAL_SPEC[t.h.id].h+.6,-t.a.pos.z).project(cam);const on=v.z<1&&Math.abs(v.x)<1.05&&Math.abs(v.y)<1.05;hunt.el.style.opacity=on?1:0;
+  hunt.el.style.transform=`translate(${(v.x*.5+.5)*innerWidth}px,${(-v.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`}
+{const _ta=tickAnimals;tickAnimals=function(dt){_ta(dt);tickHuntAuto(dt);tickHuntBar()}}
 
 /* ---- nature props ---- */
 const PROP_SIZE={Rock_Medium_1:2.2,Rock_Medium_2:2,Rock_Medium_3:1.8,Pebble_Round_1:.45,Pebble_Round_2:.4,Pebble_Square_1:.4,Bush_Common:1.3,Bush_Common_Flowers:1.3,Fern_1:.9,Flower_3_Group:.5,Flower_4_Group:.5,
@@ -3284,7 +3359,10 @@ function gaitTick(R,dt,moving){if(!R)return;R.amt+=((moving?Math.min(2,moving):0
 // 2) City navigation: a top-down height render of the town (every kit building, wall and prop) becomes a walkable grid; A* + string pulling.
 // 3) Daily routes: townsfolk follow a schedule (home, work, market at noon, tavern at dusk) along those paths; travellers walk the roads.
 // 4) Player navigation: pick a destination, the route is drawn on the ground and N auto-travels along it.
-function roadTexture(w,kind){const c=document.createElement('canvas');c.width=128;c.height=256;const x=c.getContext('2d'),R=mulberry(w.seed^(kind==='cobble'?0xc0b:0xd1f)),S=w.surf||SURF.temperate;
+// one texture per planet and road kind, kept for return visits (they are marked _keep so the ground clear leaves them)
+const ROAD_TEX={};
+function roadTexture(w,kind){const key=w.id+':'+kind;return ROAD_TEX[key]||(ROAD_TEX[key]=roadTexture0(w,kind))}
+function roadTexture0(w,kind){const c=document.createElement('canvas');c.width=128;c.height=256;const x=c.getContext('2d'),R=mulberry(w.seed^(kind==='cobble'?0xc0b:0xd1f)),S=w.surf||SURF.temperate;
   const soil=col(S.soil||'#7a6644'),rock=col(S.rock||'#6f6a62'),sand=col(S.sand||'#cbbf94'),hex=c3=>'#'+c3.getHexString();
   if(kind==='cobble'){x.fillStyle=hex(rock.clone().multiplyScalar(.72));x.fillRect(0,0,128,256);
     for(let row=0;row<16;row++)for(let k=0;k<6;k++){const w2=18+R()*8,h2=13+R()*4,px=k*22+(row%2)*11+R()*3-4,py=row*16+R()*2;const t=rock.clone().lerp(sand,.2+R()*.45).multiplyScalar(1.05+R()*.35);
@@ -3349,10 +3427,11 @@ const NAV_HMAT=new THREE.ShaderMaterial({uniforms:{base:{value:0}},vertexShader:
 function cityNav(w,q){if(q._nav!==undefined&&q._navW===w)return q._nav;if(!kitReady||!w.kitsApplied||groundWorld!==w)return null;
   const half=q.r*1.12,cell=Math.max(2.5,half*2/320),N=Math.ceil(half*2/cell),rt=new THREE.WebGLRenderTarget(N,N),cam2=new THREE.OrthographicCamera(-half,half,half,-half,1,1200);
   cam2.position.set(q.x,(q.base||0)+600,-q.z);cam2.up.set(0,0,-1);cam2.lookAt(q.x,0,-q.z);NAV_HMAT.uniforms.base.value=q.base||0;
+  const kv=kitMeshes.filter(m=>!m.visible);kv.forEach(m=>m.visible=true);
   const hid=[];G.ground.traverse(o=>{if(o!==G.ground&&o.visible&&(o===toonGroup||o===skyMesh||(o.material&&o.material.transparent&&!o.isInstancedMesh)||o.isLine||o.isSprite)){o.visible=false;hid.push(o)}});
   const prevT=renderer.getRenderTarget(),prevC=renderer.getClearColor(new THREE.Color()),prevA=renderer.getClearAlpha(),bg=scene.background,fog=scene.fog,fx=FXG.visible;scene.background=null;scene.fog=null;FXG.visible=false;scene.overrideMaterial=NAV_HMAT;
   renderer.setRenderTarget(rt);renderer.setClearColor(0x000000,0);renderer.clear();renderer.render(scene,cam2);const px=new Uint8Array(N*N*4);renderer.readRenderTargetPixels(rt,0,0,N,N,px);
-  scene.overrideMaterial=null;renderer.setRenderTarget(prevT);renderer.setClearColor(prevC,prevA);scene.background=bg;scene.fog=fog;FXG.visible=fx;hid.forEach(o=>o.visible=true);rt.dispose();
+  scene.overrideMaterial=null;renderer.setRenderTarget(prevT);renderer.setClearColor(prevC,prevA);scene.background=bg;scene.fog=fog;FXG.visible=fx;hid.forEach(o=>o.visible=true);kv.forEach(m=>m.visible=false);rt.dispose();
   const block=new Uint8Array(N*N);for(let j=0;j<N;j++)for(let i=0;i<N;i++){const k=(j*N+i)*4,h=px[k]/255*64-16,x=q.x-half+(i+.5)*cell,z=q.z-half+(j+.5)*cell,gnd=groundH(w,x,z)-(q.base||0);
     block[j*N+i]=px[k+3]===0?0:(h-gnd>1.6||waterDepth(w,x,z)>.8)?1:0}
   // keep one cell of clearance from walls and buildings
@@ -3723,7 +3802,7 @@ let barSig='';
 function renderBars(){if(!CH)return;const B=bars(),sig=JSON.stringify(B)+CH.inv.items.length+CH.skills.length;
   if(sig!==barSig){barSig=sig;$('#mmBar').innerHTML=B[0].map((_,i)=>slotHtml(0,i)).join('');$('#mmBar2').innerHTML=B[1].map((_,i)=>slotHtml(1,i)).join('')}
   const t=now();hud.querySelectorAll('[data-slot]').forEach(el=>{const [b,i]=el.dataset.slot.split(':').map(Number),s=slotInfo(B[b][i]);if(!s||s.kind!=='ab')return;const a=s.a,c=a.cost||{},left=Math.max(0,(cds[a.id]||0)-t);
-    const cd=el.querySelector('.cd');if(cd)cd.style.setProperty('--p',a.cd?left/a.cd:0);el.classList.toggle('on',a.id==='attack'&&!!combat.p);el.classList.toggle('poor',!!((c.a&&CH.act<c.a)||(c.m&&CH.mind<c.m)))})}
+    const cd=el.querySelector('.cd');if(cd)cd.style.setProperty('--p',a.cd?left/a.cd:0);el.classList.toggle('on',a.id==='attack'&&!!(combat.p||hunt.auto));el.classList.toggle('poor',!!((c.a&&CH.act<c.a)||(c.m&&CH.mind<c.m)))})}
 hud.addEventListener('click',e=>{const el=e.target.closest('[data-slot]');if(!el)return;const [b,i]=el.dataset.slot.split(':').map(Number);useSlot(b,i)});
 hud.addEventListener('contextmenu',e=>{const el=e.target.closest('[data-slot]');if(!el)return;e.preventDefault();const [b,i]=el.dataset.slot.split(':').map(Number);bars()[b][i]=null;markDirty();renderBars()});
 // drag and drop between slots, from the skill book and from the inventory
@@ -4165,6 +4244,8 @@ WORLDS=ORDER.filter(id=>BO.worlds[id]||CORE3.worlds.some(w=>w.id===id)).map(id=>
 REALMS.forEach(R=>WORLDS.push(buildRealmWorld(R)));WORLDS.push(buildRealmWorld(HOTH));
 buildGalaxy();spawnGalaxyWhales();applyQuality();resize();setLevel('galaxy');ctl.target.set(0,0,0);ctl.dist=620;ctl.phi=.95;ctl.theta=.4;applyOrbit();
 requestAnimationFrame(frame);
+// test hook: only with ?debug in the address, lets automated checks read game state
+try{if(/[?&]debug\b/.test(location.search))window.__gg=src=>eval(src)}catch(e){}
 })();
 </script>
 

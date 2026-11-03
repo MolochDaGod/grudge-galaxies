@@ -51,6 +51,19 @@ function cors(req, res) {
 }
 const send = (res, code, body) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)) };
 const readBody = req => new Promise((ok, bad) => { let n = 0, chunks = []; req.on('data', c => { n += c.length; if (n > MAX_DOC) { bad(new Error('too large')); req.destroy() } else chunks.push(c) }); req.on('end', () => ok(Buffer.concat(chunks).toString('utf8'))); req.on('error', bad) });
+// per-player write budget: 20 writes per 10 s, and at most 64 documents per folder
+const writes = new Map();
+const writeOk = uid => { const now = Date.now(), w = writes.get(uid) || { t: now, n: 0 }; if (now - w.t > 10000) { w.t = now; w.n = 0 } w.n++; writes.set(uid, w); return w.n <= 20 };
+setInterval(() => { const cut = Date.now() - 60000; for (const [k, w] of writes) if (w.t < cut) writes.delete(k) }, 60000).unref();
+const MAX_DOCS = 64;
+async function count(uid, path) {
+  if (db) return +(await db.query('select count(*) n from docs where uid=$1 and path=$2', [uid, path])).rows[0].n;
+  return Object.keys(mem[uid]?.[path] || {}).length;
+}
+async function exists(uid, path, id) {
+  if (db) return (await db.query('select 1 from docs where uid=$1 and path=$2 and id=$3', [uid, path, id])).rowCount > 0;
+  return !!mem[uid]?.[path]?.[id];
+}
 // a player may only touch documents under data/users/<their uid>/
 const ownPath = (uid, path) => typeof path === 'string' && path.length < 200 && path.startsWith(`data/users/${uid}/`) && !path.includes('..');
 
@@ -70,7 +83,13 @@ const server = http.createServer(async (req, res) => {
       if (!ownPath(uid, path)) return send(res, 403, { error: 'forbidden path' });
       if (req.method === 'GET') return send(res, 200, { docs: await list(uid, path) });
       if (!id || id.length > 80) return send(res, 400, { error: 'bad id' });
-      if (req.method === 'PUT') { const data = JSON.parse(await readBody(req)); await put(uid, path, id, data); return send(res, 200, { ok: true }) }
+      if (req.method !== 'GET' && !writeOk(uid)) return send(res, 429, { error: 'slow down' });
+      if (req.method === 'PUT') {
+        const data = JSON.parse(await readBody(req));
+        if (!data || typeof data !== 'object') return send(res, 400, { error: 'bad document' });
+        if (!(await exists(uid, path, id)) && await count(uid, path) >= MAX_DOCS) return send(res, 409, { error: 'folder full' });
+        await put(uid, path, id, data); return send(res, 200, { ok: true });
+      }
       if (req.method === 'DELETE') { await del(uid, path, id); return send(res, 200, { ok: true }) }
     }
     send(res, 404, { error: 'not found' });
@@ -87,23 +106,36 @@ wss.on('connection', (ws, req) => {
   const me = { peer: 'p' + (++seq).toString(36) + crypto.randomBytes(3).toString('hex'), presence: null, count: 0, window: Date.now() };
   peers.set(ws, me);
   ws.send(JSON.stringify({ t: 'hello', peer: me.peer }));
+  ws.on('pong', () => { me.dead = false });
   ws.on('message', buf => {
     // simple flood guard: 40 messages per second
     const now = Date.now(); if (now - me.window > 1000) { me.window = now; me.count = 0 } if (++me.count > 40) return;
     let m; try { m = JSON.parse(buf) } catch { return }
     if (m.t === 'presence' && m.d && typeof m.d === 'object') me.presence = m.d;
     else if (m.t === 'emit' && typeof m.topic === 'string' && /^(chat|emote)$/.test(m.topic)) {
+      if (m.topic === 'chat' && (!m.d || typeof m.d.m !== 'string' || m.d.m.length > 240)) return;
       const out = JSON.stringify({ t: 'event', topic: m.topic, peer: me.peer, data: m.d });
       for (const [c] of peers) if (c.readyState === 1) c.send(c === ws ? JSON.stringify({ t: 'event', topic: m.topic, peer: me.peer, data: m.d, sameTab: true }) : out);
     }
   });
   ws.on('close', () => { peers.delete(ws); const out = JSON.stringify({ t: 'left', peer: me.peer }); for (const [c] of peers) if (c.readyState === 1) c.send(out) });
 });
+// presence: each player gets the full roster count, but positions only for players on the same planet
 setInterval(() => {
   if (!peers.size) return;
-  const list = [...peers.values()].map(p => ({ peer: p.peer, presence: p.presence }));
-  const out = JSON.stringify({ t: 'peers', peers: list });
-  for (const [c] of peers) if (c.readyState === 1) c.send(out);
+  const byPlanet = new Map(), all = [];
+  for (const p of peers.values()) { const pl = p.presence && p.presence.pl; all.push({ peer: p.peer, presence: pl ? { pl } : null }); if (pl) (byPlanet.get(pl) || byPlanet.set(pl, []).get(pl)).push({ peer: p.peer, presence: p.presence }) }
+  const cache = new Map();
+  for (const [c, p] of peers) {
+    if (c.readyState !== 1) continue;
+    const pl = p.presence && p.presence.pl || '';
+    if (!cache.has(pl)) { const local = byPlanet.get(pl) || [], ids = new Set(local.map(x => x.peer)); cache.set(pl, JSON.stringify({ t: 'peers', peers: local.concat(all.filter(x => !ids.has(x.peer))) })) }
+    c.send(cache.get(pl));
+  }
 }, 250);
+// drop connections that stopped answering (closed laptops, dead mobile radios)
+setInterval(() => { for (const [c, p] of peers) { if (p.dead) { c.terminate(); continue } p.dead = true; c.ping() } }, 30000);
+const shutdown = () => { if (!db) try { fs.writeFileSync(FILE, JSON.stringify(mem)) } catch {} process.exit(0) };
+process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 
 server.listen(PORT, () => console.log(`Grudge Galaxies server on :${PORT} (${db ? 'postgres' : 'file'} saves)`));

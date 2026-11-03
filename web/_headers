@@ -1,8 +1,17 @@
-/kits/*
-  Cache-Control: public, max-age=604800, immutable
-/ui/*
-  Cache-Control: public, max-age=604800
-/*.js
-  Cache-Control: public, max-age=3600
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
 /config.js
   Cache-Control: no-cache
+/shim.js
+  Cache-Control: no-cache
+/kits/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/ui/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.js
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
