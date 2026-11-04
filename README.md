@@ -66,6 +66,12 @@ nothing otherwise.
 
 ## Changes in this update
 
+- **Waypoints and planet map:** Shift+M (or the map button) opens the planet map with towns, roads, travel points,
+  a coordinate grid and your position. Click to drop a waypoint, click a town or port to mark it, right-click to delete,
+  wheel to zoom, drag to pan. Each character keeps up to 40 named, coloured waypoints across planets. Active ones show
+  a light beam in the world, a framed marker with distance on screen (pinned to the screen edge with an arrow when
+  off-screen), a compass tick and a minimap diamond. Routes and "find trainer" drop an orange navigation waypoint
+  that clears when you arrive.
 - **Performance:** building kits are split into 640 m map cells and only cells near and in front of the camera
   are drawn (Tatooine went from about 5.5 million to 1.3 million triangles per frame). Draw distance follows the
   Low / Medium / High quality setting.

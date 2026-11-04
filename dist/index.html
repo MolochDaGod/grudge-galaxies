@@ -441,6 +441,47 @@ body.hud-edit [data-panel] *{pointer-events:none!important}body.hud-edit #ghTarg
 @media (prefers-reduced-motion:reduce){#fade{transition:none}}
 #huntBar{position:fixed;left:0;top:0;z-index:30;pointer-events:none;text-align:center;font:600 11px/1.2 'Saira Condensed',system-ui,sans-serif;color:#f3e6c8;text-shadow:0 1px 2px #000;transition:opacity .15s}
 #huntBar i{display:block;width:84px;height:6px;margin:3px auto 0;background:#1b1410;border:1px solid #6b4b2a;border-radius:3px;overflow:hidden}#huntBar s{display:block;height:100%;background:linear-gradient(#e0533d,#a1271a);text-decoration:none}
+/* ---- waypoints: on-screen frames, edge arrows, planet map ---- */
+#wpLayer{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.wp-mark{position:absolute;left:0;top:0;width:0;height:0;will-change:transform}
+.wp-gem{position:absolute;left:-8px;top:-8px;width:14px;height:14px;transform:rotate(45deg);background:var(--c);border:2px solid #1a1208;box-shadow:0 0 10px var(--c),0 0 2px #000}
+.wp-mark.near .wp-gem{animation:wpPulse 1s ease-in-out infinite}
+@keyframes wpPulse{50%{box-shadow:0 0 22px var(--c),0 0 2px #000}}
+.wp-mark span{position:absolute;left:0;top:13px;transform:translateX(-50%);white-space:nowrap;text-align:center;padding:0 6px;border-style:solid;border-width:7px 9px;border-image:url(ui/craftpix/frames/complete_container.png) 30 fill / 7px 9px stretch;line-height:1.15}
+.wp-mark em{display:block;font-style:normal;font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.04em;color:var(--c);text-shadow:0 1px 2px #000}
+.wp-mark small{display:block;font-family:var(--mono);font-size:10px;color:#f4e6c8}
+.wp-arrow{display:none;position:absolute;left:0;top:0;width:0;height:0}
+.wp-mark.edge .wp-arrow{display:block}
+.wp-arrow::before{content:"";position:absolute;left:12px;top:-9px;border-left:16px solid var(--c);border-top:9px solid transparent;border-bottom:9px solid transparent;filter:drop-shadow(0 0 3px #000)}
+.wp-mark.edge span{opacity:.92}
+#wmap{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:rgba(4,6,10,.72);padding:calc(14px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+.wm-card{position:relative;isolation:isolate;width:min(1320px,100%);height:min(880px,100%);display:flex;flex-direction:column;color:var(--cpx-ink);filter:drop-shadow(0 20px 50px rgba(0,0,0,.6))}
+.wm-card::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-style:solid;border-width:56px 20px 20px;border-image:url(ui/craftpix/windows/c_full_header.png) 84 28 28 28 fill / 56px 20px 20px 20px stretch}
+.wm-card header{height:56px;flex:none;display:flex;align-items:center;gap:14px;padding:0 14px 0 22px}
+.wm-card h2{margin:0;font-family:var(--cpx-title);font-size:21px;letter-spacing:.05em;color:var(--cpx-gold);text-shadow:0 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wm-card header small{font-family:var(--mono);font-size:11px;color:var(--cpx-dim);margin-left:auto;white-space:nowrap}
+#wmap .x{width:34px;height:31px;flex:none;background:url(ui/craftpix/windows/c_header_close.png) center/contain no-repeat;color:transparent;font-size:0;border:0;cursor:pointer}#wmap .x:hover{background-image:url(ui/craftpix/windows/c_header_close_hover.png)}
+.wm-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;padding:8px 22px 22px}
+.wm-view{position:relative;min-height:0;min-width:0}
+#wmCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;border:1px solid var(--cpx-line);cursor:crosshair;touch-action:none;background:#07090d}
+.wm-help{position:absolute;left:8px;bottom:8px;right:60px;font-family:var(--mono);font-size:10.5px;color:var(--cpx-dim);text-shadow:0 1px 2px #000;pointer-events:none}
+.wm-zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px}
+.wm-side{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;padding-right:2px}
+.wm-side h3{margin:4px 0 2px;font-family:var(--cpx-title);color:var(--cpx-gold);font-size:15px;padding-bottom:7px;background:url(ui/craftpix/misc/c_seperator.png) bottom/100% 6px no-repeat}
+.wm-side h3 small{font-family:var(--mono);font-size:11px;color:var(--cpx-dim)}
+#wmList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+#wmList li[style]{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:center;background:rgba(0,0,0,.3);border:1px solid var(--cpx-line);border-left:3px solid var(--c);border-radius:3px;padding:4px 6px;cursor:pointer}
+#wmList li.sel{border-color:var(--cpx-gold);background:rgba(232,196,106,.1)}
+#wmList li>span:not(.wm-acts){display:flex;flex-direction:column;min-width:0}
+#wmList input{width:100%;min-width:0;background:none;border:0;border-bottom:1px solid transparent;color:var(--cpx-ink);font:inherit;font-size:13px;padding:1px 0}#wmList input:focus{outline:none;border-bottom-color:var(--cpx-gold)}
+#wmList small{font-family:var(--mono);font-size:10px;color:var(--cpx-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wm-col{width:13px;height:13px;margin-left:2px;transform:rotate(45deg);background:var(--c);border:1px solid #000;padding:0;cursor:pointer}
+.wm-acts{display:flex;gap:2px;align-items:center}#wmap .wm-acts .btn{padding:0 3px;font-size:13px;min-width:26px;line-height:1.3}.wm-sub{font-family:var(--cpx-title);color:var(--cpx-dim);font-size:12.5px;margin-top:6px}.wm-empty{color:var(--cpx-dim);font-size:12.5px;padding:4px 2px}
+.wm-filters{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;font-size:12.5px;color:var(--cpx-ink)}.wm-filters input{accent-color:#e8c46a}
+#wmap .btn{border-style:solid;border-width:9px 10px;border-image:url(ui/craftpix/buttons/button_small.png) 18 fill / 9px 10px stretch;background:none;border-radius:0;padding:1px 6px;color:var(--cpx-ink);text-shadow:0 1px 0 #000;cursor:pointer;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+#wmap .btn:hover{border-image-source:url(ui/craftpix/buttons/button_small_hover.png)}#wmap .btn.danger{color:#ff9a7a}#wmap .btn[aria-pressed="false"]{opacity:.6}
+#ghud .mm-menu{grid-template-columns:repeat(7,auto)}
+@media (max-width:820px){.wm-body{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 36%;padding:6px 14px 16px}.wm-help{display:none}}
 </style>
 
 <canvas id="gl" aria-label="3D galaxy and planet viewer"></canvas>
@@ -1298,7 +1339,7 @@ function renderInfo(){
   box.querySelector('.x').onclick=()=>{selPlacement=null;if(selMarker)selMarker.visible=false;if(!selPlacement)curPoi=level==='ground'?curPoi:null;if(level!=='ground'&&pinSelRing)pinSelRing.visible=false;box.hidden=true;if(level!=='ground')renderList()};
 }
 const HINTS={galaxy:'Drag to orbit · scroll to zoom · click a system',system:'Click the bright world to enter orbit · Esc back',planet:'Click a pin or a POI in the list · Esc back',
-  play:'W A S D move · Q E turn · right-drag to look · scroll to zoom · Shift run · Space jump · Esc menu · P leave play',overhead:'Drag to pan · right-drag or Shift-drag to rotate and tilt · F free roam · Esc planet',roam:'W A S D move · drag to look · Q / E down, up · Shift fast · Esc overhead'};
+  play:'W A S D move · Q E turn · right-drag to look · scroll to zoom · Shift run · Space jump · Shift+M map · Esc menu · P leave play',overhead:'Drag to pan · right-drag or Shift-drag to rotate and tilt · F free roam · Esc planet',roam:'W A S D move · drag to look · Q / E down, up · Shift fast · Esc overhead'};
 function renderUI(){
   crumbs();renderList();renderInfo();
   $('#hint').textContent=HINTS[level==='ground'?groundMode:level];
@@ -2379,7 +2420,7 @@ let gtT=0;function gameTick(dt){mmFrame(dt);tickWhales(dt);if(waterMat)waterMat.
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;const k=e.key.toLowerCase();
   if(k==='escape'&&!gw.hidden){closeWin();e.stopImmediatePropagation();return}
   if(level!=='ground'||groundMode!=='play'||!CH){if(k==='m')openWin('menu');return}
-  const map={u:'survey',j:'sample',h:'harvester',i:'inventory',k:'skills',c:'craft',t:'travel',m:'menu',l:'codex',g:'navigate'};if(map[k]){if(!gw.hidden&&winKind===(map[k]==='harvester'?'harvesters':map[k]))closeWin();else doAction(map[k]);e.preventDefault()}
+  const map={u:'survey',j:'sample',h:'harvester',i:'inventory',k:'skills',c:'craft',t:'travel',m:'menu',l:'codex',g:'navigate'};if(map[k]&&!(k==='m'&&e.shiftKey)){if(!gw.hidden&&winKind===(map[k]==='harvester'?'harvesters':map[k]))closeWin();else doAction(map[k]);e.preventDefault()}
   if(k==='tab'){e.preventDefault();let best=null,bd=40;for(const [i] of npcToons){const p=groundWorld.placements[i];if(!p.g||p.g.kind==='friendly'||p.dead)continue;const d=Math.hypot(p.x-play.x,p.z-play.z);if(d<bd){bd=d;best=i}}if(best!=null){selectPlacement(best);startAttack(groundWorld.placements[best])}}},true);
 
 
@@ -2600,7 +2641,7 @@ function drawCompass(){const cv=$('#mmCompass');if(!cv||hud.hidden)return;const 
   x.fillStyle='rgba(8,11,16,.7)';x.fillRect(0,0,W,26);x.textAlign='center';
   for(let d=-90;d<=90;d+=15){const a=Math.round(head+d+360)%360,px=W/2+d*2;const lbl={0:'N',90:'E',180:'S',270:'W'}[Math.round((head+d+360)%360/15)*15%360];
     x.strokeStyle='rgba(220,230,240,.45)';x.beginPath();x.moveTo(px,lbl?14:18);x.lineTo(px,24);x.stroke();if(lbl){x.fillStyle=lbl==='N'?'#f2b04a':'#e8eef5';x.font='600 12px Oswald, sans-serif';x.fillText(lbl,px,12)}}
-  if(waypoint){const u=waypoint.userData,brg=(Math.atan2(u.x-play.x,u.z-play.z)*180/Math.PI+360)%360;let d=((brg-head+540)%360)-180;d=Math.max(-90,Math.min(90,d));x.fillStyle='#6ff0ff';x.beginPath();x.moveTo(W/2+d*2,16);x.lineTo(W/2+d*2-5,25);x.lineTo(W/2+d*2+5,25);x.fill()}
+  for(const u of (typeof wpHere==='function'?wpHere():[])){const brg=(Math.atan2(u.x-play.x,u.z-play.z)*180/Math.PI+360)%360;let d=((brg-head+540)%360)-180;d=Math.max(-90,Math.min(90,d));x.fillStyle=WP_COLORS[u.color]||'#6ff0ff';x.beginPath();x.moveTo(W/2+d*2,16);x.lineTo(W/2+d*2-5,25);x.lineTo(W/2+d*2+5,25);x.fill()}
   x.fillStyle='#f2b04a';x.fillRect(W/2-1,0,2,8)}
 
 /* ---------------- chat, emotes and multiplayer presence (the room capability) ---------------- */
@@ -2624,7 +2665,7 @@ function tickPeers(dt){if(!room)return;presT-=dt;const playing=CH&&level==='grou
   const v=new V3();for(const [,pm] of peerModels){v.set(pm.x,groundH(groundWorld,pm.x,pm.z)+2.4,-pm.z).project(cam);const on=v.z<1&&Math.abs(v.x)<1.1&&Math.abs(v.y)<1.1;pm.el.hidden=!on;if(on){pm.el.style.transform=`translate(${(v.x*.5+.5)*innerWidth}px,${(-v.y*.5+.5)*innerHeight}px) translate(-50%,-100%)`}}}
 const EMOTES={dance:'dances',sit:'sits down',taunt:'lets out a battle cry',wave:'waves',point:'points',flex:'flexes',strut:'struts',look:'looks around',cheer:'cheers',spin:'spins'};
 function chatSend(text){text=text.trim();if(!text)return;if(text[0]==='/'){const [cmd,...rest]=text.slice(1).split(/\s+/);const c=cmd.toLowerCase();
-    if(c==='help')return mmLog('Emotes: /'+Object.keys(EMOTES).join(' /')+' /stand · Space jump · L codex · 1-0 abilities · Tab target · B command mode · right-click mouselook · O missions','sys');
+    if(c==='help')return mmLog('Emotes: /'+Object.keys(EMOTES).join(' /')+' /stand · Space jump · Shift+M planet map and waypoints · L codex · 1-0 abilities · Tab target · B command mode · right-click mouselook · O missions','sys');
     if(EMOTES[c]){if(play.model)toonOneShot(play.model,c);mmLog(`${CH.name} ${EMOTES[c]}.`,'chat');room&&room.emit('emote',{e:c}).catch(()=>{});return}
     if(c==='stand'){if(play.model&&play.model.userData.mixer){play.model.userData.once=0}return}
     return mmLog(`Unknown command /${c}. Try /help.`,'sys')}
@@ -4244,6 +4285,155 @@ WORLDS=ORDER.filter(id=>BO.worlds[id]||CORE3.worlds.some(w=>w.id===id)).map(id=>
 REALMS.forEach(R=>WORLDS.push(buildRealmWorld(R)));WORLDS.push(buildRealmWorld(HOTH));
 buildGalaxy();spawnGalaxyWhales();applyQuality();resize();setLevel('galaxy');ctl.target.set(0,0,0);ctl.dist=620;ctl.phi=.95;ctl.theta=.4;applyOrbit();
 requestAnimationFrame(frame);
+/* ================= Waypoints and the planet map (Shift+M), SWG datapad style =================
+   Every character keeps a datapad of waypoints (name, colour, planet, on/off). Active waypoints on the current planet
+   get a light beam in the world, a framed marker on screen (clamped to the screen edge with an arrow when off-screen),
+   a tick on the compass and a diamond on the minimap. Shift+M opens the planet map: click to drop a waypoint,
+   click a town to mark it, right-click a waypoint to delete it, wheel to zoom, drag to pan. */
+const WP_COLORS={blue:'#5fc4ff',green:'#7fe08a',orange:'#ffa14a',yellow:'#ffe066',purple:'#c792ff',white:'#f2f2f2'},WP_ORDER=Object.keys(WP_COLORS),WP_MAX=40;
+const wpObjs=new Map();let wpSeq=0;
+const wpList=()=>CH?(CH.waypoints||(CH.waypoints=[])):[];
+const wpHere=()=>groundWorld?wpList().filter(p=>p.planet===groundWorld.id&&p.active):[];
+function wpAdd(x,z,name,o={}){if(!CH||!groundWorld)return null;const L=wpList();
+  if(o.nav){const i=L.findIndex(q=>q.nav);if(i>=0)L.splice(i,1)}
+  else if(L.filter(q=>!q.nav).length>=WP_MAX){toast(`Your datapad holds ${WP_MAX} waypoints. Delete one on the map (Shift+M) first.`);return null}
+  const p={id:'w'+Date.now().toString(36)+(wpSeq++),name:String(name||`Waypoint ${L.length+1}`).slice(0,40),x:Math.round(x),z:Math.round(z),planet:groundWorld.id,color:o.color||'blue',active:true,nav:!!o.nav};
+  L.push(p);markDirty();wpSync();return p}
+function wpRemove(id){const L=wpList(),i=L.findIndex(q=>q.id===id);if(i>=0){L.splice(i,1);markDirty()}wpSync()}
+function wpDispose(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()})}
+function wpSync(){const here=new Map(wpHere().map(p=>[p.id,p]));
+  for(const [id,g] of wpObjs){const p=here.get(id);if(!p||g.parent!==G.ground||g.userData.color!==p.color){if(g.parent)g.parent.remove(g);wpDispose(g);wpObjs.delete(id)}}
+  if(level!=='ground'||!groundWorld)return;
+  for(const p of here.values()){if(wpObjs.has(p.id))continue;const c=new THREE.Color(WP_COLORS[p.color]||WP_COLORS.blue),g=new THREE.Group();
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,90,10,1,true),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));beam.position.y=45;g.add(beam);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(1.5,2.1,36),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.75,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.35;g.add(ring);
+    g.position.set(p.x,groundH(groundWorld,p.x,p.z),-p.z);g.userData.color=p.color;g.userData.ring=ring;G.ground.add(g);wpObjs.set(p.id,g)}}
+// the older single-waypoint calls (survey hotspots, trainers, routes) now drop an orange navigation waypoint
+setWaypoint=function(x,z,label){if(!CH){return}wpAdd(x,z,label||'Destination',{nav:true,color:'orange'})};
+
+/* ---- on-screen frames and edge arrows ---- */
+const wpLayer=document.createElement('div');wpLayer.id='wpLayer';document.body.append(wpLayer);const wpEls=new Map();
+const _wv=new V3();
+function tickWaypoints(dt){const on=CH&&level==='ground'&&groundMode==='play'&&groundWorld&&!rts.on;wpLayer.hidden=!on;if(!on)return;
+  if([...wpObjs.values()].some(g=>g.parent!==G.ground)||wpHere().some(p=>!wpObjs.has(p.id)))wpSync();
+  const t=performance.now()/1000,here=wpHere(),seen=new Set(),W=innerWidth,H=innerHeight;
+  for(const p of here){seen.add(p.id);let el=wpEls.get(p.id);
+    if(!el){el=document.createElement('div');el.className='wp-mark';el.innerHTML='<i class="wp-arrow"></i><b class="wp-gem"></b><span><em></em><small></small></span>';wpLayer.append(el);wpEls.set(p.id,el)}
+    const d=Math.hypot(p.x-play.x,p.z-play.z);
+    if(p.nav&&d<(play.mount?12:7)&&!route){mmLog(`You have arrived at ${p.name}.`,'sys');wpRemove(p.id);continue}
+    el.style.setProperty('--c',WP_COLORS[p.color]||WP_COLORS.blue);el.querySelector('em').textContent=p.name;el.querySelector('small').textContent=d<1000?Math.round(d)+' m':(d/1000).toFixed(1)+' km';
+    const g=wpObjs.get(p.id);if(g&&g.userData.ring){const s=1+.12*Math.sin(t*3);g.userData.ring.scale.set(s,s,s)}
+    _wv.set(p.x,groundH(groundWorld,p.x,p.z)+Math.min(8,2.5+d*.01),-p.z).applyMatrix4(cam.matrixWorldInverse);const behind=_wv.z>0;_wv.applyMatrix4(cam.projectionMatrix);
+    let nx=_wv.x,ny=_wv.y;if(behind){nx=-nx;ny=-ny;if(Math.abs(nx)<.01&&Math.abs(ny)<.01)ny=-1}
+    const inside=!behind&&Math.abs(nx)<.94&&ny<.82&&ny>-.6;
+    // edge clamp: keep clear of the compass at the top and the action bar at the bottom
+    if(!inside){const k=Math.max(Math.abs(nx)/.9,ny>0?ny/.76:-ny/.5,1e-6);nx/=k;ny/=k}
+    el.classList.toggle('edge',!inside);el.classList.toggle('near',d<25);
+    el.style.transform=`translate(${(nx*.5+.5)*W}px,${(-ny*.5+.5)*H}px)`;
+    if(!inside)el.querySelector('.wp-arrow').style.transform=`rotate(${Math.atan2(-ny,nx)}rad)`}
+  for(const [id,el] of wpEls)if(!seen.has(id)){el.remove();wpEls.delete(id)}}
+{const _gt=gameTick;gameTick=function(dt){_gt(dt);tickWaypoints(dt)}}
+
+/* ---- compass ticks and minimap diamonds for every active waypoint ---- */
+{const _dm=drawMini;drawMini=function(){_dm();if(mini.hidden||!groundWorld)return;const W=mini.width,k=W/EXT;
+  for(const p of wpHere()){const px=(p.x+HALF)*k,py=(HALF-p.z)*k;mctx.save();mctx.translate(px,py);mctx.rotate(Math.PI/4);mctx.fillStyle=WP_COLORS[p.color];mctx.strokeStyle='#000';mctx.lineWidth=1.5;mctx.fillRect(-3.5,-3.5,7,7);mctx.strokeRect(-3.5,-3.5,7,7);mctx.restore()}}}
+
+/* ---- the planet map ---- */
+const wmap=document.createElement('div');wmap.id='wmap';wmap.hidden=true;wmap.innerHTML=`<div class="wm-card" role="dialog" aria-label="Planet map">
+  <header><h2 id="wmTitle">Planet map</h2><small id="wmCoord"></small><button class="x" id="wmClose" aria-label="Close map">×</button></header>
+  <div class="wm-body"><div class="wm-view"><canvas id="wmCanvas"></canvas><div class="wm-help">Click: drop waypoint · click a town: mark it · right-click a waypoint: delete · wheel: zoom · drag: pan</div>
+    <div class="wm-zoom"><button class="btn mini" id="wmIn" aria-label="Zoom in">+</button><button class="btn mini" id="wmOut" aria-label="Zoom out">−</button><button class="btn mini" id="wmMe">Me</button></div></div>
+  <aside class="wm-side"><h3>Waypoints <small id="wmCount"></small></h3><ul id="wmList"></ul>
+    <h3>Show</h3><div class="wm-filters" id="wmFilters"></div></aside></div></div>`;
+document.body.append(wmap);
+const wmC=$('#wmCanvas'),wmX=wmC.getContext('2d');
+const wm={cx:0,cz:0,s:1,drag:null,sel:null,hover:null,show:{city:1,military:1,ruin:1,crash:1,camp:1,landmark:1,travel:1,roads:1,grid:1,names:1}};
+const WM_SHOW={city:'Cities',military:'Military',ruin:'Ruins',crash:'Crash sites',camp:'Camps',landmark:'Landmarks',travel:'Travel',roads:'Roads',grid:'Grid',names:'Names'};
+function wmFit(){const r=wmC.getBoundingClientRect();wm.s=Math.min(r.width,r.height)/EXT;wm.cx=0;wm.cz=0}
+function wmOpen(){if(level!=='ground'||!groundWorld)return toast('Land on a world to open its map.');wmap.hidden=false;
+  $('#wmTitle').textContent=planetName(groundWorld)+' · planet map';wmResize();wmFit();if(groundMode==='play'){wm.cx=play.x;wm.cz=play.z;wm.s*=2}wmFilters();wmRenderList();wmDraw()}
+function wmClose(){wmap.hidden=true;wm.drag=null}
+const wmOpenNow=()=>!wmap.hidden;
+function wmResize(){const r=wmC.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1);wmC.width=Math.max(10,r.width*d|0);wmC.height=Math.max(10,r.height*d|0);wmX.setTransform(d,0,0,d,0,0)}
+const wmTo=(x,z)=>{const r=wmC.getBoundingClientRect();return[r.width/2+(x-wm.cx)*wm.s,r.height/2-(z-wm.cz)*wm.s]};
+const wmFrom=(px,py)=>{const r=wmC.getBoundingClientRect();return{x:wm.cx+(px-r.width/2)/wm.s,z:wm.cz-(py-r.height/2)/wm.s}};
+function wmClamp(){const r=wmC.getBoundingClientRect(),min=Math.min(r.width,r.height)/EXT*.9;wm.s=Math.max(min,Math.min(wm.s,2.5));wm.cx=Math.max(-HALF,Math.min(HALF,wm.cx));wm.cz=Math.max(-HALF,Math.min(HALF,wm.cz))}
+function wmDraw(){if(wmap.hidden||!groundWorld)return;const w=groundWorld,r=wmC.getBoundingClientRect(),X=wmX;X.clearRect(0,0,r.width,r.height);X.fillStyle='#07090d';X.fillRect(0,0,r.width,r.height);
+  const [x0,y0]=wmTo(-HALF,HALF),size=EXT*wm.s;X.imageSmoothingEnabled=true;if(w.miniImg)X.drawImage(w.miniImg,x0,y0,size,size);
+  X.fillStyle='rgba(6,8,12,.18)';X.fillRect(x0,y0,size,size);X.strokeStyle='#5a4630';X.lineWidth=2;X.strokeRect(x0,y0,size,size);
+  // coordinate grid every 1024 m (or 256 m when zoomed in)
+  if(wm.show.grid){const step=wm.s>.25?256:1024;X.strokeStyle='rgba(232,196,106,.13)';X.lineWidth=1;X.fillStyle='rgba(232,196,106,.55)';X.font='10px "IBM Plex Mono",monospace';
+    for(let v=-HALF;v<=HALF;v+=step){const [gx]=wmTo(v,0),[,gy]=wmTo(0,v);X.beginPath();X.moveTo(gx,y0);X.lineTo(gx,y0+size);X.moveTo(x0,gy);X.lineTo(x0+size,gy);X.stroke();
+      if(v%2048===0||step===256){X.fillText(v,gx+2,Math.max(12,y0+12));X.fillText(v,Math.max(2,x0+2),gy-2)}}}
+  if(wm.show.roads&&w._roads){X.lineCap='round';for(const rd of w._roads.roads){X.strokeStyle=rd.kind==='street'?'rgba(230,214,180,.75)':'rgba(196,164,112,.7)';X.lineWidth=rd.kind==='street'?2:1.6;X.beginPath();rd.pts.forEach((p,i)=>{const [a,b]=wmTo(p.x,p.z);i?X.lineTo(a,b):X.moveTo(a,b)});X.stroke()}}
+  if(route&&route.pts.length){X.strokeStyle='#6ff0ff';X.lineWidth=2.5;X.setLineDash([7,5]);X.beginPath();const [a,b]=wmTo(play.x,play.z);X.moveTo(a,b);for(const p of route.pts){const [c,d]=wmTo(p.x,p.z);X.lineTo(c,d)}X.stroke();X.setLineDash([])}
+  // places
+  X.textAlign='center';for(const q of w.pois){if(!wm.show[q.cat])continue;const [px,py]=wmTo(q.x,q.z);if(px<-40||py<-40||px>r.width+40||py>r.height+40)continue;
+    const rr=Math.max(q.cat==='city'?4.5:3,q.r*wm.s);X.fillStyle=(CAT_COLOR[q.cat]||'#ccc')+'33';X.beginPath();X.arc(px,py,rr,0,TAU);X.fill();X.fillStyle=CAT_COLOR[q.cat]||'#ccc';X.beginPath();X.arc(px,py,q.cat==='city'?4.5:3.2,0,TAU);X.fill();
+    if(q===wm.hover){X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
+    if(wm.show.names&&(q.cat==='city'||q.dungeon||wm.s>.12||q===wm.hover)){X.font=(q.capital?'700 13px ':'600 11.5px ')+'"Saira Condensed",sans-serif';X.lineWidth=3;X.strokeStyle='rgba(0,0,0,.85)';X.strokeText(q.name,px,py-8);X.fillStyle=q.capital?'#ffe2a0':'#f4e6c8';X.fillText(q.name,px,py-8)}}
+  if(wm.show.travel)for(const tp of travelPoints(w)){const [px,py]=wmTo(tp.x,tp.z);X.fillStyle=tp.star?'#ffd36a':'#9fe0ff';X.strokeStyle='#000';X.lineWidth=1.5;X.beginPath();X.moveTo(px,py-7);X.lineTo(px+6,py+5);X.lineTo(px-6,py+5);X.closePath();X.fill();X.stroke();
+    if(wm.s>.09||tp===wm.hover){X.font='600 11px "Saira Condensed",sans-serif';X.lineWidth=3;X.strokeStyle='rgba(0,0,0,.85)';const lb=(tp.star?'Starport ':'Shuttle ')+tp.name;X.strokeText(lb,px,py+17);X.fillStyle='#e8f4ff';X.fillText(lb,px,py+17)}}
+  // waypoints
+  for(const p of wpList()){if(p.planet!==w.id)continue;const [px,py]=wmTo(p.x,p.z);X.save();X.translate(px,py);X.globalAlpha=p.active?1:.45;X.rotate(Math.PI/4);X.fillStyle=WP_COLORS[p.color];X.strokeStyle=p.id===wm.sel?'#fff':'#000';X.lineWidth=p.id===wm.sel?2.5:1.5;X.fillRect(-6,-6,12,12);X.strokeRect(-6,-6,12,12);X.restore();
+    X.globalAlpha=p.active?1:.55;X.font='600 12px "Saira Condensed",sans-serif';X.lineWidth=3;X.strokeStyle='rgba(0,0,0,.9)';X.strokeText(p.name,px,py-11);X.fillStyle=WP_COLORS[p.color];X.fillText(p.name,px,py-11);X.globalAlpha=1}
+  // you
+  if(CH&&groundMode==='play'){const [px,py]=wmTo(play.x,play.z);X.save();X.translate(px,py);X.rotate(-play.yaw);X.fillStyle='#fff';X.strokeStyle='#000';X.lineWidth=2;X.beginPath();X.moveTo(0,-12);X.lineTo(8,9);X.lineTo(0,4);X.lineTo(-8,9);X.closePath();X.stroke();X.fill();X.restore()}
+  X.textAlign='start'}
+function wmHit(px,py){const R=10;for(const p of wpList()){if(p.planet!==groundWorld.id)continue;const [a,b]=wmTo(p.x,p.z);if(Math.hypot(a-px,b-py)<R)return{wp:p}}
+  if(wm.show.travel)for(const tp of travelPoints(groundWorld)){const [a,b]=wmTo(tp.x,tp.z);if(Math.hypot(a-px,b-py)<R)return{tp}}
+  let best=null,bd=12;for(const q of groundWorld.pois){if(!wm.show[q.cat])continue;const [a,b]=wmTo(q.x,q.z),d=Math.hypot(a-px,b-py)-Math.max(0,q.r*wm.s-6);if(d<bd){bd=d;best=q}}return best?{poi:best}:null}
+const wmPos=e=>{const r=wmC.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+wmC.addEventListener('pointerdown',e=>{if(e.button!==0)return;wmC.setPointerCapture(e.pointerId);wm.drag={x:e.clientX,y:e.clientY,cx:wm.cx,cz:wm.cz,moved:false}});
+wmC.addEventListener('pointermove',e=>{const [px,py]=wmPos(e),g=wmFrom(px,py);$('#wmCoord').textContent=`X ${fmt(g.x)} · Z ${fmt(g.z)}`+(CH&&groundMode==='play'?` · ${fmt(Math.hypot(g.x-play.x,g.z-play.z))} m away`:'');
+  if(wm.drag){const dx=e.clientX-wm.drag.x,dy=e.clientY-wm.drag.y;if(Math.hypot(dx,dy)>4)wm.drag.moved=true;wm.cx=wm.drag.cx-dx/wm.s;wm.cz=wm.drag.cz+dy/wm.s;wmClamp();wmDraw();return}
+  const h=wmHit(px,py),hv=h&&(h.poi||h.tp||h.wp)||null;if(hv!==wm.hover){wm.hover=hv;wmC.style.cursor=hv?'pointer':'crosshair';wmDraw()}});
+wmC.addEventListener('pointerup',e=>{const d=wm.drag;wm.drag=null;if(!d||d.moved)return;const [px,py]=wmPos(e),h=wmHit(px,py);
+  if(!CH)return toast('Play a character to set waypoints.');
+  if(h&&h.wp){wm.sel=h.wp.id;wmRenderList();return wmDraw()}
+  let p;if(h&&h.poi)p=wpAdd(h.poi.x,h.poi.z,h.poi.name,{color:h.poi.cat==='city'?'green':h.poi.cat==='military'?'orange':'blue'});
+  else if(h&&h.tp)p=wpAdd(h.tp.x,h.tp.z,(h.tp.star?'Starport ':'Shuttleport ')+h.tp.name,{color:'yellow'});
+  else{const g=wmFrom(px,py);if(Math.abs(g.x)>HALF||Math.abs(g.z)>HALF)return;p=wpAdd(g.x,g.z,null)}
+  if(p){wm.sel=p.id;mmLog(`Waypoint added: ${p.name}.`,'sys');wmRenderList();wmDraw();const inp=$(`#wmList [data-name="${p.id}"]`);if(inp&&!(h&&(h.poi||h.tp))){inp.focus();inp.select()}}});
+wmC.addEventListener('contextmenu',e=>{e.preventDefault();const [px,py]=wmPos(e),h=wmHit(px,py);if(h&&h.wp){wpRemove(h.wp.id);if(wm.sel===h.wp.id)wm.sel=null;wmRenderList();wmDraw()}});
+wmC.addEventListener('wheel',e=>{e.preventDefault();const [px,py]=wmPos(e),before=wmFrom(px,py);wm.s*=Math.exp(-e.deltaY*.0015);wmClamp();const after=wmFrom(px,py);wm.cx+=before.x-after.x;wm.cz+=before.z-after.z;wmClamp();wmDraw()},{passive:false});
+$('#wmIn').onclick=()=>{wm.s*=1.5;wmClamp();wmDraw()};$('#wmOut').onclick=()=>{wm.s/=1.5;wmClamp();wmDraw()};
+$('#wmMe').onclick=()=>{if(CH&&groundMode==='play'){wm.cx=play.x;wm.cz=play.z;wmDraw()}};$('#wmClose').onclick=wmClose;
+wmap.addEventListener('pointerdown',e=>{if(e.target===wmap)wmClose()});
+addEventListener('resize',()=>{if(!wmap.hidden){wmResize();wmClamp();wmDraw()}});
+function wmFilters(){$('#wmFilters').innerHTML=Object.entries(WM_SHOW).map(([k,l])=>`<label><input type="checkbox" data-f="${k}" ${wm.show[k]?'checked':''}> ${l}</label>`).join('');
+  $('#wmFilters').querySelectorAll('[data-f]').forEach(c=>c.onchange=()=>{wm.show[c.dataset.f]=c.checked?1:0;wmDraw()})}
+function wmRenderList(){const L=wpList(),here=L.filter(p=>groundWorld&&p.planet===groundWorld.id),else_=L.filter(p=>!groundWorld||p.planet!==groundWorld.id);
+  $('#wmCount').textContent=CH?`${L.filter(p=>!p.nav).length} / ${WP_MAX}`:'';
+  const row=p=>{const d=CH&&groundMode==='play'&&groundWorld&&p.planet===groundWorld.id?fmt(Math.hypot(p.x-play.x,p.z-play.z))+' m':esc((WORLDS.find(w=>w.id===p.planet)||{name:p.planet}).name);
+    return `<li class="${p.id===wm.sel?'sel':''}" style="--c:${WP_COLORS[p.color]}"><button class="wm-col" data-col="${p.id}" aria-label="Change colour" title="Colour"></button>
+      <span><input data-name="${p.id}" value="${esc(p.name)}" maxlength="40" aria-label="Waypoint name"><small>${p.nav?'Navigation · ':''}${d} · ${fmt(p.x)}, ${fmt(p.z)}</small></span>
+      <span class="wm-acts"><button class="btn mini" data-on="${p.id}" title="${p.active?'Hide':'Show'} on screen" aria-label="${p.active?'Hide':'Show'} on screen" aria-pressed="${p.active}">${p.active?'◉':'○'}</button>${groundWorld&&p.planet===groundWorld.id&&CH&&groundMode==='play'?`<button class="btn mini" data-rt="${p.id}" title="Route along the roads" aria-label="Route along the roads">➜</button>`:''}<button class="btn mini danger" data-del="${p.id}" aria-label="Delete waypoint">✕</button></span></li>`};
+  $('#wmList').innerHTML=!CH?'<li class="wm-empty">Play a character to keep waypoints.</li>':(here.length?here.map(row).join(''):'<li class="wm-empty">No waypoints on this planet yet. Click the map to drop one.</li>')+(else_.length?`<li class="wm-sub">Other planets</li>`+else_.map(row).join(''):'');
+  const B=$('#wmList'),find=id=>wpList().find(q=>q.id===id);
+  B.querySelectorAll('[data-col]').forEach(b=>b.onclick=()=>{const p=find(b.dataset.col);p.color=WP_ORDER[(WP_ORDER.indexOf(p.color)+1)%WP_ORDER.length];markDirty();wpSync();wmRenderList();wmDraw()});
+  B.querySelectorAll('[data-name]').forEach(i=>{i.onchange=()=>{const p=find(i.dataset.name);p.name=i.value.trim().slice(0,40)||p.name;markDirty();wmDraw()};i.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')i.blur()}});
+  B.querySelectorAll('[data-on]').forEach(b=>b.onclick=()=>{const p=find(b.dataset.on);p.active=!p.active;markDirty();wpSync();wmRenderList();wmDraw()});
+  B.querySelectorAll('[data-rt]').forEach(b=>b.onclick=()=>{const p=find(b.dataset.rt);wmClose();setRoute({x:p.x,z:p.z},p.name);const n=wpList().findIndex(q=>q.nav&&q.id!==p.id&&Math.hypot(q.x-p.x,q.z-p.z)<2);if(n>=0)wpList().splice(n,1);wpSync()});
+  B.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{wpRemove(b.dataset.del);wmRenderList();wmDraw()});
+  B.querySelectorAll('li[style]').forEach(li=>li.onclick=e=>{if(e.target.closest('button,input'))return;const id=li.querySelector('[data-name]').dataset.name,p=find(id);if(!p||!groundWorld||p.planet!==groundWorld.id)return;wm.sel=id;wm.cx=p.x;wm.cz=p.z;wmRenderList();wmDraw()})}
+// keep the map live while it is open (your arrow moves)
+setInterval(()=>{if(!wmap.hidden&&!wm.drag)wmDraw()},500);
+// Shift+M toggles the map; Esc closes it; other game keys wait while it is open
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase();
+  if(k==='m'&&e.shiftKey){e.preventDefault();e.stopImmediatePropagation();wmOpenNow()?wmClose():wmOpen();return}
+  if(!wmOpenNow())return;if(k==='escape'){wmClose();e.stopImmediatePropagation();e.preventDefault();return}
+  if(k==='+'||k==='='){wm.s*=1.3;wmClamp();wmDraw()}else if(k==='-'){wm.s/=1.3;wmClamp();wmDraw()}
+  e.stopImmediatePropagation()},true);
+// HUD micro menu gets a map button
+UI_ICON.map='<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2Z"/><path d="M9 4v14M15 6v14"/>';
+MICRO.splice(MICRO.length-1,0,['map','Planet map','⇧M']);
+$('#ghActions').innerHTML=MICRO.map(([id,l,k])=>`<button data-act="${id}" aria-label="${l} (${k})" data-tip-h="${l}" data-tip="Hotkey ${k}">${uiIcon(id)}<kbd>${k}</kbd></button>`).join('');
+$('#ghActions').addEventListener('click',e=>{const b=e.target.closest('button[data-act="map"]');if(!b)return;e.stopImmediatePropagation();wmOpen()},true);
+// waypoints follow the character: rebuild beams when you land, switch characters or change planets
+{const _ep=enterPlay;enterPlay=function(){_ep.apply(this,arguments);wpSync()}}
+{const _xp=exitPlay;exitPlay=function(){_xp.apply(this,arguments);for(const [id,g] of wpObjs){if(g.parent)g.parent.remove(g);wpDispose(g)}wpObjs.clear();wmClose()}}
+
 // test hook: only with ?debug in the address, lets automated checks read game state
 try{if(/[?&]debug\b/.test(location.search))window.__gg=src=>eval(src)}catch(e){}
 })();
