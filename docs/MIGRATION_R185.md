@@ -62,6 +62,26 @@ Verified: collides with a 9 m building (stops at wall + capsule radius, no overl
 - Everything gameplay-relevant (movement, AI, combat timers, cooldowns, projectiles, status ticks) runs in the fixed step
   with a seeded RNG, so a tick is reproducible and can be replayed or sent over the network.
 
+## Terrain port: super-terrain (Mesh Terrain Lab) core on WebGL2 (in progress)
+
+Source: github.com/vibe-stack/super-terrain @ b82e823 (MIT, `src/terrain/LICENSE-super-terrain`), vendored into `src/terrain/`.
+
+- Kept: WorldTerrain, compiler (heightField, TerrainField, compileSection, AdaptiveHeightMesh, material fields, climate),
+  workers (pool + protocol), streaming, LOD selector, partition, modifiers (sculpt, CSG, tunnels), mesh, persistence,
+  rocks core, water store, section geometry + skirts, far-field mesh. It type-checks against our three r185 with 0 errors.
+- Dropped (WebGPU/TSL or app UI): rendering/full, environment, water rendering, post, textures, ThreeTerrainRenderBackend,
+  Hi-Z occlusion, scatter rock materials, react/, export/, the 90 MB granite bakes.
+- Not loaded by the game yet (tree-shaken out of the build).
+
+Remaining steps:
+1. `grudge` world profile in `compiler/heightField.ts`: the planet's macro height (the legacy `rawH` grid, sent to each
+   worker once per planet) plus super-terrain's natural detail at reduced amplitude, flattened under building pads.
+2. `WebGLTerrainRenderBackend` implementing `TerrainRenderBackend` with the game's PBR/triplanar terrain shader.
+3. Planet documents: one IndexedDB document per planet id; game-scale config (16,384 m world, 128 m sections).
+4. Legacy `groundH` routed to `WorldTerrain.sampleHeight` so feet, props, NPCs and physics agree with the new surface;
+   Rapier heightfields per resident section instead of one coarse planet grid.
+5. Forest spline fields and CSG tunnels/caves on top (interiors for temples and castles).
+
 ## Phase 3: animation
 
 - Locomotion blend by speed (idle/walk/run) and direction (strafe/back), clip time scaled to ground speed.
