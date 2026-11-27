@@ -1,0 +1,414 @@
+{
+ "_about": "Grudge Galaxies combat effects database. One row per visual attack. kind: projectile|spline|beam|chain|nova|slash. path: straight|arc|homing|swerve|spiral. speed m/s. head/trail/impact use cells of kits/fx/combat_atlas.png (4x4). charge: hold-to-charge rules (seconds, damage multiplier range).",
+ "cells": {
+  "flare": 0,
+  "light": 1,
+  "rune": 2,
+  "burst": 3,
+  "lightning": 4,
+  "bolt": 5,
+  "star": 6,
+  "trace": 7,
+  "twirl": 8,
+  "slash": 9,
+  "ring": 10,
+  "starIcon": 11,
+  "smoke": 12,
+  "fire": 13,
+  "flame": 14,
+  "blast": 15
+ },
+ "effects": {
+  "blaster_bolt": {
+   "kind": "projectile",
+   "path": "straight",
+   "speed": 95,
+   "head": {
+    "cell": "light",
+    "size": 0.55,
+    "stretch": 4,
+    "color": "#ff5a3a"
+   },
+   "trail": {
+    "len": 7,
+    "width": 0.16,
+    "color": "#ff3a2a"
+   },
+   "impact": {
+    "cell": "blast",
+    "size": 1.4,
+    "color": "#ffb070",
+    "sparks": 8
+   }
+  },
+  "plasma_lance": {
+   "kind": "projectile",
+   "path": "straight",
+   "speed": 70,
+   "head": {
+    "cell": "light",
+    "size": 1.1,
+    "stretch": 3,
+    "color": "#5ad0ff"
+   },
+   "trail": {
+    "len": 14,
+    "width": 0.38,
+    "color": "#3a9cff"
+   },
+   "impact": {
+    "cell": "blast",
+    "size": 2.6,
+    "color": "#8fe6ff",
+    "ring": 3.2,
+    "sparks": 18
+   }
+  },
+  "rail_shot": {
+   "kind": "beam",
+   "width": 0.32,
+   "life": 0.45,
+   "color": "#d8f4ff",
+   "core": "#ffffff",
+   "impact": {
+    "cell": "blast",
+    "size": 3.2,
+    "color": "#bfefff",
+    "ring": 4,
+    "sparks": 26,
+    "shake": 0.35
+   },
+   "charge": {
+    "max": 1.4,
+    "minMult": 0.7,
+    "maxMult": 1.6,
+    "color": "#9fe4ff"
+   }
+  },
+  "suppress_volley": {
+   "kind": "spline",
+   "path": "swerve",
+   "count": 6,
+   "spread": 4.5,
+   "speed": 48,
+   "stagger": 0.06,
+   "head": {
+    "cell": "flare",
+    "size": 0.7,
+    "color": "#ffae4a"
+   },
+   "trail": {
+    "len": 10,
+    "width": 0.14,
+    "color": "#ff7a2a"
+   },
+   "impact": {
+    "cell": "blast",
+    "size": 1.2,
+    "color": "#ffcf8a",
+    "sparks": 6
+   }
+  },
+  "seeker_missile": {
+   "kind": "projectile",
+   "path": "homing",
+   "speed": 34,
+   "head": {
+    "cell": "flame",
+    "size": 0.8,
+    "color": "#ffd27a"
+   },
+   "trail": {
+    "len": 22,
+    "width": 0.5,
+    "color": "#8a8a8a",
+    "tex": "smoke"
+   },
+   "impact": {
+    "cell": "blast",
+    "size": 4,
+    "color": "#ff9a4a",
+    "ring": 5,
+    "sparks": 30,
+    "fire": 1,
+    "shake": 0.5
+   }
+  },
+  "arcane_orb": {
+   "kind": "projectile",
+   "path": "homing",
+   "speed": 26,
+   "head": {
+    "cell": "twirl",
+    "size": 1.1,
+    "spin": 6,
+    "color": "#b48bff"
+   },
+   "trail": {
+    "len": 16,
+    "width": 0.42,
+    "color": "#7a4aff"
+   },
+   "impact": {
+    "cell": "burst",
+    "size": 2.2,
+    "color": "#cdb6ff",
+    "ring": 2.4,
+    "sparks": 14
+   }
+  },
+  "fireball": {
+   "kind": "projectile",
+   "path": "arc",
+   "arc": 0.22,
+   "speed": 30,
+   "head": {
+    "cell": "fire",
+    "size": 1.6,
+    "spin": 3,
+    "color": "#ff9a3a"
+   },
+   "trail": {
+    "len": 18,
+    "width": 0.7,
+    "color": "#ff5a1a",
+    "tex": "smoke"
+   },
+   "impact": {
+    "cell": "blast",
+    "size": 4.4,
+    "color": "#ffb04a",
+    "ring": 4.5,
+    "sparks": 24,
+    "fire": 1,
+    "shake": 0.4
+   }
+  },
+  "frost_lance": {
+   "kind": "projectile",
+   "path": "straight",
+   "speed": 44,
+   "head": {
+    "cell": "star",
+    "size": 1.2,
+    "stretch": 2.4,
+    "color": "#9fe4ff"
+   },
+   "trail": {
+    "len": 14,
+    "width": 0.3,
+    "color": "#6fc8ff"
+   },
+   "impact": {
+    "cell": "burst",
+    "size": 2.6,
+    "color": "#dff6ff",
+    "ring": 2.8,
+    "sparks": 16
+   }
+  },
+  "void_missiles": {
+   "kind": "spline",
+   "path": "spiral",
+   "count": 7,
+   "spread": 3,
+   "speed": 30,
+   "stagger": 0.09,
+   "head": {
+    "cell": "twirl",
+    "size": 0.9,
+    "spin": 8,
+    "color": "#c04aff"
+   },
+   "trail": {
+    "len": 14,
+    "width": 0.26,
+    "color": "#6a1aff"
+   },
+   "impact": {
+    "cell": "burst",
+    "size": 2,
+    "color": "#e0a0ff",
+    "sparks": 8
+   },
+   "charge": {
+    "max": 1.8,
+    "minMult": 0.6,
+    "maxMult": 1.8,
+    "color": "#b04aff",
+    "countMin": 3
+   }
+  },
+  "chain_lightning": {
+   "kind": "chain",
+   "jumps": 4,
+   "radius": 14,
+   "width": 0.5,
+   "life": 0.5,
+   "color": "#a8d8ff",
+   "core": "#ffffff",
+   "impact": {
+    "cell": "lightning",
+    "size": 2,
+    "color": "#d0ecff",
+    "sparks": 10
+   }
+  },
+  "holy_bolt": {
+   "kind": "projectile",
+   "path": "arc",
+   "arc": 0.12,
+   "speed": 34,
+   "head": {
+    "cell": "star",
+    "size": 1,
+    "spin": 2,
+    "color": "#ffe08a"
+   },
+   "trail": {
+    "len": 12,
+    "width": 0.3,
+    "color": "#ffd05a"
+   },
+   "impact": {
+    "cell": "burst",
+    "size": 2,
+    "color": "#fff3c0",
+    "ring": 2.2,
+    "sparks": 12
+   }
+  },
+  "holy_smite": {
+   "kind": "nova",
+   "fromSky": true,
+   "width": 0.9,
+   "life": 0.6,
+   "color": "#ffe9a0",
+   "core": "#ffffff",
+   "impact": {
+    "cell": "blast",
+    "size": 3.6,
+    "color": "#fff0b0",
+    "ring": 5,
+    "sparks": 30,
+    "shake": 0.3
+   }
+  },
+  "thorn_dart": {
+   "kind": "projectile",
+   "path": "arc",
+   "arc": 0.1,
+   "speed": 40,
+   "head": {
+    "cell": "bolt",
+    "size": 0.7,
+    "stretch": 2,
+    "color": "#9fe07a"
+   },
+   "trail": {
+    "len": 10,
+    "width": 0.18,
+    "color": "#5ab04a"
+   },
+   "impact": {
+    "cell": "burst",
+    "size": 1.4,
+    "color": "#c8ffa0",
+    "sparks": 8
+   }
+  },
+  "thorn_volley": {
+   "kind": "spline",
+   "path": "swerve",
+   "count": 5,
+   "spread": 5,
+   "speed": 36,
+   "stagger": 0.07,
+   "head": {
+    "cell": "bolt",
+    "size": 0.8,
+    "stretch": 2,
+    "color": "#8fe07a"
+   },
+   "trail": {
+    "len": 12,
+    "width": 0.2,
+    "color": "#4a9a3a"
+   },
+   "impact": {
+    "cell": "burst",
+    "size": 1.6,
+    "color": "#d0ffb0",
+    "ring": 2,
+    "sparks": 8
+   }
+  },
+  "sword_slash": {
+   "kind": "slash",
+   "size": 3.2,
+   "life": 0.22,
+   "color": "#ffe2a8",
+   "impact": {
+    "cell": "blast",
+    "size": 1.2,
+    "color": "#ffd27a",
+    "sparks": 10
+   }
+  },
+  "ground_slam": {
+   "kind": "slash",
+   "size": 4.2,
+   "life": 0.3,
+   "color": "#ffcf7a",
+   "slam": true,
+   "impact": {
+    "cell": "blast",
+    "size": 3.6,
+    "color": "#ffbf6a",
+    "ring": 5,
+    "sparks": 30,
+    "shake": 0.6
+   },
+   "charge": {
+    "max": 1.2,
+    "minMult": 0.8,
+    "maxMult": 1.7,
+    "color": "#ffcf5a"
+   }
+  },
+  "war_cry": {
+   "kind": "nova",
+   "width": 0.6,
+   "life": 0.5,
+   "color": "#ff6a3a",
+   "impact": {
+    "cell": "ring",
+    "size": 5,
+    "color": "#ff8a5a",
+    "ring": 6,
+    "sparks": 16
+   }
+  }
+ },
+ "abilities": {
+  "power": "ground_slam",
+  "aimed": "plasma_lance",
+  "headshot": "rail_shot",
+  "suppress": "suppress_volley",
+  "intimidate": "war_cry"
+ },
+ "elite": {
+  "magic": "void_missiles",
+  "holy": "holy_smite",
+  "nature": "thorn_volley",
+  "melee": "ground_slam",
+  "gun": "rail_shot"
+ },
+ "auto": {
+  "magic": "arcane_orb",
+  "holy": "holy_bolt",
+  "nature": "thorn_dart",
+  "gun": "blaster_bolt",
+  "melee": "sword_slash"
+ }
+}

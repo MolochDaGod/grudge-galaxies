@@ -94,6 +94,12 @@ Internal ids and template paths are unchanged, so saves and world data keep work
 - Models: Quaternius Ultimate Spaceships and Space Kit (CC0), Majadroid LowPoly Spaceships (CC0), in `kits/vehicles.js` (2.7 MB, loaded on demand).
   Build with `tools/vehicles_build.mjs`, `tools/fbx_static_convert.html` and `tools/glb_shrink.mjs`.
 
+**Combat effects.** A combat-effects database (`COMBAT_FX`, mirrored in `data/combat_fx.json`) drives every attack visual:
+real projectiles with ribbon trails (straight, lobbed, homing), spline volleys (swerve and spiral lanes), beams, chain lightning,
+sky pillars, melee slashes and ground slams. Charged attacks: hold the hotbar key, release to fire for up to 1.8x damage.
+Blaster shots are now bolts with trails. One greyscale atlas (`kits/fx/combat_atlas.png`, Kenney Particle Pack, CC0) is
+gradient-mapped in the shader for every colour. Best practices are in the project guide.
+
 World layout data credit: SWGEmu Core3 and ProjectSWG Holocore (open-source emulator data).
 
 ## Earlier changes (previous update)
