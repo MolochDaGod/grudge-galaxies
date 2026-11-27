@@ -58,7 +58,7 @@ const col=h=>new THREE.Color(h);
 function ramp(land,t){const c=land.map(col);if(t<.5)return c[0].clone().lerp(c[1],t*2);return c[1].clone().lerp(c[2],(t-.5)*2)}
 
 /* ---------------- categories ---------------- */
-const CATS={city:'City',military:'Military',ruin:'Ruin',crash:'Crash site',camp:'Camp',landmark:'Landmark'};
+const CATS={city:'City',military:'Military',ruin:'Ruin',crash:'Crash site',camp:'Camp',landmark:'Landmark',lore:'Lore site'};
 const css=getComputedStyle(document.documentElement);
 const CAT_COLOR={};for(const k in CATS)CAT_COLOR[k]=css.getPropertyValue('--c-'+k).trim()||'#ffffff';
 const classOf=t=>/object\/building\//.test(t)?'building':/object\/installation\//.test(t)?'installation':/object\/static\//.test(t)?'static':'other';
@@ -137,6 +137,96 @@ function derivePois(w){
     return{name,cat,x:c.x,z:c.z,r:Math.max(30,Math.min(r,1200)),n:c.m.length,top:top.slice(0,4),members:c.m};
   }).sort((a,b)=>b.n-a.n);
   w.pois.forEach((poi,pi)=>{poi.id=pi;for(const i of poi.members)P[i].poi=pi});
+}
+
+/* ---------------- lore curation: names, noise, lore sites (src/lore/registry.ts on window.GG_LORE) ---------------- */
+const LORE_TYPE={race:'Origin of a race',culture:'Origin of a culture',event:'Event',gods:'The gods',power:'Place of power',struggle:'Place of struggle',machine:'Ancient Machine'};
+const LORE_LEAN={omni:'Omni',omen:'Omen',machine:'Machine',none:''};
+function compass(x,z){return['east','north-east','north','north-west','west','south-west','south','south-east'][((Math.round(Math.atan2(z,x)/(Math.PI/4))%8)+8)%8]}
+function curatePois(w){
+  const L=window.GG_LORE;if(!L||w.curated)return;w.curated=true;
+  const ren=L.RENAMES[w.id]||{},old=w.pois,P=w.placements,keep=[],remap=new Map();
+  const merge=(into,q)=>{remap.set(q.id,into);for(const i of q.members||[]){into.members.push(i)}into.n=(into.members||[]).length;into.r=Math.min(1200,Math.max(into.r,Math.hypot(q.x-into.x,q.z-into.z)+q.r*.5))};
+  // placeholder town clusters: name the largest, fold or drop the rest
+  const T=L.TOWNS[w.id],ph=old.filter(q=>/^City at /.test(q.name)).sort((a,b)=>(b.n||0)-(a.n||0));
+  if(T&&ph.length){T.names.forEach((nm,i)=>{if(ph[i]){ph[i].name=nm;ph[i].town=true}});
+    if(T.merge)for(const q of ph.slice(1))merge(ph[0],q)}
+  for(const q of old){
+    if(remap.has(q.id))continue;
+    if(/^City at /.test(q.name)){remap.set(q.id,null);continue}
+    if(ren[q.name])q.name=ren[q.name];
+    if(L.DROP.some(re=>re.test(q.name))){const twin=keep.find(k=>Math.hypot(k.x-q.x,k.z-q.z)<1500&&/engine/i.test(k.name));if(twin)merge(twin,q);else remap.set(q.id,null);continue}
+    const base=q.name.replace(/\s*\d+$/,''),key=base.toLowerCase(),same=keep.filter(k=>k.name.replace(/ \((north|south|east|west|north-east|north-west|south-east|south-west)\)$/,'').toLowerCase()===key);
+    q.name=base;
+    const near=same.find(k=>Math.hypot(k.x-q.x,k.z-q.z)<1500);
+    if(near){merge(near,q);continue}
+    if(same.length){q.name=`${base} (${compass(q.x,q.z)})`;if(same.length===1&&same[0].name===base)same[0].name=`${base} (${compass(same[0].x,same[0].z)})`;if(same.some(k=>k.name===q.name)){remap.set(q.id,null);continue}}
+    keep.push(q);
+  }
+  // lore sites: attach to a place, or stand on their own
+  w.loreHidden=[];
+  for(const s of L.SITES){if(s.world!==w.id)continue;
+    if(s.parent||s.hidden){w.loreHidden.push({key:s.key,name:s.name,x:s.x,z:s.z,r:s.r||5,lore:s});continue}
+    if(s.at){const q=keep.find(k=>k.name===s.at)||keep.find(k=>k.name.startsWith(s.at+' ('));if(q){q.lore=s;q.key=s.key}else console.warn('lore site has no place',s.key,s.at);continue}
+    keep.push({name:s.name,cat:'lore',x:s.x,z:s.z,r:s.r||30,members:[],n:0,top:[],lore:s,key:s.key,sub:LORE_TYPE[s.type]});
+  }
+  w.pois=keep;keep.forEach((q,i)=>{q.newId=i;if(q.id!=null&&!remap.has(q.id))remap.set(q.id,q)});
+  for(const p of P){if(p.poi==null)continue;const t=remap.get(p.poi);p.poi=t?t.newId:null}
+  keep.forEach(q=>{q.id=q.newId;delete q.newId;if(!q.key)q.key=w.id+':'+q.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')});
+}
+function poiName(q){if(q.cat!=='lore'||!q.lore)return q.name;const S=CH&&CH.lore;return S&&(S.found.includes(q.lore.key)||(S.heard[q.lore.key]||[]).length>=2)?q.name:'Unknown place'}
+function loreState(){if(!CH)return null;CH.lore=CH.lore||{found:[],heard:{},notes:[]};return CH.lore}
+function loreNote(title,body,kind,thread){const S=loreState();if(!S)return;S.notes.unshift({id:'n'+Date.now().toString(36)+S.notes.length,t:Date.now(),title,body,kind,thread,read:false});if(S.notes.length>400)S.notes.length=400;markDirty()}
+function loreFound(w,q){const S=loreState(),s=q.lore;if(!S||!s||S.found.includes(s.key))return;S.found.push(s.key);
+  const tp=LORE_TYPE[s.type],ln=LORE_LEAN[s.lean];
+  loreNote(s.name,`${s.line}\n\n${s.codex}${s.reward?`\n\nEasier to find here: ${s.reward}.`:''}`,'site',s.key);
+  gainXP('wilderness',s.type==='machine'?600:300,'lore site '+s.name);if(typeof addStanding==='function'&&s.lean==='omni'){}
+  zoneBanner(s.name,`${tp}${ln&&s.type!=='machine'?' · leans '+ln:''}`,'lore');mmLog(`Lore site found: ${s.name}. "${s.line}"`,'sys');toast(`Lore site found: ${s.name}`);
+  // a found temple reveals its hidden doors to the eye (not to the count)
+  if(s.build==='temple')(w.loreHidden||[]).forEach(h=>{if(h.lore.parent===s.key)h.seen=true});
+}
+
+const LEAN_GLOW={omni:0x9fd8ff,omen:0xd0463c,machine:0x7dffb0,none:0xe9c46a};
+function buildLoreSites(w){
+  const mk=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,-z);G.ground.add(m);return m};
+  const glow=c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.9,toneMapped:false});
+  for(const q of w.pois){const s=q.lore;if(!s||!s.build)continue;const gy=groundH(w,q.x,q.z),R=mulberry(strHash(s.key)),rot=R()*TAU,gc=LEAN_GLOW[s.lean]||0xe9c46a;
+    if(s.build==='stone'){const st=mk(new THREE.BoxGeometry(2.2,7,1.2),new THREE.MeshStandardMaterial({color:0x5d5a55,roughness:.9}),q.x,gy+3,q.z);st.rotation.set((R()-.5)*.12,rot,(R()-.5)*.12);
+      const rune=mk(new THREE.PlaneGeometry(1.1,3.6),glow(gc),q.x,gy+3.6,q.z);rune.rotation.y=rot;rune.translateZ(.62);
+      const ring=mk(new THREE.RingGeometry(3.2,3.6,40),glow(gc),q.x,gy+.15,q.z);ring.rotation.x=-Math.PI/2;ring.material.opacity=.45}
+    else if(s.build==='machine'){const g=new THREE.Group();g.position.set(q.x,gy,-q.z);g.rotation.y=rot;G.ground.add(g);
+      const bone=new THREE.MeshStandardMaterial({color:0x707568,roughness:.55,metalness:.45}),seam=glow(gc);
+      const L=150,sp=new THREE.Mesh(new THREE.CylinderGeometry(7,9,L,14),bone);sp.rotation.z=Math.PI/2;sp.position.y=-2;g.add(sp);
+      for(let i=0;i<10;i++){const t=-L/2+12+i*(L-24)/9,rr=16+Math.sin(i/9*Math.PI)*10,rib=new THREE.Mesh(new THREE.TorusGeometry(rr,2.4,8,28,Math.PI),bone);rib.position.set(t,-rr*.45,0);rib.rotation.y=Math.PI/2;g.add(rib);
+        const sl=new THREE.Mesh(new THREE.BoxGeometry(1.2,.5,10),seam);sl.position.set(t,5.2,0);g.add(sl)}
+      for(let k=0;k<5;k++){const kn=new THREE.Mesh(new THREE.SphereGeometry(5+R()*3,12,10),bone);kn.position.set(L/2+6+k*7,-1+R()*3,(k-2)*9);g.add(kn)}
+      const core=new THREE.Mesh(new THREE.SphereGeometry(3,16,12),seam);core.position.set(0,6.5,0);g.add(core);g.userData.loreCore=core;loreFx.push(g)}
+    else if(s.build==='temple'){const living=w.id==='rori',g=new THREE.Group();g.position.set(q.x,gy-3,-q.z);G.ground.add(g);
+      const stone=new THREE.MeshStandardMaterial({color:living?0x4e6a3c:0x3d2426,roughness:living?.85:.35,metalness:living?.05:.7});
+      const cap=new THREE.Mesh(new THREE.ConeGeometry(17,20,4),stone);cap.rotation.y=Math.PI/4;cap.position.y=10;g.add(cap);
+      const tip=new THREE.Mesh(new THREE.OctahedronGeometry(2.2),glow(gc));tip.position.y=21.5;g.add(tip);g.userData.loreCore=tip;loreFx.push(g);
+      // three hidden doors: dim slits on the visible faces, brighter once the temple is found
+      for(const h of w.loreHidden||[]){if(h.lore.parent!==s.key||h.lore.trigger)continue;const dx=h.x-q.x,dz=h.z-q.z,a=Math.atan2(dz,dx);
+        const d=new THREE.Mesh(new THREE.PlaneGeometry(2.4,4.2),new THREE.MeshBasicMaterial({color:gc,transparent:true,opacity:.18,toneMapped:false,side:THREE.DoubleSide}));
+        d.position.set(Math.cos(a)*8.5,5.5,-Math.sin(a)*8.5);d.rotation.y=a+Math.PI/2;g.add(d);h.door=d}}}
+}
+let loreFx=[];
+function tickLoreFx(t){for(const g of loreFx){if(!g.parent){continue}const c=g.userData.loreCore;if(c){const k=1+Math.sin(t*1.6)*.12;c.scale.setScalar(k)}}
+  if(groundWorld)for(const h of groundWorld.loreHidden||[])if(h.door)h.door.material.opacity=(h.seen||(CH&&CH.lore&&CH.lore.found.includes(h.lore.parent)))?.55+Math.sin(t*2)*.2:.18}
+
+function loreUnread(){const S=CH&&CH.lore;return S?S.notes.filter(n=>!n.read).length:0}
+let loreOpen=null;
+function winLore(P){const S=loreState(),L=window.GG_LORE;if(!S||!L){P.innerHTML='<p class="gw-note">Create a warlord to keep lore notes.</p>';return}
+  const site=k=>L.SITES.find(x=>x.key===k),threads=[...new Set([...S.found.filter(k=>{const s=site(k);return s&&!s.parent}),...Object.keys(S.heard)])];
+  const dots=k=>{const h=S.heard[k]||[];return[1,2,3,4,5].map(i=>`<i class="lr-dot${h.includes(i)?' on':''}"></i>`).join('')};
+  P.innerHTML=`<div class="lr">
+   <section><h3>Notes <small>${S.notes.length} kept · ${loreUnread()} unread</small></h3>
+    ${S.notes.length?`<ul class="lr-notes">${S.notes.map(n=>`<li class="${n.read?'':'new'}${loreOpen===n.id?' open':''}"><button data-ln="${n.id}"><b>${esc(n.title)}</b><small>${n.kind==='site'?'Lore site':'Clue'} · ${new Date(n.t).toLocaleDateString()}${n.read?'':' · new'}</small></button>${loreOpen===n.id?`<p>${esc(n.body).replace(/\n\n/g,'</p><p>')}</p>`:''}</li>`).join('')}</ul>`:'<p class="gw-note">Missions sometimes carry a rumour or a clue. Everything you learn, and every lore site you reach, is kept here to read again.</p>'}
+    ${S.notes.some(n=>!n.read)?'<button class="btn mini" id="lrAll">Mark all read</button>':''}</section>
+   <section><h3>Threads <small>${S.found.length} lore sites reached</small></h3>
+    ${threads.length?`<ul class="lr-threads">${threads.map(k=>{const s=site(k);if(!s)return'';const f=S.found.includes(k);return`<li class="${f?'found':''}"><span><b>${f||(S.heard[k]||[]).length>1?esc(s.name):'Unknown place'}</b><small>${esc(L.PLANET[s.world]||'')}${f?' · '+esc(LORE_TYPE[s.type]):''}</small></span><span class="lr-dots" title="Clues heard">${dots(k)}</span>${f?'<em>Reached</em>':''}</li>`}).join('')}</ul>`:'<p class="gw-note">No threads yet. Take missions, talk in cantinas and travel.</p>'}</section></div>`;
+  P.querySelectorAll('[data-ln]').forEach(b=>b.onclick=()=>{const n=S.notes.find(x=>x.id===b.dataset.ln);if(n){n.read=true;markDirty()}loreOpen=loreOpen===b.dataset.ln?null:b.dataset.ln;renderWin()});
+  const all=P.querySelector('#lrAll');if(all)all.onclick=()=>{S.notes.forEach(n=>n.read=true);markDirty();renderWin()};
 }
 
 /* ---------------- demo worlds ---------------- */
@@ -526,7 +616,7 @@ function buildGround(w){
   if(groundWorld===w)return;
   w.kitsApplied=false;kitMeshes.length=0;roofMeshes.length=0;
   clearNpcToons();G.ground.remove(toonGroup);if(play.model){G.ground.remove(play.model);play.model=null}
-  clearGroup(G.ground);groundWorld=w;indexPois(w);
+  clearGroup(G.ground);loreFx=[];groundWorld=w;indexPois(w);
   const hemi=new THREE.HemisphereLight(0xdfe8f0,0x3a3328,.5);G.ground.add(hemi);
   const sun=new THREE.DirectionalLight(0xfff2dc,.62);sun.position.set(.5,1,.35);G.ground.add(sun);G.ground.userData.sun=sun;G.ground.userData.hemi=hemi;
   const S=(typeof TERRAIN_RES!=='undefined'&&TERRAIN_RES[quality])||288,N=S+1,cell=EXT/S,geo=new THREE.PlaneGeometry(EXT,EXT,S,S);geo.rotateX(-Math.PI/2);
@@ -546,6 +636,7 @@ function buildGround(w){
     G.ground.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:CAT_COLOR[p.cat],transparent:true,opacity:.85})));
     const disc=new THREE.Mesh(new THREE.CircleGeometry(p.r,48),new THREE.MeshBasicMaterial({color:CAT_COLOR[p.cat],transparent:true,opacity:.13,depthWrite:false}));
     disc.rotation.x=-Math.PI/2;disc.position.set(p.x,p.base+1,-p.z);G.ground.add(disc)});
+  buildLoreSites(w);
   // placements
   mapNpcs(w);
   const P=w.placements,m=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshLambertMaterial(),P.length);
@@ -746,7 +837,7 @@ function renderList(){
     const li=document.createElement('li'),b=document.createElement('button');b.style.setProperty('--c',CAT_COLOR[p.cat]);
     if(p===curPoi)b.setAttribute('aria-current','true');
     b.innerHTML=`<span class="dot"></span><span class="nm"></span><span class="ct">${p.n||''}</span>`;
-    b.querySelector('.nm').textContent=p.name;const sub=document.createElement('span');sub.className='sub';sub.textContent=`${CATS[p.cat]} · ${fmt(p.x)}, ${fmt(p.z)}`;b.querySelector('.nm').append(sub);
+    b.querySelector('.nm').textContent=poiName(p);const sub=document.createElement('span');sub.className='sub';sub.textContent=`${CATS[p.cat]} · ${fmt(p.x)}, ${fmt(p.z)}`;b.querySelector('.nm').append(sub);
     b.onclick=()=>poiClick(p);li.append(b);list.append(li)});
   if(!items.length)list.innerHTML='<li class="empty">No POIs match. Clear the filter or turn categories back on.</li>';
 }
@@ -774,7 +865,7 @@ function renderInfo(){
     box.innerHTML=`<button class="x" aria-label="Close">×</button><div class="eyebrow">${CATS[p.cat]}</div><h3></h3>
     <dl><dt>Center</dt><dd>X ${fmt(p.x)} · Z ${fmt(p.z)}${p.known!=null?' · Y '+fmt(p.known):''}</dd><dt>Radius</dt><dd>${fmt(p.r)} m</dd><dt>Objects</dt><dd>${p.n}</dd>${p.src?'<dt>Source</dt><dd class="sr"></dd>':''}<dt>${p.n?'Most common':''}</dt><dd class="tt"></dd></dl>
     <div class="acts"></div>`;
-    box.querySelector('h3').textContent=p.name;
+    box.querySelector('h3').textContent=poiName(p);
     box.querySelector('.tt').textContent=p.top.slice(0,3).map(([t,c])=>`${c}× ${prettify(t)}`).join(', ');
     const SRC={region:'Core3 region',screenplay:'Core3 screenplay',badge:'Exploration badge'};
     if(p.src)box.querySelector('.sr').textContent=[p.src,...(p.also||[])].map(k=>SRC[k]||k).join(' + ');
@@ -820,7 +911,7 @@ async function loadFiles(files){
   if(!got.size){toast('Nothing loaded. '+errs.join('; '));return}
   DEMO=false;
   for(const [id,pl] of got){const i=WORLDS.findIndex(w=>w.id===id);const c3=CORE3.worlds.find(w=>w.id===id);
-    const base=buildoutPlacements(id).concat(c3?c3.placements.map(p=>({...p})):[]);const w=finalizeWorld(id,base.concat(pl),false,c3?c3.pois:null);addTrainers(w);
+    const base=buildoutPlacements(id).concat(c3?c3.placements.map(p=>({...p})):[]);const w=finalizeWorld(id,base.concat(pl),false,c3?c3.pois:null);addTrainers(w);curatePois(w);
     if(i>=0)WORLDS[i]=w;else WORLDS.push(w)}
   groundWorld=null;curWorld=null;curPoi=null;buildGalaxy();spawnGalaxyWhales();
   busy=false;level='planet';await goGalaxy();
@@ -898,9 +989,9 @@ function labelItems(){
   if(level==='system')return[{key:'s'+curWorld.id,pos:sysWorldMesh.position.clone().add(new V3(0,2.6,0)),text:curWorld.name,sub:'click to orbit'}];
   if(level==='planet'){const cd=cam.position.clone().normalize();
     return curWorld.pois.filter(p=>p===curPoi||(p.spos.clone().normalize().dot(cd)>.35&&(p.cat==='city'||ctl.dist<26))).sort((a,b)=>(b===curPoi)-(a===curPoi)||b.n-a.n).slice(0,24)
-      .map(p=>({key:'p'+p.id,pos:p.spos.clone().multiplyScalar(1.01),text:p.name,cls:p===curPoi?'sel':'dim'}));}
+      .map(p=>({key:'p'+p.id,pos:p.spos.clone().multiplyScalar(1.01),text:poiName(p),cls:p===curPoi?'sel':'dim'}));}
   if(level==='ground'){const out=[];for(const p of groundWorld.pois){const pos=new V3(p.x,p.base+Math.max(14,p.r*.12),-p.z);const d=pos.distanceTo(cam.position);
-      if(d<(groundMode==='play'?(p.cat==='city'?2500:900):p.cat==='city'?9000:4500)||p===curPoi)out.push({key:'q'+p.id,pos,text:p.name,sub:p===curPoi?`${CATS[p.cat]} · ${p.n} objects`:'',cls:p===curPoi?'sel':'',d})}
+      if(d<(groundMode==='play'?(p.cat==='city'?2500:900):p.cat==='city'?9000:4500)||p===curPoi)out.push({key:'q'+p.id,pos,text:poiName(p),sub:p===curPoi?`${CATS[p.cat]} · ${p.n} objects`:'',cls:p===curPoi?'sel':'',d})}
     if(groundMode!=='overhead'){const cp=groundMode==='play'?new V3(play.x,0,-play.z):cam.position,npcs=[];
       for(const p of groundWorld.placements){if(p.k!=='npc'||!p.g||p.dead)continue;const d=Math.hypot(p.x-cp.x,-p.z-cp.z);if(d<140&&!(groundMode==='play'&&d<46))npcs.push({p,d})}
       npcs.sort((a,b)=>a.d-b.d).slice(0,12).forEach(({p,d})=>{const sh=npcShape(p);out.push({key:'n'+p.x+p.z,pos:new V3(p.x,p.gy+sh.h+1.2,-p.z),text:p.g.kind==='friendly'?`${p.g.name}`:p.g.name,
@@ -1844,7 +1935,8 @@ let performT=0,performN=0;const PERF=['dance','music','entertainer'];function pe
 function tickPerform(dt){if(performT<=0)return;performT-=dt;if(play.model&&!play.model.userData.mixer)play.model.rotation.y+=dt*3;if(performT<=0){const near=[...npcToons.keys()].filter(i=>{const p=groundWorld.placements[i];return p.g&&p.g.kind==='friendly'&&Math.hypot(p.x-play.x,p.z-play.z)<25}).length;gainXP(PERF[performN++%3],(40+near*25)*(structsHere().some(s=>s.type==='cantina'&&Math.hypot(s.x-play.x,s.z-play.z)<30)?2:1),`${near} watched`);mmOnPerform()}}
 
 /* ---- exploration ---- */
-function tickExplore(){for(const q of groundWorld.pois){const key=groundWorld.id+':'+q.id;if(CH.discovered.includes(key))continue;if(Math.hypot(q.x-play.x,q.z-play.z)<q.r){CH.discovered.push(key);gainXP(q.cat==='city'?'scouting':'wilderness',q.cat==='city'?50:120,'discovered '+q.name);markDirty()}}}
+function tickExplore(){const W=groundWorld;for(const h of W.loreHidden||[]){if(h.lore.trigger==='event')continue;if(Math.hypot(h.x-play.x,h.z-play.z)<h.r)loreFound(W,h)}
+  for(const q of W.pois){if(q.lore&&Math.hypot(q.x-play.x,q.z-play.z)<Math.min(q.r,q.lore.r||q.r))loreFound(W,q);const key=W.id+':'+(q.key||q.id);if(CH.discovered.includes(key))continue;if(Math.hypot(q.x-play.x,q.z-play.z)<q.r){CH.discovered.push(key);gainXP(q.cat==='city'?'scouting':'wilderness',q.cat==='city'?50:120,'discovered '+q.name);markDirty()}}}
 
 /* ---- galactic glow whales ---- */
 const whaleMat=()=>new THREE.ShaderMaterial({uniforms:{t:{value:0},base:{value:col('#10264a')},glow:{value:col('#7ff6ff')},spot:{value:col('#c58bff')}},
@@ -2215,7 +2307,7 @@ $('#mmChatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){chatSend(e.tar
 let boardSalt=0;
 const HUNT=/beasts|reptiles|spiders|insects|dragons/;
 function missionBoard(tk='general'){if(!groundWorld)return[];const w=groundWorld,TT=TERMINALS[tk]||TERMINALS.general,R=mulberry(strHash(w.id+':'+tk+':'+(missionTerminal?missionTerminal.city:'')+':'+Math.floor(Date.now()/36e5)+':'+boardSalt)),out=[];
-  const hostilePois=w.pois.filter(q=>/military|camp|ruin|crash/.test(q.cat)),cities=w.pois.filter(q=>q.cat==='city'),sights=w.pois.filter(q=>q.cat!=='city');
+  const hostilePois=w.pois.filter(q=>/military|camp|ruin|crash/.test(q.cat)),cities=w.pois.filter(q=>q.cat==='city'),sights=w.pois.filter(q=>q.cat!=='city'&&q.cat!=='lore');
   const classes=[...new Set(planetRes().filter(r=>r.t!==-1).flatMap(r=>r.cl).filter(c=>/^(Metal|Mineral|Chemical|Flora Resources|Gas|Water|Gemstone)$/.test(c)))];
   const pick=a=>a[Math.floor(R()*a.length)],dist=q=>Math.hypot(q.x-play.x,q.z-play.z);
   for(let i=0;i<7;i++){const kind=pick(TT.kinds);
@@ -2224,7 +2316,13 @@ function missionBoard(tk='general'){if(!groundWorld)return[];const w=groundWorld
     else if(kind==='explore'&&sights.length){const q=pick(sights),d=dist(q);out.push({kind,title:`Scout: report on ${q.name}`,need:1,target:{x:q.x,z:q.z,r:Math.max(60,q.r),name:q.name},reward:{cr:Math.round(250+d*.15),xp:150,xpType:'scouting'}})}
     else if(kind==='hunt'){const n=4+Math.floor(R()*4);out.push({kind,title:`Hunt: thin out ${n} wild creatures`,need:n,reward:{cr:300+n*90,xp:100+n*30,xpType:'trapping'},req:'outdoors_scout_novice'})}
     else if(kind==='entertain'&&cities.length){const q=pick(cities);out.push({kind,title:`Entertain: perform 3 times in ${q.name}`,need:3,target:{x:q.x,z:q.z,r:q.r,name:q.name},reward:{cr:600,xp:300,xpType:'dance'},req:'social_entertainer_novice'})}}
-  const fac=tk==='faction'?PLANET_FACTION[w.id]:null;return out.filter((m,i)=>out.findIndex(o=>o.title===m.title)===i).map(m=>({...m,...(fac?{faction:fac,standing:150,title:`${(FACTION[fac]||{}).name}: ${m.title}`,reward:{...m.reward,cr:Math.round(m.reward.cr*1.4)}}:{}),id:'m'+strHash(w.id+tk+m.title).toString(36),planet:w.id,have:0,terminal:tk}))}
+  const fac=tk==='faction'?PLANET_FACTION[w.id]:null;return out.filter((m,i)=>out.findIndex(o=>o.title===m.title)===i).map(m=>({...m,...(fac?{faction:fac,standing:150,title:`${(FACTION[fac]||{}).name}: ${m.title}`,reward:{...m.reward,cr:Math.round(m.reward.cr*1.4)}}:{}),id:'m'+strHash(w.id+tk+m.title).toString(36),planet:w.id,have:0,terminal:tk})).map(m=>{const pr=R()<.65?pickPrior(w,m,R):null;return pr?{...m,prior:{thread:pr.thread,slot:pr.slot,clue:pr.clue}}:m})}
+function pickPrior(w,m,R){const L=window.GG_LORE;if(!L)return null;const S=loreState()||{heard:{},found:[]};
+  const c=L.PRIORS.filter(p=>p.world===w.id&&p.kinds.includes(m.kind)&&!(S.heard[p.thread]||[]).includes(p.slot));if(!c.length)return null;
+  const fresh=c.filter(p=>!S.found.includes(p.thread)),pool=fresh.length?fresh:c;return pool[Math.floor(R()*pool.length)]}
+function priorHeard(pr){const L=window.GG_LORE,S=loreState();if(!L||!S)return;const h=S.heard[pr.thread]=S.heard[pr.thread]||[];if(h.includes(pr.slot))return;h.push(pr.slot);
+  const site=L.SITES.find(x=>x.key===pr.thread),nm=site?site.name:pr.thread;
+  loreNote(h.length===1?'A new rumour':`Clue ${h.length} of 5: ${nm}`,pr.clue,'clue',pr.thread);mmLog(`You heard something: "${pr.clue}"`,'sys');toast('New lore note: open the Codex, Lore tab')}
 function inCity(){return groundWorld&&groundWorld.pois.some(q=>q.cat==='city'&&Math.hypot(q.x-play.x,q.z-play.z)<q.r*1.15)}
 function winMissions(B){$('#gwTitle').textContent='Missions';CH.missions=CH.missions||[];const act=CH.missions,board=atTerminal()?missionBoard(missionTerminal.kind).filter(m=>!act.some(a=>a.id===m.id)):[];
   B.innerHTML=`<p class="gw-note">Take up to three missions. Rewards pay out the moment a mission completes. ${atTerminal()?`${esc(missionTerminal.city)} · ${TERMINALS[missionTerminal.kind].name} mission terminal.`:'Find a mission terminal in any city (look for the light beacons) and press F to browse work.'}</p>
@@ -2236,7 +2334,7 @@ function winMissions(B){$('#gwTitle').textContent='Missions';CH.missions=CH.miss
   B.querySelectorAll('[data-wp]').forEach(b=>b.onclick=()=>{const m=act.find(x=>x.id===b.dataset.wp);if(m.planet!==groundWorld.id)return toast(`That mission is on ${titleCase(m.planet)}.`);setWaypoint(m.target.x,m.target.z,m.title);closeWin()});
   $('#msNew')&&($('#msNew').onclick=()=>{boardSalt++;renderWin()})}
 function missionProgress(fn){if(!CH||!CH.missions)return;let changed=false;for(const m of CH.missions){if(m.planet&&groundWorld&&m.planet!==groundWorld.id&&m.kind!=='survey')continue;const add=fn(m);if(add){m.have=Math.min(m.need,m.have+add);changed=true}}
-  if(!changed)return;const done=CH.missions.filter(m=>m.have>=m.need);for(const m of done){if(m.faction)addStanding(m.faction,m.standing||150,'faction mission');CH.credits+=m.reward.cr;gainXP(m.reward.xpType,m.reward.xp,'mission');mmLog(`Mission complete: ${m.title}. +${m.reward.cr} credits`,'sys');toast(`Mission complete! +${m.reward.cr} credits`)}
+  if(!changed)return;const done=CH.missions.filter(m=>m.have>=m.need);for(const m of done){if(m.faction)addStanding(m.faction,m.standing||150,'faction mission');CH.credits+=m.reward.cr;gainXP(m.reward.xpType,m.reward.xp,'mission');if(m.prior)priorHeard(m.prior);mmLog(`Mission complete: ${m.title}. +${m.reward.cr} credits`,'sys');toast(`Mission complete! +${m.reward.cr} credits`)}
   CH.missions=CH.missions.filter(m=>m.have<m.need);markDirty();mmHud()}
 function mmOnKill(p){const pos=targetPos(p);{const cf=CREATURE_FACTION[p.g&&p.g.cat];if(cf){addStanding(cf,-10);if(RIVAL[cf]&&RIVAL[cf]!==cf)addStanding(RIVAL[cf],6,'defeated a '+(FACTION[cf]||{}).name+' ally')}
     const city=groundWorld.pois.find(q=>q.cat==='city'&&Math.hypot(q.x-pos.x,q.z-pos.z)<q.r*1.8);if(city)addStanding(PLANET_FACTION[groundWorld.id],4)}if(p.g&&(p.g.kind==='boss'||/orcs|undead|trolls|titans|minotaurs/.test(p.g.cat||'')))gainXP('bountyhunter',Math.round(12*(p.g.tier||1)*(p.g.kind==='boss'?5:1)),'');missionProgress(m=>m.kind==='destroy'&&p.g.kind!=='friendly'&&Math.hypot(pos.x-m.target.x,pos.z-m.target.z)<m.target.r?1:m.kind==='hunt'&&HUNT.test(p.g.cat||'')?1:0)}
@@ -2465,8 +2563,9 @@ const CHRONICLE=[
  ['The Galaxy Beyond','Glow whales carry warlords between the old star worlds and the nine realms. Starports on every capital dock them, and portal rings open where the whales have sung long enough. The sandbox is wide: harvest, craft, build, and choose who to hold a grudge against.']];
 let codexTab='factions',codexRealm='haven_shore',codexWorld=null;
 function winCodex(B){if(groundWorld&&groundWorld!==codexWorld){codexWorld=groundWorld;if(REALM[groundWorld.id])codexRealm=groundWorld.id}$('#gwTitle').textContent='Codex';
-  B.innerHTML=`<div class="bk-head"><nav>${[['factions','Factions'],['bestiary','Bestiary'],['lore','Chronicle']].map(([k,l])=>`<button data-cx="${k}" aria-pressed="${codexTab===k}">${l}</button>`).join('')}</nav></div><div id="cxPage" class="cx-page"></div>`;
+  B.innerHTML=`<div class="bk-head"><nav>${[['factions','Factions'],['bestiary','Bestiary'],['lore','Chronicle'],['sites','Lore'+(loreUnread()?` (${loreUnread()} new)`:'')]].map(([k,l])=>`<button data-cx="${k}" aria-pressed="${codexTab===k}">${l}</button>`).join('')}</nav></div><div id="cxPage" class="cx-page"></div>`;
   B.querySelectorAll('[data-cx]').forEach(b=>b.onclick=()=>{codexTab=b.dataset.cx;renderWin()});const P=$('#cxPage'),mine=typeof playerFaction==='function'?playerFaction():null;
+  if(codexTab==='sites'){winLore(P);return}
   if(codexTab==='factions'){P.innerHTML=`<div class="cx-facs">${GD.factions.map(f=>{const L=FACTION_LORE[f.id]||{},v=CH?standing(f.id):0,pct=(v+5000)/100,races=GD.races.filter(r=>r.faction===f.id).map(r=>r.name).join(' · ');
       return`<article class="cx-fac${f.id===mine?' mine':''}" style="--fc:${f.color}"><header><span class="cx-em">${L.emblem||'◆'}</span><div><h3>${esc(f.name)}${f.id===mine?' <small>your banner</small>':''}</h3><small>Patron ${esc(f.patron||'')} · ${esc(races)}</small></div></header>
         <p>${esc(L.lore||f.description||'')}</p><dl><dt>Holds</dt><dd>${esc(L.seat||'')}</dd><dt>Sworn rival</dt><dd>${esc((FACTION[RIVAL[f.id]]||{name:'none'}).name)}</dd></dl>
@@ -3192,7 +3291,7 @@ applyHudLayout();
 {const _mf=mmFrame;mmFrame=function(dt){_mf(dt);tickHud3(dt);tickScene(dt);tickFlora(dt);tickTrees(dt);tickAnimals(dt);tickProps(dt);if(CH&&level==='ground'&&groundMode==='play'){tickTravellers(dt);tickRoute(dt)}}}
 /* ---------------- per-frame tick for the MMO layer ---------------- */
 let mmT=0,moveT=0;
-function mmFrame(dt){if(!intro.hidden&&level==='galaxy'&&!busy){ctl.theta+=dt*.035;applyOrbit()}tickPadFx(dt);tickCaravans(dt);tickTerminals(dt);
+function mmFrame(dt){tickLoreFx(performance.now()/1000);if(!intro.hidden&&level==='galaxy'&&!busy){ctl.theta+=dt*.035;applyOrbit()}tickPadFx(dt);tickCaravans(dt);tickTerminals(dt);
   tickPeers(dt);const playing=CH&&level==='ground'&&groundMode==='play'&&groundWorld;document.body.classList.toggle('mmo',!!playing);if(!playing){if(rts.on)rtsToggle(false);return}
   tickHam(dt);tickUnits(dt);tickStructures(dt);tickWild(dt);tickInteract();drawSelRings();drawCompass();mmT-=dt;if(mmT<=0){mmT=.25;mmHud();if(rts.on&&rts.selStruct)renderCmd.tick=(renderCmd.tick||0)+1}
   moveT-=dt;if(moveT<=0){moveT=1;mmOnMove()}}
@@ -3879,6 +3978,7 @@ WORLDS=ORDER.filter(id=>BO.worlds[id]||CORE3.worlds.some(w=>w.id===id)).map(id=>
   const pl=buildoutPlacements(id).concat(c3?c3.placements:[]);const w=finalizeWorld(id,pl,true,c3?c3.pois:null);addTrainers(w);return w});
 // the nine realms are the 3x3 sector layout (LOD and server interest), not worlds on the galaxy map
 WORLDS.push(buildRealmWorld(HOTH));
+WORLDS.forEach(curatePois);
 WORLDS.forEach(w=>{if(PLANET_NAMES[w.id])w.name=PLANET_NAMES[w.id]}); // display names; ids stay as data keys
 buildGalaxy();spawnGalaxyWhales();applyQuality();resize();setLevel('galaxy');ctl.target.set(0,0,0);ctl.dist=620;ctl.phi=.95;ctl.theta=.4;applyOrbit();
 requestAnimationFrame(frame);/* ================= Guns: sci-fi pistols and rifles from the Grudge ObjectStore, KayKit + UAL ranged animations =================

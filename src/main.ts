@@ -7,6 +7,7 @@
  */
 import './three-compat';
 import './combat/runtime';
+import './lore/registry';
 
 function loadClassic(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
