@@ -14,6 +14,7 @@ cp "$SRC"/{anim.js,kit.js,toon.js,cart.js} dist/
 cp -r "$SRC/ui" dist/ui
 cp "$SRC"/kits/*.js dist/kits/
 for d in trees animals ground fx sky pbr nodes; do mkdir -p dist/kits/$d; cp "$SRC"/kits/$d/*.{js,jpg,png} dist/kits/$d/ 2>/dev/null || true; done
+[ -d "$SRC/kits/store" ] && cp -r "$SRC/kits/store" dist/kits/store   # licensed Asset Store content: deployed, never committed
 cp web/shim.js dist/
 cp "$KEEP" dist/config.js && rm -f "$KEEP"
 # the test hook only switches on with ?debug in the address; nothing else differs from the artifact

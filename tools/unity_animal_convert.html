@@ -1,0 +1,13 @@
+<!doctype html><script src="three.min.js"></script><script src="fflate.min.js"></script><script src="FBXLoader.js"></script><script src="GLTFExporter.js"></script>
+<script>
+const CL=['Idle','Idle_2','Eating','Walk','Gallop','Attack','Death','Hit'];
+window.conv=async(sp)=>{const L=new THREE.FBXLoader();const base=await L.loadAsync('animals/'+sp+'/mesh.fbx');const info={meshes:[],clips:[],bones:0};
+  const TL=new THREE.TextureLoader(),alb=await TL.loadAsync('animals/'+sp+'/albedo.jpg'),nrm=await TL.loadAsync('animals/'+sp+'/normal.jpg');alb.encoding=THREE.sRGBEncoding;
+  const drop=[];base.traverse(o=>{if(o.isMesh&&(/_LOD[1-9]/i.test(o.name)||/Tusks(Medium|Small)/i.test(o.name)))drop.push(o)});drop.forEach(o=>o.parent.remove(o));
+  base.traverse(o=>{if(o.isBone)info.bones++;if(o.isMesh){info.meshes.push(o.name+' '+o.geometry.attributes.position.count);o.material=new THREE.MeshStandardMaterial({map:alb,normalMap:nrm,roughness:.85,metalness:0,skinning:!!o.isSkinnedMesh,name:sp})}});
+  const clips=[];for(const k of CL){try{const a=await L.loadAsync('animals/'+sp+'/'+k+'.fbx');const c=a.animations[0];if(!c)continue;c.name=k;
+    // keep rotations everywhere, positions only on the root bone (no drifting root motion), drop scale tracks
+    c.tracks=c.tracks.filter(t=>/\.quaternion$/.test(t.name));clips.push(c);info.clips.push(k+':'+c.duration.toFixed(2)+':'+c.tracks.length)}catch(e){info.clips.push(k+':ERR '+e.message)}}
+  base.animations=clips;const box=new THREE.Box3().setFromObject(base);info.size=box.getSize(new THREE.Vector3()).toArray().map(v=>+v.toFixed(1));
+  const glb=await new Promise(r=>new THREE.GLTFExporter().parse(base,r,{binary:true,animations:clips,onlyVisible:false,maxTextureSize:1024}));let s='';const u=new Uint8Array(glb);for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));info.b64=btoa(s);return info}
+</script>

@@ -4547,7 +4547,7 @@ const DIR8={f:'F',b:'B',l:'L',r:'R',fl:'FL',fr:'FR',bl:'BL',br:'BR'};
 
 // credits (100STYLE is CC BY 4.0 and must be credited)
 {const _me2=menuExtras;menuExtras=function(){_me2();const B=$('#gwBody');if(!B||B.querySelector('.credits-row'))return;const c=document.createElement('section');c.className='credits-row';
-  c.innerHTML='<h3>Credits</h3><p class="gw-note">Locomotion styles: <a href="https://www.ianxmason.com/100style/" target="_blank" rel="noopener">100STYLE</a> dataset by I. Mason, S. Starke and T. Komura (2022), CC BY 4.0. Ranged and movement clips: KayKit Character Animations (Kay Lousberg) and the Universal Animation Library 1 and 2 (Quaternius), CC0. Alien flora, xeno creatures, war droids, habitats, rovers, ships and turrets: Ultimate Space Kit and Sci-fi Turrets (Quaternius), CC0. Space backdrops: Kenney Space Skyboxes, CC0. Guns: Quaternius Modular Sci-Fi Guns and Ultimate Gun Pack, CC0. Parkour motion capture: hhtools Parkour Mocap by YaojieShen (Apache-2.0), packaged as codepawl/parkour-mocap-glb on Hugging Face. Glow whale model: Quaternius Animated Fish Pack, CC0. Surface and ground materials and scanned rocks: Poly Haven, CC0. Mars environment kit by <a href="https://sketchfab.com/SOLDMARS" target="_blank" rel="noopener">SOLDMARS</a>, CC BY 4.0. World data: SWGEmu Core3 and ProjectSWG Holocore.</p>';B.append(c)}}
+  c.innerHTML='<h3>Credits</h3><p class="gw-note">Locomotion styles: <a href="https://www.ianxmason.com/100style/" target="_blank" rel="noopener">100STYLE</a> dataset by I. Mason, S. Starke and T. Komura (2022), CC BY 4.0. Ranged and movement clips: KayKit Character Animations (Kay Lousberg) and the Universal Animation Library 1 and 2 (Quaternius), CC0. Alien flora, xeno creatures, war droids, habitats, rovers, ships and turrets: Ultimate Space Kit and Sci-fi Turrets (Quaternius), CC0. Space backdrops: Kenney Space Skyboxes, CC0. Wildlife: ANIMALS FULL PACK (Unity Asset Store, licensed). Guns: Quaternius Modular Sci-Fi Guns and Ultimate Gun Pack, CC0. Parkour motion capture: hhtools Parkour Mocap by YaojieShen (Apache-2.0), packaged as codepawl/parkour-mocap-glb on Hugging Face. Glow whale model: Quaternius Animated Fish Pack, CC0. Surface and ground materials and scanned rocks: Poly Haven, CC0. Mars environment kit by <a href="https://sketchfab.com/SOLDMARS" target="_blank" rel="noopener">SOLDMARS</a>, CC BY 4.0. World data: SWGEmu Core3 and ProjectSWG Holocore.</p>';B.append(c)}}
 
 /* ================= Waypoints and the planet map (Shift+M), SWG datapad style =================
    Every character keeps a datapad of waypoints (name, colour, planet, on/off). Active waypoints on the current planet
@@ -4852,7 +4852,7 @@ function pbrMat(src,o={}){if(!src||Array.isArray(src))return src;if(src.isShader
   // toon characters were lit by a 50% emissive copy of their texture; keep a little of that so faces don't go muddy
   if(toon)em.multiplyScalar(.32);
   const m=new THREE.MeshStandardMaterial({map:src.map||null,color:src.color?src.color.clone():new THREE.Color(1,1,1),vertexColors:!!src.vertexColors,
-    emissive:em,emissiveMap:src.emissiveMap||null,transparent:!!src.transparent,opacity:src.opacity??1,alphaTest:src.alphaTest||0,side:src.side,
+    emissive:em,emissiveMap:src.emissiveMap||null,normalMap:src.normalMap||null,aoMap:src.aoMap||null,transparent:!!src.transparent,opacity:src.opacity??1,alphaTest:src.alphaTest||0,side:src.side,
     skinning:!!(src.skinning||o.skinned),morphTargets:!!src.morphTargets,roughness:o.rough??.86,metalness:o.metal??.03,envMapIntensity:.7});
   if(toon)m.color.setScalar(1);
   m.userData.pbr=true;pbrInject(m,o,src);byKind[kk]=m;PBR.mats.add(m);return m}
@@ -5212,6 +5212,23 @@ let guns2P=null;
 for(const [id,G] of Object.entries(GUNS2)){const kin=G.dmg==='kinetic';
   SHOP.push({id:'gun_'+id,name:G.name,cost:G.cost,make:()=>({kind:'weapon',slot:'Main hand',name:G.name,gun:id,tier:G.tier,q:420})});
   SCHEMATICS.push({id:'gun_'+id,name:G.name,out:'weapon',slot:'Main hand',gun:id,needs:[['Metal',Math.round(G.len*30+12)],[kin?'Mineral':'Chemical',kin?14:Math.round(6+G.tier*3)],['Mineral',10]],attrs:kin?['quality','malleability','conductivity']:['quality','conductivity','malleability'],box:'crafting_artisan_engineering_02'})}
+/* ================= Wildlife from PRIM's ANIMALS FULL PACK (Unity Asset Store, purchased) =================
+   Realistic animated creatures standing in for SWG fauna: bantha (elephant), bolma (rhino), dewback (crocodile),
+   kusak (lion), falumpaset (hippo), eopie (zebra), gurreck (bear). Store assets ship inside the game build but stay out of
+   the public repo (kits/store/ is git-ignored). */
+const STORE_ANIMALS={bantha:{h:3.1,herd:[3,6],prey:1},bolma:{h:1.8,herd:[1,3],prey:0},dewback:{h:1.3,herd:[1,3],prey:0},kusak:{h:1.25,herd:[1,2],prey:0},
+  falumpaset:{h:1.6,herd:[2,4],prey:1},eopie:{h:1.5,herd:[3,6],prey:1},gurreck:{h:1.7,herd:[1,1],prey:0}};
+Object.assign(ANIMAL_SPEC,STORE_ANIMALS);
+{const add=(k,ids)=>{ANIMALS[k]=(ANIMALS[k]||[]).concat(ids)};add('desert',['bantha','dewback','eopie']);add('badlands',['bolma','kusak','eopie']);add('grass',['falumpaset','eopie']);
+  add('swamp',['falumpaset','dewback']);add('forest',['gurreck']);add('temperate',['eopie']);add('jungle',['kusak']);add('ice',['gurreck']);add('red',['bolma'])}
+{const _la=loadAnimal;loadAnimal=function(id){if(!STORE_ANIMALS[id])return _la(id);if(animalG[id]||animalLoading[id])return animalLoading[id];
+  animalLoading[id]=loadScript('kits/store/animals/'+id+'.js').then(()=>new Promise(res=>{const b64=(window.GRUDGE_ANIMAL||{})[id];if(!b64)return res();const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete window.GRUDGE_ANIMAL[id];
+    new THREE.GLTFLoader().parse(buf.buffer,'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const m=o.material;if(m&&'metalness' in m){m.metalness=0;m.roughness=.85;if(m.map)m.map.encoding=THREE.LinearEncoding}}});
+      // Unity FBX rigs carry their scale on the bones, so measure the skinned pose, not the raw geometry
+      g.scene.updateMatrixWorld(true);const box=new THREE.Box3(),v=new THREE.Vector3();g.scene.traverse(o=>{if(!o.isSkinnedMesh)return;o.skeleton.update();const n=o.geometry.attributes.position.count;for(let i=0;i<n;i+=37){o.boneTransform(i,v);v.applyMatrix4(o.matrixWorld);box.expandByPoint(v)}});
+      if(box.isEmpty())box.setFromObject(g.scene);animalG[id]={scene:g.scene,clips:g.animations,h:box.max.y-box.min.y,minY:box.min.y};res()},e=>{console.warn('animal '+id,e);res()})})).catch(e=>{console.warn('store animal '+id+' unavailable',e)});
+  return animalLoading[id]}}
+{const _ma=makeAnimal;makeAnimal=function(id){const a=_ma(id);if(a&&STORE_ANIMALS[id]&&animalG[id].minY!=null){const inner=a.obj.children[0];if(inner)inner.position.y=-animalG[id].minY}return a}}
 /* ================= Playtest build: resilience, bug reports, performance overlay, welcome card =================
    - A thrown error inside one system no longer freezes the game: the frame loop keeps going, the error is logged once.
    - F8 (or Menu > Report a bug) files a report with a screenshot, where you are, what the game was doing, the last errors

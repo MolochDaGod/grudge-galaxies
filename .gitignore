@@ -1,4 +1,6 @@
-node_modules/
-server/saves.json
 .env
 .wrangler/
+dist/kits/store/
+kits/store/
+node_modules/
+server/saves.json

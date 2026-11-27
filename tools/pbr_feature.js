@@ -64,7 +64,7 @@ function pbrMat(src,o={}){if(!src||Array.isArray(src))return src;if(src.isShader
   // toon characters were lit by a 50% emissive copy of their texture; keep a little of that so faces don't go muddy
   if(toon)em.multiplyScalar(.32);
   const m=new THREE.MeshStandardMaterial({map:src.map||null,color:src.color?src.color.clone():new THREE.Color(1,1,1),vertexColors:!!src.vertexColors,
-    emissive:em,emissiveMap:src.emissiveMap||null,transparent:!!src.transparent,opacity:src.opacity??1,alphaTest:src.alphaTest||0,side:src.side,
+    emissive:em,emissiveMap:src.emissiveMap||null,normalMap:src.normalMap||null,aoMap:src.aoMap||null,transparent:!!src.transparent,opacity:src.opacity??1,alphaTest:src.alphaTest||0,side:src.side,
     skinning:!!(src.skinning||o.skinned),morphTargets:!!src.morphTargets,roughness:o.rough??.86,metalness:o.metal??.03,envMapIntensity:.7});
   if(toon)m.color.setScalar(1);
   m.userData.pbr=true;pbrInject(m,o,src);byKind[kk]=m;PBR.mats.add(m);return m}
