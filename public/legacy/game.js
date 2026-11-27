@@ -839,7 +839,7 @@ canvas.addEventListener('pointermove',e=>{
   const p=ptrs.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;moved+=Math.abs(dx)+Math.abs(dy);
   if(busy)return;
   if(ptrs.size===2){const [a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0){zoomBy(pinch0/d)}pinch0=d;return}
-  if(level==='ground'&&groundMode==='play'){if(rts.on)return;play.camYaw-=dx*.005;play.camPitch=Math.max(-.45,Math.min(1.25,play.camPitch+dy*.004));return}
+  if(level==='ground'&&groundMode==='play'){if(rts.on)return;play.camYaw-=dx*.005;play.camPitch=Math.max(-1.15,Math.min(1.25,play.camPitch+dy*.004*CAMOPT.sens*(CAMOPT.inv?-1:1)));return}
   if(level==='ground'&&groundMode==='roam'){roam.yaw-=dx*.004;roam.pitch=Math.max(-1.45,Math.min(1.45,roam.pitch-dy*.004));return}
   if(level==='ground'&&!(btn===2||shift)){
     const k=ctl.dist*.0016,r=new V3(Math.cos(ctl.theta),0,-Math.sin(ctl.theta)),f=new V3(-Math.sin(ctl.theta),0,-Math.cos(ctl.theta));
@@ -1074,7 +1074,7 @@ function enterPlay(){
   if(pendingSpawn){from.x=pendingSpawn.x;from.z=pendingSpawn.z;pendingSpawn=null}
   Object.assign(play,{x:from.x,z:from.z,yaw:from.yaw,camYaw:from.yaw,camPitch:.22,dist:6.2});groundMode='play';renderUI();updatePlay(0);if(CH){if(CH.hp==null)CH.hp=charStats().maxHp;renderHud();mmEnterPlay()}
 }
-function exitPlay(){if(groundMode!=='play')return;mmExitPlay();if(CH)saveNow();groundMode='overhead';hud.hidden=true;combat.p=null;if(play.model){G.ground.remove(play.model);play.model=null}
+function exitPlay(){if(groundMode!=='play')return;if(cam.fov!==55){cam.fov=55;cam.updateProjectionMatrix()}mmExitPlay();if(CH)saveNow();groundMode='overhead';hud.hidden=true;combat.p=null;if(play.model){G.ground.remove(play.model);play.model=null}
   ctl.target.set(play.x,groundH(groundWorld,play.x,play.z),-play.z);ctl.theta=play.camYaw;ctl.phi=.62;ctl.dist=Math.max(220,ctl.dist);applyOrbit();renderUI()}
 function updatePlay(dt){
   const w=groundWorld,swim=waterDepth(w,play.x,play.z),gy0=groundH(w,play.x,play.z),H=(RACE_BODY[warlord.race]||{h:1.8}).h;
@@ -1094,10 +1094,14 @@ function updatePlay(dt){
   if(play.model){if(rm){const sz=rm.obj.userData.seatZ||0;play.model.position.set(play.x-Math.sin(play.yaw)*sz,baseY+seat-.45,-(play.z+Math.cos(play.yaw)*sz));play.model.rotation.y=play.yaw+Math.PI;animateAny(play.model,play.t,0)}
     else{play.model.position.set(play.x,baseY,-play.z);play.model.rotation.y=play.yaw+Math.PI;animateAny(play.model,play.t,play.moving)}}
   // camera rides behind the right shoulder
-  const pitch=play.camPitch,dist=play.dist,piv=new V3(play.x+rt.x*.85,rm?baseY+seat+H*.55:gy+H*1.05,-(play.z+rt.z*.85));
-  cam.position.set(piv.x+Math.sin(c)*Math.cos(pitch)*dist,piv.y+Math.sin(pitch)*dist,piv.z+Math.cos(c)*Math.cos(pitch)*dist);
+  // looking up: the orbit stops just under the shoulder line (it would dive into the ground), and the aim tilts up
+  // instead, so negative pitch raises the view and the crosshair up to about 66 degrees
+  if(cam.fov!==CAMOPT.fov){cam.fov=CAMOPT.fov;cam.updateProjectionMatrix()}
+  const pitch=play.camPitch,orbit=Math.max(pitch,-.18),dist=play.dist*(pitch<0?1-Math.min(.35,-pitch*.3):1),piv=new V3(play.x+rt.x*.85,rm?baseY+seat+H*.55:gy+H*1.05,-(play.z+rt.z*.85));
+  cam.position.set(piv.x+Math.sin(c)*Math.cos(orbit)*dist,piv.y+Math.sin(orbit)*dist,piv.z+Math.cos(c)*Math.cos(orbit)*dist);
   const camG=groundH(w,cam.position.x,-cam.position.z)+.8;if(cam.position.y<camG)cam.position.y=camG;
-  cam.lookAt(piv.x-Math.sin(c)*6,piv.y-.9-Math.sin(pitch)*2,piv.z-Math.cos(c)*6);
+  const aimY=pitch>=0?piv.y-.9-Math.sin(pitch)*2:piv.y-.9+Math.tan(Math.min(1.15,-pitch))*9.6;
+  cam.lookAt(piv.x-Math.sin(c)*6,aimY,piv.z-Math.cos(c)*6);
 }
 
 /* ---- NPC mapping: Core3 spawns -> Grudge townsfolk, enemies and bosses ---- */
@@ -1155,6 +1159,10 @@ function loadToon(race){
     new THREE.GLTFLoader().parse(buf.buffer,'',g=>{const flipped=new Set();g.scene.traverse(o=>{if(o.isMesh){o.frustumCulled=false;
       /* these meshes came from FBX (texture V counted from the bottom) without the glTF flip: flip V once per geometry */
       const uv=o.geometry.attributes.uv;if(uv&&!flipped.has(uv)){flipped.add(uv);for(let k=0;k<uv.count;k++)uv.setY(k,1-uv.getY(k));uv.needsUpdate=true}const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map){m.map.encoding=THREE.LinearEncoding;m.map.anisotropy=renderer.capabilities.getMaxAnisotropy();m.map.needsUpdate=true;m.needsUpdate=true}})}});
+      // world scale: every race is normalised so its body height matches RACE_BODY, with the orc at 2.0 m (the reference
+      // every building, door, prop and creature is sized against)
+      {g.scene.updateMatrixWorld(true);const bb=new THREE.Box3();g.scene.traverse(o=>{if(o.isMesh&&!/weapon|shield|tome|bow|staff|sword|axe|hammer|dagger|spear|gun/i.test(o.name))bb.expandByObject(o)});
+        const hh=bb.max.y-bb.min.y,want=(RACE_BODY[race]||{h:1.8}).h*(2/2.02);if(hh>.4&&hh<6){const k=want/hh;(g.scene.children.length===1?g.scene.children[0]:g.scene).scale.multiplyScalar(k);g.scene.userData.fitK=k;g.scene.userData.fitH=+(hh*k).toFixed(2)}}
       toonReady[race]=g.scene;res(g.scene)},e=>{toonCache[race]=null;rej(e)})});
   return toonCache[race];
 }
@@ -1389,7 +1397,14 @@ function kitRule(p){if(p.t&&p.t.startsWith('crc:'))return{skip:1};if(p.k==='trav
   const cls=clsOf(p);if(cls==='object'){if(/station|terminal|console/.test(t))return{k:'crate',fit:'h',h:1.3};}else if(cls!=='building'&&cls!=='static'&&cls!=='installation')return null;
   for(const [re,r] of KIT_RULES)if(re.test(t))return r;
   if(cls==='building')return{k:'kk_house',fit:'fp'};if(cls==='installation')return{k:'kk_mill',fit:'h',h:9};return{k:'crate',fit:'h',h:1.2}}
-function fitMatrix(p,proto,rule,out){const s0=proto.size,w=p.w||Math.max(4,p.r*2),d=p.d||w;let sx,sy,sz;
+// human-scale caps: uniform 'fit the SWG footprint' scaling made big footprints into 25-100 m houses. Every kit gets a
+// maximum height in metres for a 2 m orc (doors about 2.6 m); the footprint keeps its plaza instead.
+const KIT_MAX_H={kk_house:9,kk_barracks:11,kk_lumbermill:11,kk_watchtower:16,kk_castle:38,houseparts:12,kk_church:16,kk_tavern:10,kk_market:7,kk_blacksmith:8,kk_mill:13,kk_windmill:14,kk_stables:7,kk_farm_plot:2.5};
+function kitMaxH(k){if(KIT_MAX_H[k]!=null)return KIT_MAX_H[k];if(/^kk_/.test(k))return 14;return Infinity}
+function fitMatrix(p,proto,rule,out){const r=fitMatrixRaw(p,proto,rule,out);const k=rule&&rule.k;const cap=k?kitMaxH(k):Infinity;
+  if(cap<Infinity&&proto.size){const pos=new V3(),q=new THREE.Quaternion(),sc=new V3();r.decompose(pos,q,sc);const h=proto.size.y*sc.y;if(h>cap){const f=cap/h;sc.multiplyScalar(f);r.compose(pos,q,sc)}}
+  return r}
+function fitMatrixRaw(p,proto,rule,out){const s0=proto.size,w=p.w||Math.max(4,p.r*2),d=p.d||w;let sx,sy,sz;
   if(rule.fit==='fp'){sx=w/s0.x;sz=d/s0.z;const s=Math.sqrt(sx*sz);sx=Math.min(s*1.5,Math.max(s/1.5,sx));sz=Math.min(s*1.5,Math.max(s/1.5,sz));sy=s*(rule.hmul||1)}
   else if(rule.fit==='wall'){sx=Math.max(2,w)/s0.x;sy=Math.max(3.5,Math.min(7,(p.h||5)))/s0.y;sz=sy}
   else if(rule.fit==='h'){sy=rule.h/s0.y;sx=sz=sy}
@@ -1439,7 +1454,7 @@ function applyKits(w){
   if(!kitReady){kitWaiters.push(()=>{if(groundWorld===w)applyKits(w)});return}
   if(w.kitsApplied)return;w.kitsApplied=true;
   const groups=new Map(),M=new THREE.Matrix4(),hide=[];
-  const emit=(k,p,rule,pidx=-1)=>{const proto=kitProtoCache[k];if(!proto)return;let g=groups.get(k);if(!g)groups.set(k,g={proto,ms:[],pidx:[]});g.ms.push(fitMatrix(p,proto,rule,new THREE.Matrix4()).toArray());g.pidx.push(pidx)};
+  const emit=(k,p,rule,pidx=-1)=>{const proto=kitProtoCache[k];if(!proto)return;let g=groups.get(k);if(!g)groups.set(k,g={proto,ms:[],pidx:[]});g.ms.push(fitMatrix(p,proto,rule&&rule.k?rule:{...rule,k},new THREE.Matrix4()).toArray());g.pidx.push(pidx)};
   const pads=[],ports=w.placements.filter(q=>q.k!=='travel'&&/starport|shuttleport/.test(q.t));
   w.placements.forEach((p,i)=>{let r=kitRule(p);if(!r)return;if(p.k==='travel'&&ports.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<160)){hide.push(i);return}if(r.skip){hide.push(i);return}if(r.k&&!kitProtoCache[r.k]){if(!r.alt)return;r=r.alt;if(r.skip){hide.push(i);return}if(r.k&&!kitProtoCache[r.k])return}
     if(r.composite){const base=COMPOSITES[r.composite],yaw=(p.yaw!=null?p.yaw:strHash(p.t)%360)*Math.PI/180,cy=Math.cos(yaw),sy=Math.sin(yaw);const gy=p.gy??groundH(w,p.x,p.z);
@@ -1861,13 +1876,19 @@ const nearestPoi=(w,x,z)=>w.pois.reduce((a,q)=>!a||Math.hypot(q.x-x,q.z-z)<Math.
 const QUALITY={low:{pr:1,npc:8},medium:{pr:1.5,npc:14},high:{pr:2,npc:18}};let quality='high';try{quality=localStorage.getItem('swgatlas.quality')||(devicePixelRatio>1.5?'medium':'high')}catch(e){}
 function applyQuality(){const q=QUALITY[quality]||QUALITY.high;renderer.setPixelRatio(Math.min(devicePixelRatio,q.pr));MAX_CREATURES=q.npc;resize()}
 var MAX_CREATURES=18;
+const CAMOPT={fov:70,sens:1,inv:false};try{Object.assign(CAMOPT,JSON.parse(localStorage.getItem('gg.camopt')||'{}'))}catch(e){}
+function saveCamOpt(){try{localStorage.setItem('gg.camopt',JSON.stringify(CAMOPT))}catch(e){}}
 function winMenu(B){$('#gwTitle').textContent='Menu';B.innerHTML=`<div class="gw-menu">
   ${CH?`<button class="btn" id="mSave">Save now</button>`:''}<button class="btn" id="mChars">Characters</button>${CH&&level==='ground'?'<button class="btn" id="mGal">Return to galaxy map</button>':''}
   <label class="gw-set" for="mQual">Graphics quality <select id="mQual">${Object.keys(QUALITY).map(k=>`<option ${k===quality?'selected':''}>${k}</option>`).join('')}</select></label>
-  <h3>Controls</h3><ul class="gw-keys"><li><kbd>W</kbd><kbd>S</kbd> walk · <kbd>A</kbd><kbd>D</kbd> turn · <kbd>Shift</kbd> run · drag to look</li><li><kbd>U</kbd> survey · <kbd>J</kbd> sample · <kbd>H</kbd> place harvester</li>
+  <label class="gw-set" for="mFov">Field of view <input type="range" id="mFov" min="55" max="100" step="1" value="${CAMOPT.fov}"> <b id="mFovV">${CAMOPT.fov}°</b></label>
+  <label class="gw-set" for="mSens">Mouse sensitivity <input type="range" id="mSens" min="0.3" max="2.5" step="0.05" value="${CAMOPT.sens}"> <b id="mSensV">${CAMOPT.sens.toFixed(2)}</b></label>
+  <label class="gw-set" for="mInv">Invert mouse Y <input type="checkbox" id="mInv" ${CAMOPT.inv?'checked':''}></label>
+  <h3>Controls</h3><ul class="gw-keys"><li><kbd>W</kbd><kbd>S</kbd> walk · <kbd>A</kbd><kbd>D</kbd> turn · <kbd>Shift</kbd> run · drag or right-click mouselook to look (up to about 65° up)</li><li><kbd>U</kbd> survey · <kbd>J</kbd> sample · <kbd>H</kbd> place harvester</li>
    <li><kbd>I</kbd> inventory · <kbd>K</kbd> skills · <kbd>C</kbd> craft · <kbd>T</kbd> travel at a pad</li><li>Click a creature, then Attack · <kbd>Tab</kbd> nearest enemy · <kbd>Esc</kbd> close / back</li></ul>
   <p class="gw-note">Saves ${Store.mode==='cloud'?'go to your private space on this artifact and follow you to other devices':'stay in this browser'}. The game autosaves every 30 seconds and when you travel.</p></div>`;
   $('#mSave')&&($('#mSave').onclick=async()=>{await saveNow();toast('Saved.')});$('#mChars').onclick=()=>openWin('chars');$('#mGal')&&($('#mGal').onclick=()=>{closeWin();saveNow();exitPlay();goGalaxy()});
+  $('#mFov').oninput=e=>{CAMOPT.fov=+e.target.value;$('#mFovV').textContent=CAMOPT.fov+'°';saveCamOpt()};$('#mSens').oninput=e=>{CAMOPT.sens=+e.target.value;$('#mSensV').textContent=CAMOPT.sens.toFixed(2);saveCamOpt()};$('#mInv').onchange=e=>{CAMOPT.inv=e.target.checked;saveCamOpt()};
   $('#mQual').onchange=e=>{quality=e.target.value;try{localStorage.setItem('swgatlas.quality',quality)}catch(err){}applyQuality()}}
 let charList=[],confirmDel=null;
 async function winChars(B){$('#gwTitle').textContent='Characters';B.innerHTML='<p class="gw-note">Loading characters…</p>';await storeReady;charList=await Store.list();if(winKind!=='chars')return;
@@ -2068,7 +2089,14 @@ function useAbility(a){if(!CH||groundMode!=='play')return;if(rts.on)return;const
 let mouselook=false;
 function setMouselook(on){mouselook=on;if(on){try{const r=canvas.requestPointerLock();if(r&&r.catch)r.catch(()=>{mouselook=false;mmHud()})}catch(e){mouselook=false}}else if(document.pointerLockElement===canvas)document.exitPointerLock();mmHud()}
 document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement!==canvas&&mouselook){mouselook=false;mmHud()}});
-document.addEventListener('mousemove',e=>{if(document.pointerLockElement!==canvas||groundMode!=='play'||rts.on)return;play.camYaw-=e.movementX*.0026;play.camPitch=Math.max(-.45,Math.min(1.25,play.camPitch+e.movementY*.0022))});
+// any UI that wants a choice (game windows, F dialogs, vendors, terminals, tutorial cards, map) frees and shows the cursor;
+// mouselook comes back by itself when the last one closes (the close click/key counts as the user gesture)
+const UI_SEL='[role="dialog"],#ggOpener,#ggDlg,.gg-modal';let uiFreed=false;
+function uiBlocking(){for(const e of document.querySelectorAll(UI_SEL)){if(e.hidden||e.id==='wmap'&&e.closest('[hidden]'))continue;const cs=getComputedStyle(e);if(cs.display==='none'||cs.visibility==='hidden')continue;if(e.getClientRects().length)return true}return false}
+(function uiCursor(){requestAnimationFrame(uiCursor);const b=uiBlocking();
+  if(b){if(mouselook){uiFreed=true;setMouselook(false)}document.body.classList.add('ui-cursor')}
+  else{document.body.classList.remove('ui-cursor');if(uiFreed){uiFreed=false;if(groundMode==='play'&&level==='ground')setMouselook(true)}}})();
+document.addEventListener('mousemove',e=>{if(document.pointerLockElement!==canvas||groundMode!=='play'||rts.on)return;play.camYaw-=e.movementX*.0026*CAMOPT.sens;play.camPitch=Math.max(-1.15,Math.min(1.25,play.camPitch+e.movementY*.0022*CAMOPT.sens*(CAMOPT.inv?-1:1)))});
 canvas.addEventListener('contextmenu',e=>{if(level!=='ground'||groundMode!=='play')return;e.preventDefault();if(rts.on)return rtsOrder(e.clientX,e.clientY);setMouselook(!mouselook)});
 
 /* ---------------- MMO HUD ---------------- */

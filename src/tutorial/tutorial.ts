@@ -172,6 +172,7 @@ export async function installTutorial() {
     let k = 0;
     const el = document.createElement('div');
     el.id = 'ggOpener';
+    el.setAttribute('role', 'dialog');
     const show = () => {
       const cd = cards[k];
       el.innerHTML = `<div class="op-card"><p class="op-eyebrow">${cd.eye}</p><h2>${cd.title}</h2>${cd.body}
