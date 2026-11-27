@@ -6,6 +6,7 @@
  * (physics, animation, skills, VFX) behind the same deterministic tick.
  */
 import './three-compat';
+import './combat/runtime';
 
 function loadClassic(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -24,6 +25,10 @@ if (!/[?&]nophysics\b/.test(location.search)) {
   import('./core/tick').then((m) => m.installFixedTick()).catch((e) => console.warn('fixed tick unavailable', e));
   import('./physics/world').then((m) => m.installPhysics()).catch((e) => console.warn('physics unavailable', e));
 }
+// F interactions: townsfolk by role, travel pads, harvesters, corpses, nodes, terminals
+import('./interact/interact').then((m) => m.installInteract()).catch((e) => console.warn('interactions unavailable', e));
+// openers + tutorial for new characters (?notutorial skips it)
+import('./tutorial/tutorial').then((m) => m.installTutorial()).catch((e) => console.warn('tutorial unavailable', e));
 
 loadClassic('legacy/game.js').catch((e) => {
   console.error(e);

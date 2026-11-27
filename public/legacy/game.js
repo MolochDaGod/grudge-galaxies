@@ -1601,7 +1601,13 @@ function migrate(c){if(c&&c.planet&&typeof WORLDS!=='undefined'&&WORLDS.length&&
   (c.harvesters||[]).forEach(h=>{if(!h.size){h.size='personal';h.hopper=0;h.maint=150;h.power=0;h.on=true;h.updated=Date.now()}});c.harvesters=c.harvesters||[];c.xp=c.xp||{};return c}
 function syncLook(){if(!CH)return;Object.assign(warlord,{race:CH.race,cls:CH.cls,set:CH.set,tier:gearTier(),wprof:weaponProf(CH)});saveWarlord()}
 function gearTier(){const its=Object.values(CH.gear||{}).map(id=>CH.inv.items.find(i=>i.id===id)).filter(Boolean);return its.length?Math.max(1,Math.round(its.reduce((a,i)=>a+i.tier,0)/its.length)):1}
-function charStats(){const base=warlordStats({...warlord,tier:1}),m=skillMods(CH),its=Object.values(CH.gear||{}).map(id=>CH.inv.items.find(i=>i.id===id)).filter(Boolean);
+function charStats(){if(window.GG_COMBAT&&CH)return ggCharStats();return charStatsLegacy()}
+function ggCharStats(){const C=window.GG_COMBAT,lv=combatLevel(),base=warlordStats({...warlord,tier:Math.max(1,Math.min(8,Math.ceil(lv/12)))}),m=skillMods(CH),its=Object.values(CH.gear||{}).map(id=>CH.inv.items.find(i=>i.id===id)).filter(Boolean);
+  const gear=its.map(i=>({id:i.id,name:i.name,kind:i.kind,slot:i.slot,tier:i.tier||1,q:i.q||300,gun:i.gun,attrs:i.attrs}));
+  if(!gear.some(i=>i.kind==='weapon')&&base.wpn)gear.push({id:'set:'+base.wpn.name,name:base.wpn.name,kind:'weapon',tier:base.wpn.tier||1,q:400});
+  const cs=C.derive({level:lv,classStart:(CLASS[CH.cls]||{}).start||{},raceBonus:(RACE[CH.race]||{}).bonuses||{},cls:CH.cls,gear,setBonus:{hp:base.tot.hp*.25,defense:base.tot.defense*.3,crit:base.tot.crit,block:base.tot.block},skillMods:m});
+  const pw=C.powerFor(cs,cs.kind);return{maxHp:cs.maxHp,def:Math.round(cs.armor),dmg:Math.round(cs.weapon*(1+pw/100)),range:cs.range,m,cs,level:lv}}
+function charStatsLegacy(){const base=warlordStats({...warlord,tier:1}),m=skillMods(CH),its=Object.values(CH.gear||{}).map(id=>CH.inv.items.find(i=>i.id===id)).filter(Boolean);
   let hp=600+base.tot.hp*.25,def=base.tot.defense*.3,dmg=40+base.dmg*.5;for(const i of its){hp+=i.tier*70*(i.q/600);def+=i.tier*14*(i.q/600);if(i.kind==='weapon')dmg+=i.tier*22*(i.q/600)}
   const melee=!/ranger|mage|priest/.test(CH.cls),dm=m.damage||0;def*=1+(m.defense||0)/200;
   return{maxHp:Math.round(hp*(1+(m.survival||0)/200)),def:Math.round(def),dmg:Math.round(dmg*(1+dm/250)),range:melee?4.5:22,m}}
@@ -1753,12 +1759,28 @@ function drawHarvesters(){harvGroup.clear();if(!CH||!groundWorld)return;if(!harv
 /* ---- combat and creature harvesting ---- */
 const combat={p:null,cd:0,ecd:0};
 function npcStats(p){const g=p.g;if(g.maxHp)return;const base=g.kind==='boss'?(g.boss.hp||5000):g.kind==='hostile'?(g.enemy.hp||200):300;g.maxHp=Math.round(base*(.6+g.tier*.25));g.hp=g.maxHp;g.dmg=g.kind==='boss'?60+g.tier*15:g.kind==='hostile'?((g.enemy.damage||12)*1.2):8}
+
+/* ---- combat math bridge (src/combat/math.ts): every hit, crit, dodge, block and miss resolves there ---- */
+const OUT_TXT={miss:'misses',dodge:'is dodged by',block:'is blocked by'};
+function ggMe(){const st=charStats();return{st,c:{level:st.level||combatLevel(),s:st.cs}}}
+function ggHit(g,mult=1,kind){const C=window.GG_COMBAT,{st,c}=ggMe();if(!C||!st.cs){const d=Math.round(st.dmg*mult*(.8+Math.random()*.4));return{dmg:d,outcome:'hit'}}
+  const R=C.resolveHit(c,C.npcCombatant(g),{mult,kind:kind||st.cs.kind,flat:st.gun?st.cs.weapon*(GUNS[st.gun]?GUNS[st.gun].mult:1):undefined});ggLastHit=R;window.dispatchEvent(new CustomEvent('gg:hit',{detail:R}));return R}
+function ggHitText(who,name,R){if(R.outcome==='miss')return`${who} miss ${name}`;if(R.outcome==='dodge')return`${name} dodges ${who==='You'?'your':who+"'s"} attack`;
+  return`${who==='You'?'You':who} ${R.outcome==='crit'?'CRITICALLY hit':'hit'} ${name} for ${R.dmg}${R.outcome==='block'?' (blocked)':''}`}
+function ggEnemyHit(g,mult=1){const C=window.GG_COMBAT,{st,c}=ggMe();if(!C||!st.cs){const d=Math.round((g.dmg||10)*mult*(.7+Math.random()*.6)*(600/(600+st.def)));return{dmg:d,outcome:'hit'}}
+  const R=C.resolveHit(C.npcCombatant(g),c,{mult});return R}
+function ggTakenText(name,R){if(R.outcome==='miss')return`${name} misses you`;if(R.outcome==='dodge')return`You dodge ${name}`;return`${name} ${R.outcome==='crit'?'CRITICALLY hits':'hits'} you for ${R.dmg}${R.outcome==='block'?' (blocked)':''}`}
+let ggLastHit=null;
+const pct=v=>(v*100).toFixed(1)+'%';
+function ggCombatRows(cs){const P={melee:'Melee power',ranged:'Ranged power',spell:'Spell power'}[cs.kind];
+  return statRow(P,Math.round(window.GG_COMBAT.powerFor(cs,cs.kind)))+statRow('Healing power',Math.round(cs.healPower))+statRow('Resist',Math.round(cs.resist))+statRow('Critical',pct(cs.crit))+statRow('Crit damage',pct(cs.critDmg))+statRow('Dodge',pct(cs.dodge))+statRow('Block',pct(cs.block))+statRow('Attack speed','+'+pct(cs.haste))+statRow('Cooldowns','-'+pct(cs.cdr))
+    +`<details class="cp-attrs"><summary>Attributes</summary>${Object.entries(cs.attrs).map(([k,v])=>statRow(k,v.toFixed(1),'#9fe4ff')).join('')}</details>`+(cs.perks.length?`<small>Perks: ${esc(cs.perks.join(', '))}</small>`:'')}
 function startAttack(p){if(play.mount)dismount(true);if(groundMode!=='play')return toast('Switch to Play to fight.');npcStats(p);if(p.dead)return;combat.p=p;combat.cd=0;renderHud()}
 function tickCombat(dt){const p=combat.p;if(!p){if(hunt.t>0){hunt.t-=dt;return}if(CH&&CH.hp!=null){const st=charStats();CH.hp=Math.min(st.maxHp,CH.hp+st.maxHp*.02*dt)}return}
   const st=charStats(),d=Math.hypot(p.x-play.x,p.z-play.z);const cre=[...npcToons.entries()].find(([i])=>groundWorld.placements[i]===p);if(cre){const u=cre[1].userData;u.target={x:play.x+(p.x-play.x)/Math.max(d,1)*2,z:play.z+(p.z-play.z)/Math.max(d,1)*2};u.combat=true}
   combat.cd-=dt;combat.ecd-=dt;if(d>60){combat.p=null;floatMsg('Target out of range');return renderHud()}
-  if(d<=st.range+2&&combat.cd<=0){combat.cd=gunCd();const dmg=Math.round(st.dmg*mmDmgMul()*(.8+Math.random()*.4));p.g.hp-=dmg;floatMsg(`You hit ${p.g.name} for ${dmg}`);if(play.model){play.model.userData.swing=.4;toonOneShot(play.model,'attack')}if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'hit')}
-  if(d<=(p.g.kind==='hostile'&&/beasts|reptiles|spiders|dragons/.test(p.g.cat)?4:14)&&combat.ecd<=0&&p.g.kind!=='friendly'){combat.ecd=2;const dm=Math.round(p.g.dmg*enemyMul(p)/mmDefMul()*(.7+Math.random()*.6)*(600/(600+st.def)));CH.hp-=dm;floatMsg(`${p.g.name} hits you for ${dm}`);if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'attack');if(play.model){const heavy=dm>charStats().maxHp*.12;if(heavy||Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,heavy?'stagger':'hit'),250)}}
+  if(d<=st.range+2&&combat.cd<=0){combat.cd=gunCd()/(1+((charStats().cs||{}).haste||0));const R=ggHit(p.g,mmDmgMul()),dmg=R.dmg;p.g.hp-=dmg;floatMsg(ggHitText('You',p.g.name,R));if(play.model){play.model.userData.swing=.4;toonOneShot(play.model,'attack')}if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'hit')}
+  if(d<=(p.g.kind==='hostile'&&/beasts|reptiles|spiders|dragons/.test(p.g.cat)?4:14)&&combat.ecd<=0&&p.g.kind!=='friendly'&&!p.g.dummy){combat.ecd=2;const ER=ggEnemyHit(p.g,enemyMul(p)/mmDefMul()),dm=ER.dmg;CH.hp-=dm;floatMsg(ggTakenText(p.g.name,ER));if(cre&&cre[1].userData.toonObj)toonOneShot(cre[1].userData.toonObj,'attack');if(play.model){const heavy=dm>charStats().maxHp*.12;if(heavy||Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,heavy?'stagger':'hit'),250)}}
   if(p.g.hp<=0)killNpc(p);if(CH.hp<=0)incapacitate();renderHud()}
 function killNpc(p){mmOnKill(p);p.dead=true;combat.p=null;const g=p.g,xp=Math.round(40*g.tier*(g.kind==='boss'?5:1));gainXP('combat',xp,'defeated '+g.name);gainXP(CLASS_WEAPON_XP[CH.cls]||'unarmed',Math.round(xp*.8),'');const cr=Math.round((20+g.tier*25)*(g.kind==='boss'?8:1)*(.6+Math.random()*.8));CH.credits+=cr;floatMsg(`Looted ${cr} credits`);
   const i=groundWorld.placements.indexOf(p),obj=npcToons.get(i);if(obj){toonGroup.remove(obj);npcToons.delete(i)}
@@ -2032,15 +2054,15 @@ function useAbility(a){if(!CH||groundMode!=='play')return;if(rts.on)return;const
   const c=a.cost||{};if(c.a&&CH.act<c.a)return floatMsg(`Not enough Action for ${a.name}.`);if(c.m&&CH.mind<c.m)return floatMsg(`Not enough Mind for ${a.name}.`);
   if(a.hit||a.debuff){const p=currentTarget();if((!p||p.g.kind==='friendly')&&a.hit){const an=nearestAnimal(play.x,play.z,a.hit.range||14);if(an){if(c.a)CH.act-=c.a;if(c.m)CH.mind-=c.m;cds[a.id]=t+(a.cd||0);return huntStrike(an,a.hit.mult,abilAnim(a)||'attack')}}if(!p||p.g.kind==='friendly')return floatMsg(`${a.name} needs an enemy target.`);npcStats(p);const tp=targetPos(p),d=Math.hypot(tp.x-play.x,tp.z-play.z),st=charStats(),range=a.hit&&a.hit.range||st.range+2;
     if(d>range)return floatMsg(`Out of range (${Math.round(d)} m, need ${Math.round(range)} m).`);
-    if(a.hit){const dmg=Math.round(st.dmg*a.hit.mult*mmDmgMul()*(.85+Math.random()*.3));p.g.hp-=dmg;floatMsg(`${a.name} hits ${p.g.name} for ${dmg}`);if(!combat.p)startAttack(p);
+    if(a.hit){const R=ggHit(p.g,a.hit.mult*mmDmgMul(),a.hit.melee?'melee':undefined),dmg=R.dmg;p.g.hp-=dmg;floatMsg(R.dmg?`${a.name} ${R.outcome==='crit'?'CRITS':'hits'} ${p.g.name} for ${dmg}`:ggHitText('You',p.g.name,R));if(!combat.p)startAttack(p);
       const xpT=CLASS_WEAPON_XP[CH.cls]||'combat';if(Math.random()<.3)gainXP(xpT,8,'');if(p.g.hp<=0)killNpc(p)}
     if(a.debuff){p.g.weakUntil=now()+a.debuff;floatMsg(`${p.g.name} is weakened for ${a.debuff} s`);if(!combat.p)startAttack(p)}
     if(play.model)toonOneShot(play.model,abilAnim(a)||'attack')}
-  if(a.heal){const M=hamMax(),stim=a.id==='stim'&&CH.inv.items.find(i=>i.kind==='medicine');let h=M.h*a.heal*(stim?2:1);if(stim){CH.inv.items=CH.inv.items.filter(i=>i!==stim);markDirty()}
+  if(a.heal){const M=hamMax(),stim=a.id==='stim'&&CH.inv.items.find(i=>i.kind==='medicine');let h=M.h*a.heal*(stim?2:1);{const cs=charStats().cs;if(cs)h=h*(1+cs.healPower/300)*(Math.random()<cs.crit?1.5:1)}if(stim){CH.inv.items=CH.inv.items.filter(i=>i!==stim);markDirty()}
     CH.hp=Math.min(M.h,(CH.hp||0)+h);floatMsg(`You heal ${Math.round(h)}${stim?' using a Stimpack':''}`);gainXP('medical',20,'healing');if(play.model)toonOneShot(play.model,abilAnim(a)||'cast')}
   if(a.buff){addBuff(...a.buff,a.icon);floatMsg(`${a.buff[1]} for ${a.buff[2]} s`);if((a.anim||abilAnim(a))&&play.model)toonOneShot(play.model,a.anim||abilAnim(a))}
   if(a.run)a.run();
-  if(c.a)CH.act-=c.a;if(c.m)CH.mind-=c.m;if(a.cd)cds[a.id]=t+a.cd;mmHud()}
+  if(c.a)CH.act-=c.a;if(c.m)CH.mind-=c.m;if(a.cd)cds[a.id]=t+a.cd*(1-((charStats().cs||{}).cdr||0));mmHud()}
 
 /* ---------------- shoulder camera: free look with the mouse, right-click toggles mouselook ---------------- */
 let mouselook=false;
@@ -2721,7 +2743,7 @@ function huntStats(a,h){if(a.hp==null){const S=ANIMAL_SPEC[h.id];a.tier=Math.max
 // one strike on an animal: mult is the ability multiplier (1 for auto-attack)
 function huntStrike(t,mult=1,anim='attack'){const {a,h}=t;huntStats(a,h);const st=charStats();const reach=(st.range||3)+3;
   if(t.d>reach)return floatMsg(`Too far to strike the ${HUNT_NAME(h.id).toLowerCase()} (${Math.round(t.d)} m).`);
-  const dmg=Math.round(st.dmg*mult*mmDmgMul()*(.8+Math.random()*.4));a.hp-=dmg;floatMsg(`You hit the ${HUNT_NAME(h.id).toLowerCase()} for ${dmg}`);
+  const R=ggHit({tier:a.tier,cat:'beasts',dmg:a.dmg,maxHp:a.maxHp},mult*mmDmgMul()),dmg=R.dmg;a.hp-=dmg;floatMsg(ggHitText('You','the '+HUNT_NAME(h.id).toLowerCase(),R));
   if(play.model){play.model.userData.swing=.4;toonOneShot(play.model,anim)}
   if(a.hp<=0)return huntKill(a,h);
   animPlay(a,Math.random()<.5?'Idle_HitReact1':'Idle_HitReact2',.08,true);
@@ -2732,8 +2754,8 @@ function huntStrike(t,mult=1,anim='attack'){const {a,h}=t;huntStats(a,h);const s
 function huntFight(a,h,dt,dP,px,pz){if(groundMode!=='play'||!CH||dP>60){a.state='idle';a.t=0;return false}
   const dx=px-a.pos.x,dz=pz-a.pos.z;a.yaw=Math.atan2(dx,-dz);a.cd=(a.cd||0)-dt;
   if(dP>2.2){const st=Math.min(dP-2,6.5*dt);a.pos.x+=dx/dP*st;a.pos.z+=dz/dP*st;animPlay(a,'Gallop',.15)}
-  else if(a.cd<=0){a.cd=1.8+Math.random()*.6;animPlay(a,'Attack',.1,true);const dm=Math.round(a.dmg/mmDefMul()*(.7+Math.random()*.6)*(600/(600+charStats().def)));CH.hp-=dm;hunt.t=6;
-    floatMsg(`The ${HUNT_NAME(h.id).toLowerCase()} bites you for ${dm}`);if(play.model&&Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,'hit'),200);renderHud();if(CH.hp<=0){for(const m of h.members)if(m.state==='fight')m.state='idle';incapacitate()}}
+  else if(a.cd<=0){a.cd=1.8+Math.random()*.6;animPlay(a,'Attack',.1,true);const ER=ggEnemyHit({tier:a.tier,cat:'beasts',dmg:a.dmg},1/mmDefMul()),dm=ER.dmg;CH.hp-=dm;hunt.t=6;
+    floatMsg(ggTakenText('The '+HUNT_NAME(h.id).toLowerCase(),ER));if(play.model&&Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,'hit'),200);renderHud();if(CH.hp<=0){for(const m of h.members)if(m.state==='fight')m.state='idle';incapacitate()}}
   else if(a.cur!==a.acts.Attack||!a.cur.isRunning())animPlay(a,'Idle',.2);
   return true}
 function huntKill(a,h){a.dead=true;a.state='dead';a.target=null;animPlay(a,'Death',.1,true);hunt.cur=null;huntBar();
@@ -3115,7 +3137,7 @@ function mmFrame(dt){if(!intro.hidden&&level==='galaxy'&&!busy){ctl.theta+=dt*.0
 function mmEnterPlay(){spawnUnits();drawStructures();spawnParkedCart();mmLog(`Welcome to ${planetName(groundWorld)}, ${CH?CH.name:'traveler'}. Right-click for mouselook, Enter to chat, /help for commands.`,'sys')}
 function mmExitPlay(){dismount(true);if(parkedCart){G.ground.remove(parkedCart);parkedCart=null}despawnUnits();structGroup.clear();setMouselook(false);if(rts.on)rtsToggle(false);for(const id of [...peerModels.keys()])dropPeer(id)}
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;if(level!=='ground'||groundMode!=='play'||!CH)return;const k=e.key.toLowerCase();
-  if(k==='escape'&&rts.on){rtsToggle(false);e.stopImmediatePropagation();e.preventDefault();return}if(k==='enter'){$('#mmChatIn').focus();e.preventDefault();return}if(k==='b'){rtsToggle();e.preventDefault();return}if(k==='v'){toggleMount();e.preventDefault();return}if(k==='f'&&interact){interact.run();e.preventDefault();return}if((k===' '||k==='x')&&play.mount){e.preventDefault()}if(k==='o'){openWin('missions');e.preventDefault();return}
+  if(k==='escape'&&rts.on){rtsToggle(false);e.stopImmediatePropagation();e.preventDefault();return}if(k==='enter'){$('#mmChatIn').focus();e.preventDefault();return}if(k==='b'){rtsToggle();e.preventDefault();return}if(k==='v'){toggleMount();e.preventDefault();return}if(k==='f'&&interact&&!e.shiftKey&&!document.getElementById('ggDlg')){interact.run();e.preventDefault();return}if((k===' '||k==='x')&&play.mount){e.preventDefault()}if(k==='o'){openWin('missions');e.preventDefault();return}
 },true);
 
 
@@ -3146,9 +3168,13 @@ const TIPS={
     return`<h4>${a.icon} ${esc(a.name)}</h4>${i>=0?`<small>Hotbar key ${(i+1)%10}</small>`:''}<p>${esc(a.desc)}</p>${c.a?statRow('Action',c.a,'#f2c14a'):''}${c.m?statRow('Mind',c.m,'#5aa6f2'):''}${a.cd?statRow('Cooldown',a.cd+' s'):''}${a.hit&&a.hit.range?statRow('Range',a.hit.range+' m'):''}
       ${left?`<p class="tp-warn">Ready in ${Math.ceil(left)} s</p>`:''}${a.req?`<small>Granted by ${esc((BOXES[bx(...a.req)]||{}).name||'')}</small>`:''}`},
   item(id){const it=CH&&CH.inv.items.find(i=>i.id===id);if(!it)return'';const eq=Object.values(CH.gear||{}).includes(it.id),t=it.tier;
-    let rows=statRow('Quality',Math.round(it.q));if(t)rows+=statRow('Tier',`T${t} ${tierName(t)}`,tierColor(t));
-    if(it.kind==='armor')rows+=statRow('Health',`+${Math.round(t*70*(it.q/600))}`)+statRow('Defense',`+${Math.round(t*14*(it.q/600))}`);
-    if(it.kind==='weapon')rows+=statRow('Damage',`+${Math.round(t*22*(it.q/600))}`)+statRow('Health',`+${Math.round(t*70*(it.q/600))}`);
+    const C=window.GG_COMBAT,gr=C?C.qualityGrade(it.q):null;
+    let rows=statRow('Quality',`${Math.round(it.q)}${gr?' · '+gr.name:''}`,gr?gr.color:undefined);if(t)rows+=statRow('Tier',`T${t} ${tierName(t)}`,tierColor(t));
+    if(C&&it.kind==='armor')rows+=statRow('Armour',`+${Math.round(C.armorValue(t||1,it.q))}`);
+    if(C&&it.kind==='weapon'){const wd=C.weaponDamage(t||1,it.q)*(it.gun&&GUNS[it.gun]?GUNS[it.gun].mult:1);rows+=statRow('Weapon damage',`${Math.round(wd*.9)}–${Math.round(wd*1.1)}`)+(it.gun&&GUNS[it.gun]?statRow('Range',GUNS[it.gun].range+' m')+statRow('Rate',`${(1/GUNS[it.gun].cd).toFixed(1)}/s`):'')}
+    if(C&&it.attrs)rows+=Object.entries(it.attrs).filter(([,v])=>v).map(([k,v])=>statRow(k,`+${(v*gr.mult).toFixed(1)}`,'#9fe4ff')).join('');
+    if(C&&(it.kind==='weapon'||it.kind==='armor')){const P=C.itemPerks(it);if(P.length)rows+=`<div class="tp-perks">${P.map(p=>`<p style="color:${gr.color}">◆ ${esc(p.name)}: ${esc(p.text)}</p>`).join('')}</div>`;
+      else if(gr&&gr.perks===0)rows+=`<small>Good quality or better rolls a perk.</small>`}
     if(it.kind==='medicine'||it.kind==='food')rows+=statRow('Restores',`${Math.round(150+it.q*.6*(1+(skillMods(CH).heal||0)/100))} health`);
     if(it.kind==='deed')rows+=statRow('Harvester',(HARV_SIZES[it.size]||HARV_SIZES.personal).label);
     return`<h4 style="color:${t?tierColor(t):'var(--cpx-ink)'}">${esc(it.name)}</h4><small>${esc(it.slot?it.slot+' · ':'')}${KIND_NAME[it.kind]||it.kind}${it.set?' · '+esc(it.set)+' set':''}</small>${rows}
@@ -3178,7 +3204,7 @@ function winInventory(B){$('#gwTitle').textContent='Inventory';const res=Object.
   const bag=CH.inv.items.filter(i=>!Object.values(CH.gear||{}).includes(i.id)),st=charStats();
   const slot=(it,lbl)=>`<button class="cp-slot${it&&it.tier?' t'+Math.min(8,it.tier):''}${it&&invSel===it.id?' sel':''}" ${it?`data-it="${it.id}" data-tip-k="item:${it.id}"${it.kind==='medicine'||it.kind==='food'?` draggable="true" data-drag="it:${esc(it.name)}"`:''}`:`data-tip-h="${esc(lbl||'Empty')}" data-tip="${lbl?'Nothing equipped.':'Empty bag slot.'}"`}>${it?icon(itemIcon(it),it.name):lbl?`<span class="cp-ghost">${GHOST_SLOT[lbl]?icon(GHOST_SLOT[lbl],''):esc(lbl)}</span>`:''}${it&&it.tier?`<em>T${it.tier}</em>`:''}</button>`;
   B.innerHTML=`<div class="cp-inv"><section><h3>Equipped</h3><div class="cp-doll">${gearSlots.map(s=>`<div class="cp-dslot"><small>${s}</small>${slot(CH.inv.items.find(i=>i.id===CH.gear[s]),s)}</div>`).join('')}</div>
-     <div class="cp-stats">${statRow('Health',st.maxHp)}${statRow('Defense',st.def)}${statRow('Damage',st.dmg)}${statRow('Gear tier',`T${gearTier()} ${tierName(gearTier())}`,tierColor(gearTier()))}${statRow('Credits',CH.credits.toLocaleString(),'var(--cpx-gold)')}</div></section>
+     <div class="cp-stats">${statRow('Level',st.level||combatLevel())}${statRow('Health',st.maxHp)}${statRow('Armour',st.def)}${statRow('Damage',st.dmg)}${st.cs?ggCombatRows(st.cs):''}${statRow('Gear tier',`T${gearTier()} ${tierName(gearTier())}`,tierColor(gearTier()))}${statRow('Credits',CH.credits.toLocaleString(),'var(--cpx-gold)')}</div></section>
    <section><h3>Bag <small>${bag.length} items</small></h3><div class="cp-bag">${bag.map(i=>slot(i)).join('')}${Array.from({length:Math.max(0,24-bag.length)},()=>slot(null)).join('')}</div>
      <div class="cp-actbar" id="invAct"></div></section>
    <section><h3>Resources <small>${res.length} types</small></h3><ul class="cp-res">${res.map(([n,r])=>`<li data-tip-k="res:${esc(n)}">${icon(resIcon(r),r.c)}<span><b>${esc(n)}</b><small>${esc(r.c)}</small></span><em>${r.units.toLocaleString()}</em></li>`).join('')||'<li class="cp-empty">Survey (U) and sample (J) to gather resources.</li>'}</ul></section></div>`;
@@ -3330,7 +3356,7 @@ addEventListener('dragover',e=>{if(dragSrc&&e.target.closest&&e.target.closest('
 addEventListener('drop',e=>{const el=e.target.closest&&e.target.closest('[data-slot]');if(!el||!dragSrc)return;e.preventDefault();const [b,i]=el.dataset.slot.split(':').map(Number),B=bars();
   if(dragSrc.slot){const [sb,si]=dragSrc.slot;[B[b][i],B[sb][si]]=[B[sb][si],B[b][i]]}else B[b][i]=dragSrc.val;dragSrc.done=true;markDirty();barSig='';renderBars()});
 addEventListener('dragend',()=>{if(dragSrc&&dragSrc.slot&&!dragSrc.done){const [sb,si]=dragSrc.slot;bars()[sb][si]=null;markDirty();barSig='';renderBars()}dragSrc=null;document.body.classList.remove('mm-dragging')});
-addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||level!=='ground'||groundMode!=='play'||!CH||rts.on)return;const m=e.code&&e.code.match(/^Digit(\d)$/);if(!m)return;
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||level!=='ground'||groundMode!=='play'||!CH||rts.on)return;const m=e.code&&e.code.match(/^Digit(\d)$/);if(!m||document.getElementById('ggDlg'))return;
   e.preventDefault();e.stopImmediatePropagation();useSlot(e.shiftKey?1:0,(+m[1]+9)%10)},true);
 
 /* ---- 3D portrait of the actual character ---- */
@@ -5080,10 +5106,17 @@ setTimeout(()=>{let seen=null;try{seen=localStorage.getItem('gg.pt.seen')}catch(
 window.GG_BRIDGE={
   get play(){return play},get keys(){return keys},get groundWorld(){return groundWorld},get level(){return level},get groundMode(){return groundMode},
   get kitMeshes(){return kitMeshes},get G(){return G},get cam(){return cam},get scene(){return scene},get renderer(){return renderer},get quality(){return quality},
-  get CH(){return CH},get rts(){return rts},HALF,EXT,
+  get CH(){return CH},get rts(){return rts},get combat(){return combat},get hunt(){return hunt},get selPlacement(){return selPlacement},set selPlacement(v){selPlacement=v},get mouselook(){return mouselook},HALF,EXT,
+  markDirty:()=>markDirty(),renderHud:()=>renderHud(),gainXP:(t,n,w)=>gainXP(t,n,w),openWin:k=>openWin(k),toonOneShot:(m,k)=>toonOneShot(m,k),charStats:()=>charStats(),knownAbilities:()=>knownAbilities(),
+  get interact(){return interact},set interact(v){interact=v},get promptEl(){return promptEl},get nodeNear(){return typeof nodeNear!=='undefined'?nodeNear:null},get npcToons(){return npcToons},
+  get terminals(){return terminals},get TERMINALS(){return TERMINALS},get gwHidden(){return gw.hidden},get buffs(){return buffs},get waypoint(){return waypoint},get parkedCart(){return parkedCart},
+  fn:{startGather:()=>typeof startGather==='function'&&startGather(),harvestCorpse:(p,k)=>harvestCorpse(p,k),addBuff:(...a)=>addBuff(...a),setWaypoint:(x,z,l)=>setWaypoint(x,z,l),
+    nearTravel:()=>nearTravel(),travelPoints:w=>travelPoints(w),setVendor:n=>{vendorName=n},combatLevel:()=>combatLevel(),hamMax:()=>hamMax(),selectPlacement:i=>selectPlacement(i),mmHud:()=>mmHud(),
+    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0}},
+  get GD(){return GD},get RACE(){return RACE},get CLASS(){return CLASS},get FACTION(){return FACTION},get WORLDS(){return WORLDS},get PLANET_FACTION(){return PLANET_FACTION},planetName:w=>planetName(w),nearestPoi:(w,x,z)=>nearestPoi(w,x,z),
   groundH:(w,x,z)=>groundH(w,x,z),waterDepth:(w,x,z)=>waterDepth(w,x,z),toast:m=>toast(m),floatMsg:m=>floatMsg(m),
   wrap(name,make){const W={updatePlay:()=>{updatePlay=make(updatePlay)},gameTick:()=>{gameTick=make(gameTick)},buildGround:()=>{buildGround=make(buildGround)},
-      applyKits:()=>{applyKits=make(applyKits)},rideUpdate:()=>{rideUpdate=make(rideUpdate)},playCharacter:()=>{playCharacter=make(playCharacter)}};
+      applyKits:()=>{applyKits=make(applyKits)},rideUpdate:()=>{rideUpdate=make(rideUpdate)},playCharacter:()=>{playCharacter=make(playCharacter)},thinkCreature:()=>{thinkCreature=make(thinkCreature)},useAbility:()=>{useAbility=make(useAbility)},killNpc:()=>{killNpc=make(killNpc)},huntKill:()=>{huntKill=make(huntKill)},openWin:()=>{openWin=make(openWin)},tickInteract:()=>{tickInteract=make(tickInteract)},toggleEquip:()=>{toggleEquip=make(toggleEquip)},startSample:()=>{startSample=make(startSample)}};
     if(!W[name])throw new Error('GG_BRIDGE.wrap: unknown '+name);W[name]()}};
 window.dispatchEvent(new Event('gg:bridge'));
 

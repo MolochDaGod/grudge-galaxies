@@ -25,6 +25,7 @@ const GRAVITY = -24; // a little heavier than earth: snappier jumps and falls fo
 const JUMP_V = 8.2;
 const STREAM_IN = 520; // metres: kit cells closer than this get colliders
 const STREAM_OUT = 760;
+const NATURE_R = 140; // metres: trees, boulders and pillars closer than this are solid
 
 let ready = false;
 export async function initPhysics(): Promise<void> {
@@ -49,6 +50,8 @@ export class PlanetPhysics {
   acc = 0;
   cells = new Map<THREE.InstancedMesh, CellColliders>();
   lastStream = new THREE.Vector2(1e9, 1e9);
+  lastNature = new THREE.Vector2(1e9, 1e9);
+  natureT = 0;
   stats = { colliders: 0, steps: 0 };
 
   constructor(private B: Bridge, w: any) {
@@ -88,7 +91,17 @@ export class PlanetPhysics {
   /** stream building/kit colliders in and out by map cell around the player */
   stream(force = false) {
     const p = this.B.play, here = new THREE.Vector2(p.x, -p.z);
+    // trees, boulders and pillars stream on a finer step and on a timer (the tree grid is built a few seconds after
+    // the planet, so the first pass may find none)
+    const now = performance.now();
+    if (!force && (here.distanceTo(this.lastNature) > 16 || now - this.natureT > 2000)) {
+      this.natureT = now;
+      this.lastNature.copy(here);
+      this.streamNature(here);
+    }
     if (!force && here.distanceTo(this.lastStream) < 48) return;
+    this.natureT = now;
+    this.lastNature.copy(here);
     this.lastStream.copy(here);
     const M = new THREE.Matrix4(), pos = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
     const box = new THREE.Box3(), c = new THREE.Vector3(), half = new THREE.Vector3();
@@ -123,9 +136,139 @@ export class PlanetPhysics {
       }
       this.cells.set(im, { mesh: im, colliders: cols });
     }
-    let n = 0;
+    this.streamNature(here);
+    let n = this.nature.size;
     for (const v of this.cells.values()) n += v.colliders.length;
     this.stats.colliders = n;
+  }
+
+  /**
+   * Natural colliders: tree trunks (capsules from the planet's tree grid, sized by species scale so the 100 m giants
+   * are solid too), talus boulders (balls) and mesa pillars (cylinders). Streamed per instance within NATURE_R.
+   */
+  nature = new Map<string, RAPIER.Collider>();
+  private natureMeshes: { kind: 'boulder' | 'pillar'; im: THREE.InstancedMesh; pts: Float32Array }[] | null = null;
+  streamNature(here: THREE.Vector2) {
+    const w: any = this.worldRef, want = new Set<string>(), R2 = NATURE_R * NATURE_R;
+    const add = (key: string, make: () => RAPIER.ColliderDesc | null) => {
+      want.add(key);
+      if (this.nature.has(key)) return;
+      const d = make();
+      if (d) this.nature.set(key, this.world.createCollider(d));
+    };
+    // trees
+    const grid: Map<string, any[]> | undefined = w._treeGrid;
+    if (grid) {
+      const px = here.x, pz = -here.y; // legacy coords
+      for (let gx = Math.floor((px - NATURE_R) / 200); gx <= Math.floor((px + NATURE_R) / 200); gx++)
+        for (let gz = Math.floor((pz - NATURE_R) / 200); gz <= Math.floor((pz + NATURE_R) / 200); gz++) {
+          const L = grid.get(gx + ',' + gz);
+          if (!L) continue;
+          for (const t of L) {
+            const dx = t.x - px, dz = t.z - pz;
+            if (dx * dx + dz * dz > R2 || !Number.isFinite(t.x) || !Number.isFinite(t.z)) continue;
+            const ts = Math.max(0.5, Math.min(40, (t.b && t.b.ts) || 1));
+            add('t' + t.x.toFixed(1) + ',' + t.z.toFixed(1), () => {
+              const gy = Number.isFinite(t.y) ? t.y : this.B.groundH(w, t.x, t.z);
+              const r = 0.32 * ts, hh = 2.6 * ts;
+              return RAPIER.ColliderDesc.capsule(hh, r).setTranslation(t.x, gy + hh + r * 0.5, -t.z).setFriction(0.5);
+            });
+          }
+        }
+    }
+    // boulders and pillars: found once per planet among the ground's instanced meshes
+    if (!this.natureMeshes) {
+      this.natureMeshes = [];
+      this.B.G.ground.traverse((o: any) => {
+        if (!o.isInstancedMesh) return;
+        const g = o.geometry, p = g.parameters || {};
+        const kind = g.type === 'DodecahedronGeometry' ? 'boulder' : g.type === 'CylinderGeometry' && p.radiusTop === 0.55 && p.radiusBottom === 1 ? 'pillar' : null;
+        if (!kind) return;
+        const a = o.instanceMatrix.array as Float32Array, pts = new Float32Array(o.count * 3);
+        for (let i = 0; i < o.count; i++) { pts[i * 3] = a[i * 16 + 12]; pts[i * 3 + 1] = a[i * 16 + 13]; pts[i * 3 + 2] = a[i * 16 + 14]; }
+        this.natureMeshes!.push({ kind, im: o, pts });
+      });
+    }
+    const M = new THREE.Matrix4(), pos = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+    for (const nm of this.natureMeshes) {
+      const P = nm.pts;
+      for (let i = 0; i < nm.im.count; i++) {
+        const dx = P[i * 3] - here.x, dz = P[i * 3 + 2] - here.y;
+        if (dx * dx + dz * dz > R2) continue;
+        add(nm.kind[0] + i + ':' + nm.im.id, () => {
+          nm.im.getMatrixAt(i, M);
+          M.decompose(pos, q, s);
+          if (![pos.x, pos.y, pos.z, s.x, s.y, s.z].every(Number.isFinite) || s.y < 0.8) return null;
+          if (nm.kind === 'boulder') return RAPIER.ColliderDesc.ball(Math.max(0.4, Math.min(s.x, s.z) * 0.85)).setTranslation(pos.x, pos.y, pos.z);
+          return RAPIER.ColliderDesc.cylinder(s.y / 2, Math.max(s.x, s.z) * 0.8).setTranslation(pos.x, pos.y + s.y / 2, pos.z);
+        });
+      }
+    }
+    for (const [k, c] of this.nature) if (!want.has(k)) { this.world.removeCollider(c, false); this.nature.delete(k); }
+  }
+
+  /* ---- navigation for NPCs: corrections against the same colliders the player collides with ---- */
+  private probe: RAPIER.Ball | null = null;
+  /** is a 0.45 m ball at legacy (x, z) at chest height inside a building, rock or tree? */
+  blocked(x: number, z: number): boolean {
+    if (!this.probe) this.probe = new RAPIER.Ball(0.45);
+    const y = this.B.groundH(this.worldRef, x, z) + 0.95;
+    let hit = false;
+    this.world.intersectionsWithShape({ x, y, z: -z }, { x: 0, y: 0, z: 0, w: 1 }, this.probe, (c) => {
+      if (c === this.collider || c.shape.type === RAPIER.ShapeType.HeightField) return true;
+      hit = true;
+      return false;
+    });
+    return hit;
+  }
+
+  /** A* on a 1.5 m grid (64 x 64 around the mover) avoiding blocked cells; returns legacy-coord waypoints or null */
+  findPath(fx: number, fz: number, tx: number, tz: number): { x: number; z: number }[] | null {
+    const C = 1.5, N = 64, ox = fx - (N / 2) * C, oz = fz - (N / 2) * C;
+    const clampIdx = (v: number) => Math.max(0, Math.min(N - 1, Math.round(v)));
+    const si = clampIdx((fx - ox) / C), sj = clampIdx((fz - oz) / C), ti = clampIdx((tx - ox) / C), tj = clampIdx((tz - oz) / C);
+    const occ = new Int8Array(N * N).fill(-1);
+    const isBlocked = (i: number, j: number) => {
+      const k = j * N + i;
+      if (occ[k] < 0) occ[k] = this.blocked(ox + i * C, oz + j * C) ? 1 : 0;
+      return occ[k] === 1;
+    };
+    const g = new Float32Array(N * N).fill(Infinity), came = new Int32Array(N * N).fill(-1), open: number[] = [];
+    const h = (i: number, j: number) => Math.hypot(i - ti, j - tj);
+    const s0 = sj * N + si;
+    g[s0] = 0;
+    open.push(s0);
+    const closed = new Uint8Array(N * N);
+    let best = s0, bestH = h(si, sj), iter = 0;
+    while (open.length && iter++ < 2500) {
+      let bi = 0, bf = Infinity;
+      for (let k = 0; k < open.length; k++) {
+        const n = open[k], f = g[n] + h(n % N, (n / N) | 0);
+        if (f < bf) { bf = f; bi = k; }
+      }
+      const cur = open.splice(bi, 1)[0], ci = cur % N, cj = (cur / N) | 0;
+      if (closed[cur]) continue;
+      closed[cur] = 1;
+      const hc = h(ci, cj);
+      if (hc < bestH) { bestH = hc; best = cur; }
+      if (ci === ti && cj === tj) { best = cur; break; }
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+        if (!di && !dj) continue;
+        const ni = ci + di, nj = cj + dj;
+        if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue;
+        const nk = nj * N + ni;
+        if (closed[nk] || isBlocked(ni, nj)) continue;
+        if (di && dj && (isBlocked(ci + di, cj) || isBlocked(ci, cj + dj))) continue; // no corner cutting
+        const ng = g[cur] + (di && dj ? 1.414 : 1);
+        if (ng < g[nk]) { g[nk] = ng; came[nk] = cur; open.push(nk); }
+      }
+    }
+    if (best === s0) return null;
+    const out: { x: number; z: number }[] = [];
+    for (let n = best; n !== s0 && n >= 0; n = came[n]) out.push({ x: ox + (n % N) * C, z: oz + ((n / N) | 0) * C });
+    out.reverse();
+    // thin the path: keep every third waypoint plus the last
+    return out.filter((_, k) => k % 3 === 2 || k === out.length - 1);
   }
 
   jump() {
@@ -190,6 +333,7 @@ export class PlanetPhysics {
   dispose() {
     this.world.free();
     this.cells.clear();
+    this.nature.clear();
   }
 }
 
@@ -277,6 +421,42 @@ export async function installPhysics() {
     P2.stream();
     phase = 'step';
     P2.step(dt);
+    } catch (e) {
+      fail(e);
+    }
+    return r;
+  });
+  /* NPC navigation corrections: creatures, townsfolk and enemies are moved by the legacy AI (straight lines to a target).
+     After each step, if the new spot is inside a building, rock or tree the step is undone and the NPC gets an A* detour
+     around it; one that keeps failing for 3 s gives up on that target (the legacy AI picks a new one). */
+  B.wrap('thinkCreature', (orig) => function (this: unknown, c: any, dt: number, w: any) {
+    const u = c.userData, x0 = u.pos?.x, z0 = u.pos?.z;
+    const r = orig.call(this, c, dt, w);
+    const Pn = P;
+    if (!Pn || Pn.worldRef !== w || !u.pos || x0 === undefined) return r;
+    try {
+      phase = 'nav';
+      if ((u.pos.x !== x0 || u.pos.z !== z0) && Pn.blocked(u.pos.x, u.pos.z) && !Pn.blocked(x0, z0)) {
+        u.pos.x = x0;
+        u.pos.z = z0;
+        c.position.x = x0;
+        c.position.z = -z0;
+        u.navStuck = (u.navStuck || 0) + dt;
+        const goal = (u.path && u.path.length ? u.path[u.path.length - 1] : u.target) || null;
+        if (goal && (!u.navReplan || u.navReplan < performance.now())) {
+          u.navReplan = performance.now() + 800;
+          const path = Pn.findPath(x0, z0, goal.x, goal.z);
+          if (path && path.length) {
+            u.target = path.shift();
+            u.path = path.concat(Math.hypot(goal.x - (path[path.length - 1]?.x ?? x0), goal.z - (path[path.length - 1]?.z ?? z0)) > 1.5 ? [goal] : []);
+          }
+        }
+        if (u.navStuck > 3) {
+          u.target = null;
+          u.path = null;
+          u.navStuck = 0;
+        }
+      } else if (u.navStuck) u.navStuck = Math.max(0, u.navStuck - dt);
     } catch (e) {
       fail(e);
     }
