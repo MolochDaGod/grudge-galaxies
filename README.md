@@ -66,6 +66,22 @@ nothing otherwise.
 
 ## Changes in this update
 
+- **Guns:** Blaster Pistol, Blaster Carbine, Assault Blaster and Long Rifle (sci-fi models from the Grudge ObjectStore)
+  are main-hand weapons sold at markets and craftable at the engineering bench. They attach to the right hand
+  socket and switch combat to ranged: aim stance in a fight, shoot / full-auto, magazines and reloads, rifle run,
+  run-strafe, muzzle flash and tracers. Works on NPC targets and when hunting.
+- **45 new animation clips** baked from KayKit Rig_Medium (ranged combat, advanced movement, general) and the
+  Quaternius Universal Animation Library (pistol, roll, swim, drive, punches, interact, repair...).
+  See `docs/ANIMATION_PIPELINE.md`, including which free mocap / text-to-motion tools are safe to ship.
+- **Ability effects:** one GPU particle pool using the effect-definition presets (auras, impacts, lightning, fire
+  sheet, ice, buffs, projectiles) plus flat rune and ring decals: casts, bolts, impacts, heals, buff auras, debuffs, kills.
+- **Starports:** the sci-fi colony kit (runway strip, terminal, reactor, solar field, gateway, drone carrier, tower)
+  and a berthed cruiser overhead replace the medieval stand-ins; SWG factories, generators, farms and harvesters
+  use colony buildings too. The kit's textures were missing in R2, so it uses a procedural plated-hull material.
+- **Grudge ID sign-in** (deployed site with a backend): menu → Account → Sign in with Grudge ID. The server checks
+  the token at id.grudge-studio.com and keeps saves per account; guest characters move into the account once.
+  Optional `GRUDGE_ID_URL` variable on Railway (defaults to https://id.grudge-studio.com).
+
 - **Sectors, not realms:** the nine realm worlds are gone from the galaxy map. The 3x3 layout is now an invisible
   sector split of every planet (about 5.5 km a side) that the server uses for interest: players get full positions
   only from their own and bordering sectors on the same planet. Characters saved on a realm move to Tatooine.

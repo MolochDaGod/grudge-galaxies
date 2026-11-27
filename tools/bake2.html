@@ -1,0 +1,33 @@
+<!doctype html><meta charset=utf-8><body><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="retarget.js"></script>
+<script>
+// Bakes clips from GLB animation packs (KayKit Rig_Medium, Quaternius UAL / Rigify) into the game's shared format.
+const MAPS={
+ kaykit:{Hips:'hips',Spine2:'chest',Head:'head',LeftArm:'upperarm.l',LeftForeArm:'lowerarm.l',LeftHand:'wrist.l',RightArm:'upperarm.r',RightForeArm:'lowerarm.r',RightHand:'wrist.r',
+   LeftUpLeg:'upperleg.l',LeftLeg:'lowerleg.l',LeftFoot:'foot.l',LeftToeBase:'toes.l',RightUpLeg:'upperleg.r',RightLeg:'lowerleg.r',RightFoot:'foot.r',RightToeBase:'toes.r'},
+ rigify:{Hips:'DEF-hips',Spine2:'DEF-spine.003',Neck:'DEF-neck',Head:'DEF-head',LeftShoulder:'DEF-shoulder.L',LeftArm:'DEF-upper_arm.L',LeftForeArm:'DEF-forearm.L',LeftHand:'DEF-hand.L',
+   RightShoulder:'DEF-shoulder.R',RightArm:'DEF-upper_arm.R',RightForeArm:'DEF-forearm.R',RightHand:'DEF-hand.R',LeftUpLeg:'DEF-thigh.L',LeftLeg:'DEF-shin.L',LeftFoot:'DEF-foot.L',LeftToeBase:'DEF-toe.L',
+   RightUpLeg:'DEF-thigh.R',RightLeg:'DEF-shin.R',RightFoot:'DEF-foot.R',RightToeBase:'DEF-toe.R'}};
+const FPS=24;
+function q16(arr){const a=new Int16Array(arr.length);for(let i=0;i<arr.length;i++)a[i]=Math.round(Math.max(-1,Math.min(1,arr[i]))*32767);let s='';const u=new Uint8Array(a.buffer);for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s)}
+async function bake(jobs){const out={fps:FPS,keys:RT_KEYS,clips:{},log:[]};const L=new THREE.GLTFLoader();const cache={};
+  for(const [id,file,clipName,rig] of jobs){try{
+    const g=cache[file]||(cache[file]=await new Promise((res,rej)=>L.load(file,res,undefined,rej)));
+    const root=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);
+    const all={};root.traverse(o=>{if(!all[o.name])all[o.name]=o});const M=MAPS[rig],map={},san=THREE.PropertyBinding.sanitizeNodeName;for(const k of RT_KEYS){const nm=M[k]&&san(M[k]);if(nm&&all[nm])map[k]=all[nm]}
+    const clip=g.animations.find(a=>a.name===clipName);if(!clip)throw new Error('no clip '+clipName);
+    // bind pose first (reset any animated pose)
+    root.updateMatrixWorld(true);
+    const F=rtFrame(map),Fi=F.clone().invert();const T=rtTPose(root,map,F);
+    const hipsY0=rtWorldP(map.Hips).y,legLen=hipsY0-rtWorldP(map.LeftFoot).y;
+    const mixer=new THREE.AnimationMixer(root),act=mixer.clipAction(clip);act.play();
+    const n=Math.max(2,Math.round(clip.duration*FPS)+1),Q=[],H=[];
+    for(let f=0;f<n;f++){mixer.setTime(Math.min(clip.duration,f/FPS));root.updateMatrixWorld(true);
+      for(const k of RT_KEYS){if(!map[k]){Q.push(0,0,0,1);continue}const D=rtWorldQ(map[k]).multiply(T[k].clone().invert());const Dc=Fi.clone().multiply(D).multiply(F);Q.push(Dc.x,Dc.y,Dc.z,Dc.w)}
+      H.push((rtWorldP(map.Hips).y-hipsY0)/legLen)}
+    out.clips[id]={n,dur:clip.duration,q:q16(Q),h:q16(H.map(v=>v/2))};out.log.push(`${id}: ${n}f ${clip.duration.toFixed(2)}s leg=${legLen.toFixed(2)} miss=${RT_KEYS.filter(k=>!map[k]).join(',')}`);
+  }catch(e){out.log.push(id+' FAILED '+e.message)}}
+  return out}
+window.__bake=bake;
+</script>

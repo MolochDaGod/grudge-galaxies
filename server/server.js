@@ -40,7 +40,24 @@ async function del(uid, path, id) {
 
 // ---------- helpers ----------
 const uidOf = token => crypto.createHash('sha256').update(String(token)).digest('hex').slice(0, 24);
-const tokenFrom = req => { const h = req.headers.authorization || ''; const m = /^Bearer ([A-Za-z0-9_-]{32,128})$/.exec(h); return m ? m[1] : null };
+const tokenFrom = req => { const h = req.headers.authorization || ''; const m = /^Bearer ([A-Za-z0-9_.-]{32,4096})$/.exec(h); return m ? m[1] : null };
+// Grudge ID accounts: a JWT from id.grudge-studio.com is checked there (cached 10 min) and maps to a stable per-account folder.
+// Anything else is the anonymous browser token, as before.
+const ID_URL = (process.env.GRUDGE_ID_URL || 'https://id.grudge-studio.com').replace(/\/$/, '');
+const idCache = new Map();
+async function whoIs(token) {
+  if (!token.includes('.')) return { uid: uidOf(token), name: '', grudge: false };
+  const c = idCache.get(token); if (c && c.exp > Date.now()) return c.who;
+  let who = null;
+  try {
+    const r = await fetch(ID_URL + '/api/auth/me', { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(6000) });
+    if (r.ok) { const j = await r.json(), u = j.user || j.data || j.account || j; const id = u.grudgeId || u.grudge_id || u.id || u.userId || u.user_id || u.sub;
+      if (id) who = { uid: 'g' + crypto.createHash('sha256').update('grudge:' + id).digest('hex').slice(0, 23), name: String(u.username || u.displayName || u.name || '').slice(0, 40), grudge: true } }
+  } catch { }
+  idCache.set(token, { who, exp: Date.now() + (who ? 600000 : 30000) });
+  if (idCache.size > 5000) for (const [k, v] of idCache) if (v.exp < Date.now()) idCache.delete(k);
+  return who;
+}
 function cors(req, res) {
   const o = req.headers.origin;
   const allow = ORIGINS.includes('*') ? '*' : (o && ORIGINS.includes(o) ? o : ORIGINS[0]);
@@ -48,6 +65,7 @@ function cors(req, res) {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Max-Age', '86400');
 }
 const send = (res, code, body) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)) };
 const readBody = req => new Promise((ok, bad) => { let n = 0, chunks = []; req.on('data', c => { n += c.length; if (n > MAX_DOC) { bad(new Error('too large')); req.destroy() } else chunks.push(c) }); req.on('end', () => ok(Buffer.concat(chunks).toString('utf8'))); req.on('error', bad) });
@@ -76,8 +94,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/health') return send(res, 200, { ok: true, players: peers.size, storage: db ? 'postgres' : 'file' });
     if (!url.pathname.startsWith('/api/')) return send(res, 404, { error: 'not found' });
     const token = tokenFrom(req); if (!token) return send(res, 401, { error: 'missing token' });
-    const uid = uidOf(token);
-    if (url.pathname === '/api/me') return send(res, 200, { uid });
+    const who = await whoIs(token); if (!who) return send(res, 401, { error: 'grudge sign-in expired' });
+    const uid = who.uid;
+    if (url.pathname === '/api/me') return send(res, 200, who);
     if (url.pathname === '/api/docs') {
       const path = url.searchParams.get('path'), id = url.searchParams.get('id');
       if (!ownPath(uid, path)) return send(res, 403, { error: 'forbidden path' });
