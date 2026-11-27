@@ -50,6 +50,8 @@ export interface Bridge {
     startGather(): void; harvestCorpse(p: any, k: string): void; addBuff(id: string, name: string, secs: number, mods: Record<string, number>, icon?: string): void;
     setWaypoint(x: number, z: number, label: string): void; nearTravel(): any; travelPoints(w: any): any[]; setVendor(n: string): void; combatLevel(): number;
     hamMax(): { h: number; a: number; m: number }; selectPlacement(i: number): void; mmHud(): void; setMissionTerminal(t: any): void;
+    npcStrike(p: any, u: any): any; npcCallPack(c: any, p: any, r: number): void; isNight(): boolean; standing(f: string): number;
+    creatureFaction(cat: string): string | undefined; mmLog(m: string, kind?: string): void; toonOneShot(o: any, k: string): void; incapacitated(): boolean;
   };
   planetName(w: any): string;
   nearestPoi(w: any, x: number, z: number): any;

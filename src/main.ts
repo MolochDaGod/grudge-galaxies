@@ -25,6 +25,8 @@ if (!/[?&]nophysics\b/.test(location.search)) {
   import('./core/tick').then((m) => m.installFixedTick()).catch((e) => console.warn('fixed tick unavailable', e));
   import('./physics/world').then((m) => m.installPhysics()).catch((e) => console.warn('physics unavailable', e));
 }
+// scripted creature brains (templates + Core3 state graph + patrol queues)
+import('./script/runtime').then((m) => m.installScripts()).catch((e) => console.warn('scripts unavailable', e));
 // F interactions: townsfolk by role, travel pads, harvesters, corpses, nodes, terminals
 import('./interact/interact').then((m) => m.installInteract()).catch((e) => console.warn('interactions unavailable', e));
 // openers + tutorial for new characters (?notutorial skips it)

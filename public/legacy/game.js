@@ -3411,7 +3411,8 @@ const ARCH={beasts:{aggro:12,pack:16,flee:.25,ranged:0},reptiles:{aggro:10,pack:
 const GREET={friendly:['Well met, friend of the {f}.','Safe travels, {n}.','The {f} remembers your deeds.','Good to see you again.'],neutral:['Hm. Traveler.','Keep your weapons sheathed in town.','Looking for work? Try the mission terminal.','Fresh water and supplies at the market.'],
   wary:['We don\'t see your kind welcome here.','Watch yourself, outsider.','The guards have their eye on you.'],night:['Late to be out walking.','The cantina\'s still open, if you\'re thirsty.','Mind the dark beyond the walls.']};
 let greetT=0;
-function aiTick(c,dt,w){const u=c.userData,p=u.p;if(!p||!p.g||p.dead)return;const g=p.g,playing=CH&&groundMode==='play'&&level==='ground',px=play.x,pz=play.z;
+function aiTick(c,dt,w){const u=c.userData,p=u.p;if(!p||!p.g||p.dead||u.brain)return;// scripted brains (src/script/ai) own these creatures
+const g=p.g,playing=CH&&groundMode==='play'&&level==='ground',px=play.x,pz=play.z;
   const dP=playing?Math.hypot(px-u.pos.x,pz-u.pos.z):1e9;u.ai=u.ai||{state:'idle',t:0,goalT:Math.random()*10};const ai=u.ai;ai.t+=dt;u.run=1;
   if(g.kind==='friendly'){
     // trainers stand their post and face you
@@ -3464,6 +3465,9 @@ function aiTick(c,dt,w){const u=c.userData,p=u.p;if(!p||!p.g||p.dead)return;cons
     floatMsg(`The ${g.name} hits you for ${dm}`);if(u.toonObj)toonOneShot(u.toonObj,'attack');if(CH.hp<=0){incapacitate();ai.state='return'}}}
 
 
+function npcStrike(p,u){const g=p.g;npcStats(p);const ER=ggEnemyHit(g,enemyMul(p)/mmDefMul()),dm=ER.dmg;CH.hp-=dm;floatMsg(ggTakenText('The '+g.name,ER));if(u.toonObj)toonOneShot(u.toonObj,'attack');
+  if(play.model&&dm>0&&Math.random()<.5)setTimeout(()=>play.model&&toonOneShot(play.model,dm>charStats().maxHp*.12?'stagger':'hit'),220);renderHud();if(CH.hp<=0)incapacitate();return ER}
+function npcCallPack(c,p,radius){const u=c.userData;for(const [i,h] of npcToons){const q=groundWorld.placements[i];if(q===p||!q.g||q.g.cat!==p.g.cat||q.dead)continue;const hu=h.userData;if(Math.hypot(hu.pos.x-u.pos.x,hu.pos.z-u.pos.z)<radius&&hu.brain)hu.brain.send('attacked')}}
 /* ================= Mission terminals: physical kiosks in every city, missions by terminal type ================= */
 const TERMINALS={general:{name:'General',color:'#6ff0ff',kinds:['destroy','destroy','explore']},artisan:{name:'Artisan',color:'#f2a24a',kinds:['survey','survey']},
   entertainer:{name:'Entertainer',color:'#c58bff',kinds:['entertain']},scout:{name:'Scout',color:'#8fe07a',kinds:['hunt','explore']},faction:{name:'Faction',color:'#ffd75a',kinds:['destroy','destroy']}};
@@ -3969,7 +3973,16 @@ if(G.ground)G.ground.add(vfxPts);
    world-space plating, panel seams, lit window strips on walls, tint per building type ---- */
 const HULL_TINT={col_research:'#d9dde3',col_reactor:'#8e949c',col_runway:'#a9b0b8',col_gate:'#c6ccd4',col_solar:'#4a6a9a',col_drone:'#b8b2a6',col_warehouse:'#9fa6ad',
   col_geo:'#9a8f84',col_home:'#cfd4d9',col_house:'#d6d0c6',col_house2:'#cdd2d6',col_farm:'#a7b59a',col_cruiser:'#8f9aa8',col_destroyer:'#7c8794',col_tower:'#a4a9ae',col_barrel:'#b07a48'};
-function hullMat(hex,glow){const m=new THREE.MeshLambertMaterial({color:new THREE.Color(hex)});m.extensions={derivatives:true};
+// CraftPix Space Colony palette atlases (licensed store asset, kits/store/colony): four trim/body schemes; parts keep their
+// authored colour bands, the procedural plating, seams and window bands still run on top
+const COLONY_ATLAS={};
+function colonyAtlas(v){if(COLONY_ATLAS[v]!==undefined)return COLONY_ATLAS[v];COLONY_ATLAS[v]=null;
+  new THREE.TextureLoader().load('kits/store/colony/'+v+'.png',t=>{t.flipY=false;t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearFilter;t.generateMipmaps=false;t._keep=true;COLONY_ATLAS[v]=t;
+    for(const m of hullMats)if(m.userData.atlas===v){m.map=t;m.color.lerp(new THREE.Color(1,1,1),.75);m.needsUpdate=true}},undefined,()=>{});return null}
+const hullMats=[];
+function hullVariant(name){const w=typeof groundWorld!=='undefined'&&groundWorld,fac=w&&PLANET_FACTION[w.id];const blue=fac!=='legion',white=/research|home|house|farm|solar/.test(name);return'T_Spase'+(blue?'_blue':'')+(white?'_white':'').replace('T_Spase_white','T_Spase_white')}
+function hullMat(hex,glow,name=''){const m=new THREE.MeshLambertMaterial({color:new THREE.Color(hex)});m.extensions={derivatives:true};
+  const v=hullVariant(name);m.userData.atlas=v;hullMats.push(m);const at=colonyAtlas(v);if(at){m.map=at;m.color.lerp(new THREE.Color(1,1,1),.75)}
   m.onBeforeCompile=sh=>{sh.uniforms.glowC={value:new THREE.Color(glow||'#7fe8ff')};
     sh.vertexShader='varying vec3 vHW;\n'+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\nvec4 hw=vec4(transformed,1.);\n#ifdef USE_INSTANCING\nhw=instanceMatrix*hw;\n#endif\nvHW=(modelMatrix*hw).xyz;');
     sh.fragmentShader='varying vec3 vHW;uniform vec3 glowC;\nfloat hh(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\nfloat seam(vec2 p){vec2 g=abs(fract(p)-.5);return smoothstep(.47,.5,max(g.x,g.y));}\n'+sh.fragmentShader
@@ -3978,9 +3991,9 @@ function hullMat(hex,glow){const m=new THREE.MeshLambertMaterial({color:new THRE
         float plate=.86+.14*hh(floor(pp));float s1=seam(pp);diffuseColor.rgb*=plate*(1.-.35*s1);
         float wall=1.-aw.y;float band=smoothstep(.06,.0,abs(fract(vHW.y/3.2)-.55)-.05)*wall*step(.45,hh(floor(uvp/vec2(1.6,3.2))+7.));`)
       .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance+=glowC*band*.9;')}
-  m.customProgramCacheKey=()=>'hull'+(glow||'');return m}
+  m.customProgramCacheKey=()=>'hull'+(glow||'')+(m.map?'m':'');return m}
 {const _kp=kitProto;kitProto=function(name,g){const p=_kp(name,g);if(p&&/^col_/.test(name)&&!p._hull){p._hull=true;const glow=/reactor|geo/.test(name)?'#ffb45a':/solar/.test(name)?'#7fb8ff':'#7fe8ff';
-  const mat=hullMat(HULL_TINT[name]||'#b4bac2',glow);for(const part of p.parts)part.mat=mat}return p}}
+  const mat=hullMat(HULL_TINT[name]||'#b4bac2',glow,name);for(const part of p.parts)part.mat=mat}return p}}
 
 /* ---- Grudge ID account row in the menu (standalone site with a backend only) ---- */
 {const _me=menuExtras;menuExtras=function(){_me();const A=window.grudgeAuth,B=$('#gwBody');if(!A||!A.enabled()||!B||B.querySelector('.gid-row'))return;
@@ -4333,7 +4346,7 @@ function pbrMat(src,o={}){if(!src||Array.isArray(src))return src;if(src.isShader
     emissive:em,emissiveMap:src.emissiveMap||null,normalMap:src.normalMap||null,aoMap:src.aoMap||null,transparent:!!src.transparent,opacity:src.opacity??1,alphaTest:src.alphaTest||0,side:src.side,
     roughness:o.rough??.86,metalness:o.metal??.03,envMapIntensity:.7});
   if(toon)m.color.setScalar(1);
-  m.userData.pbr=true;pbrInject(m,o,src);byKind[kk]=m;PBR.mats.add(m);return m}
+  m.userData.pbr=true;if(src.userData&&src.userData.atlas){m.userData.atlas=src.userData.atlas;hullMats.push(m);if(!m.map&&COLONY_ATLAS[src.userData.atlas]){m.map=COLONY_ATLAS[src.userData.atlas];m.color.lerp(new THREE.Color(1,1,1),.75)}}pbrInject(m,o,src);byKind[kk]=m;PBR.mats.add(m);return m}
 const PBR_LOOK={kit:{rough:.88,metal:.02,scale:1.2,surf:'kit'},scifi:{rough:.6,metal:.32,scale:1.6,surf:'metal',roughVar:.5,grime:.3},toon:{rough:.78,metal:.04,scale:3,bump:.35,grime:.05,roughVar:.3},
   creature:{rough:.7,metal:.05,scale:2.5,bump:.8,grime:.18},droid:{rough:.5,metal:.45,scale:2.5,grime:.22},gun:{rough:.42,metal:.55,scale:5,surf:'gun',bump:.6,grime:.2}};
 const pbrKindFor=name=>/^(col_|sk_|skt_|mk_)/.test(name)?'scifi':'kit';
@@ -5112,7 +5125,8 @@ window.GG_BRIDGE={
   get terminals(){return terminals},get TERMINALS(){return TERMINALS},get gwHidden(){return gw.hidden},get buffs(){return buffs},get waypoint(){return waypoint},get parkedCart(){return parkedCart},
   fn:{startGather:()=>typeof startGather==='function'&&startGather(),harvestCorpse:(p,k)=>harvestCorpse(p,k),addBuff:(...a)=>addBuff(...a),setWaypoint:(x,z,l)=>setWaypoint(x,z,l),
     nearTravel:()=>nearTravel(),travelPoints:w=>travelPoints(w),setVendor:n=>{vendorName=n},combatLevel:()=>combatLevel(),hamMax:()=>hamMax(),selectPlacement:i=>selectPlacement(i),mmHud:()=>mmHud(),
-    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0}},
+    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0},npcStrike:(p,u)=>npcStrike(p,u),npcCallPack:(c,p,r)=>npcCallPack(c,p,r),isNight:()=>isNight(),
+    standing:f=>standing(f),creatureFaction:cat=>CREATURE_FACTION[cat],mmLog:(m,k)=>mmLog(m,k||'combat'),toonOneShot:(o,k)=>toonOneShot(o,k),incapacitated:()=>!CH||CH.hp<=0},
   get GD(){return GD},get RACE(){return RACE},get CLASS(){return CLASS},get FACTION(){return FACTION},get WORLDS(){return WORLDS},get PLANET_FACTION(){return PLANET_FACTION},planetName:w=>planetName(w),nearestPoi:(w,x,z)=>nearestPoi(w,x,z),
   groundH:(w,x,z)=>groundH(w,x,z),waterDepth:(w,x,z)=>waterDepth(w,x,z),toast:m=>toast(m),floatMsg:m=>floatMsg(m),
   wrap(name,make){const W={updatePlay:()=>{updatePlay=make(updatePlay)},gameTick:()=>{gameTick=make(gameTick)},buildGround:()=>{buildGround=make(buildGround)},

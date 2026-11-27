@@ -52,3 +52,19 @@ starting profession has none), defeat it (about nine hits for that character), e
 you are handed, open the survey device, open the mission board. Completion: +1,500 credits, +250 combat XP, the weapon
 becomes Superior (quality 600, one perk) and `CH.tutorial = { done, at, race, cls }` is saved. Skip any time; replay
 from the Menu window. `?notutorial` in the address disables it.
+
+## Scriptable patterns (`src/script/`)
+
+Modelled on the SWGEmu Core3 design: object templates, the creature state graph and patrol queues.
+
+- `templates.ts`: `registerObjectType(type, TemplateClass)` (Core3 `ObjectManager::registerObjectTypes`), `defineTemplate(id,
+  { templateType, extends, ...fields })` (Core3 `ObjectTemplates:addTemplate` + Lua `:new {}` inheritance, nested objects
+  merge one level), `getTemplate(id)` runs the class's `readObject` once, `instantiate(id, target)` runs `loadTemplateData`.
+- `fsm.ts`: data-driven state machine: states with `onEnter / tick / onExit / on{event}`, machine-wide `any` events,
+  `describe()` prints the graph.
+- `ai/creature.ts`: the Core3 creature graph (spawn, standing, wandering, patrol, alert, attack, flee, return, death,
+  respawn) driven by `creature` templates per category (`object/creature/beasts` ...) and variants
+  (`object/creature/variant/sentinel`, `prey`). A placement picks one with `g.ai` or `g.aiTemplate`.
+- `ai/patrol.ts`: the Core3 patrol flowchart (queue -> path -> walk by creature speed / cell change -> interpolate).
+- `runtime.ts`: every hostile creature gets a brain; the legacy aiTick skips them. `window.GG_SCRIPT` lists templates,
+  the graph and live state counts.
