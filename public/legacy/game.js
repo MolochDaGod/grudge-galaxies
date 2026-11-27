@@ -506,6 +506,7 @@ function indexPois(w){
     for(let bx=Math.floor((p.x-R)/B);bx<=Math.floor((p.x+R)/B);bx++)for(let bz=Math.floor((p.z-R)/B);bz<=Math.floor((p.z+R)/B);bz++){const k=bx+','+bz;(poiBins.get(k)||poiBins.set(k,[]).get(k)).push(p)}});
 }
 function groundH(w,x,z){
+  if(w.floorAt){const f=w.floorAt(x,z);if(f!=null)return f} // generated building floors (src/buildings/runtime.ts)
   let h=rawH(w,x,z),best=0,bh=h;const a=poiBins.get(Math.floor(x/1024)+','+Math.floor(z/1024));
   if(a)for(const p of a){const d=Math.hypot(x-p.x,z-p.z),k=1-smooth(p.r+30,p.r+Math.min(1200,250+Math.abs(p.base-h)*6),d);if(k>best){best=k;bh=p.base}}
   return h+(bh-h)*best;
@@ -1369,6 +1370,13 @@ function clearNpcToons(){for(const [i,obj] of npcToons){toonGroup.remove(obj);hi
 
 /* ================= Grudge asset library: buildings, castles, space terminals, NPCs and monsters ================= */
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s)})}
+/* content hash of a kit prototype (all parts, their transforms, every 7th vertex): tools/prefab_bake.mjs bakes
+   colliders against it and src/physics/world.ts uses a bake only when the hash still matches */
+const _ph=new THREE.Vector3(),protoHashCache={};
+function protoHash(k){if(protoHashCache[k])return protoHashCache[k];const proto=kitProtoCache[k];if(!proto||!proto.parts)return null;let h=2166136261>>>0;const mix=n=>{h=Math.imul(h^(n|0),16777619)>>>0};
+  for(const part of proto.parts){const g=part.geo,pos=g.getAttribute('position'),idx=g.index;if(!pos)continue;for(const e of part.m.elements)mix(Math.round(e*1000));const n=idx?idx.count:pos.count;mix(n);
+    for(let i=0;i<n;i+=7){const j=idx?idx.getX(i):i;_ph.fromBufferAttribute(pos,j).applyMatrix4(part.m);mix(Math.round(_ph.x*1000));mix(Math.round(_ph.y*1000));mix(Math.round(_ph.z*1000))}}
+  return protoHashCache[k]=h.toString(16)}
 const KIT={},kitProtoCache={};let kitReady=false;const kitWaiters=[];
 function kitScene(name){
   if(!KIT[name])KIT[name]=new Promise((res,rej)=>{const b64=(window.GRUDGE_KIT||{})[name];if(!b64)return rej(new Error('missing kit '+name));
@@ -1512,7 +1520,7 @@ const KIT_RULES=[
   [/stalagmite|stalactite/,{k:'kk_detail_rocks',fit:'uni',len:4}],[/hovel|stone_hut/,{k:'kk_house',fit:'uni',len:9}],
   [/arch/,{k:'kk_wall_gate',fit:'uni',len:7}],[/campfire|fire_pit/,{k:'kk_detail_rocks',fit:'uni',len:1.6}],
 ];
-function kitRule(p){if(p.t&&p.t.startsWith('crc:'))return{skip:1};if(p.k==='travel')return{composite:p.t.startsWith('Starport')?'starport':'shuttle'};if(p.k==='npc')return null;const t=p.t.toLowerCase();{const pr=packRule(t);if(pr)return pr}
+function kitRule(p){if(p.genB)return{skip:1};if(p.t&&p.t.startsWith('crc:'))return{skip:1};if(p.k==='travel')return{composite:p.t.startsWith('Starport')?'starport':'shuttle'};if(p.k==='npc')return null;const t=p.t.toLowerCase();{const pr=packRule(t);if(pr)return pr}
   const cls=clsOf(p);if(cls==='object'){if(/station|terminal|console/.test(t))return{k:'crate',fit:'h',h:1.3};}else if(cls!=='building'&&cls!=='static'&&cls!=='installation')return null;
   for(const [re,r] of KIT_RULES)if(re.test(t))return r;
   if(cls==='building')return{k:'kk_house',fit:'fp'};if(cls==='installation')return{k:'kk_mill',fit:'h',h:9};return{k:'crate',fit:'h',h:1.2}}
@@ -1587,8 +1595,8 @@ function applyKits(w){
     for(const idx of cells.values()){const n=idx.length;let cx=0,cy=0,cz=0;for(const j of idx){cx+=g.ms[j][12];cy+=g.ms[j][13];cz+=g.ms[j][14]}cx/=n;cy/=n;cz/=n;
       let r=0;for(const j of idx){const m=g.ms[j],sc=Math.hypot(m[0],m[1],m[2]);r=Math.max(r,Math.hypot(m[12]-cx,m[13]-cy,m[14]-cz)+sc*(g.proto.size&&g.proto.size.isVector3?g.proto.size.length()*.5:40))}
       const sphere=new THREE.Sphere(new V3(cx,cy,cz),r+20);
-      for(const part of g.proto.parts){const im=new THREE.InstancedMesh(part.geo,part.mat,n);idx.forEach((j,q)=>{M.fromArray(g.ms[j]).multiply(part.m);im.setMatrixAt(q,M)});
-        im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.userData.pidx=idx.map(j=>g.pidx[j]);im.userData.cull=sphere;G.ground.add(im);kitMeshes.push(im)}}}
+      g.proto.parts.forEach((part,pi)=>{const im=new THREE.InstancedMesh(part.geo,part.mat,n);idx.forEach((j,q)=>{M.fromArray(g.ms[j]).multiply(part.m);im.setMatrixAt(q,M)});im.userData.kit=k;im.userData.part=pi;im.userData.inst=idx.map(j=>g.ms[j]);
+        im.instanceMatrix.needsUpdate=true;im.frustumCulled=false;im.userData.pidx=idx.map(j=>g.pidx[j]);im.userData.cull=sphere;G.ground.add(im);kitMeshes.push(im)})}}
   if(pads.length){PAD_TEX=PAD_TEX||padTexture();const pm=new THREE.InstancedMesh(new THREE.CylinderGeometry(1,1,.6,40),[new THREE.MeshLambertMaterial({color:0x7d8086}),new THREE.MeshLambertMaterial({map:PAD_TEX}),new THREE.MeshLambertMaterial({color:0x7d8086})],pads.length);
     pads.forEach((pd,j)=>{M.compose(new V3(pd.x,pd.gy+.3,-pd.z),new THREE.Quaternion(),new V3(pd.r,1,pd.r));pm.setMatrixAt(j,M)});pm.instanceMatrix.needsUpdate=true;pm.userData.pidx=pads.map(p=>p.i);G.ground.add(pm);kitMeshes.push(pm)}
   // hide the stand-in boxes (and any roofs) for everything a kit now represents
@@ -3660,6 +3668,15 @@ function npcCallPack(c,p,radius){const u=c.userData;for(const [i,h] of npcToons)
 const TERMINALS={general:{name:'General',color:'#6ff0ff',kinds:['destroy','destroy','explore']},artisan:{name:'Artisan',color:'#f2a24a',kinds:['survey','survey']},
   entertainer:{name:'Entertainer',color:'#c58bff',kinds:['entertain']},scout:{name:'Scout',color:'#8fe07a',kinds:['hunt','explore']},faction:{name:'Faction',color:'#ffd75a',kinds:['destroy','destroy']}};
 let terminals=[],missionTerminal=null;
+/* a mission terminal inside a generated building: same look as the street ones, no sky beam (there is a roof) */
+function addTerminalAt(k,x,z,rot,y,city){const T=TERMINALS[k]||TERMINALS.general,w=groundWorld,fac=k==='faction'&&w?PLANET_FACTION[w.id]:null,c=col(fac&&FACTION[fac]?FACTION[fac].color:T.color);
+  const g=new THREE.Group(),dark=new THREE.MeshLambertMaterial({color:0x2c3440});
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,.3,8),dark);base.position.y=.15;g.add(base);
+  const post=new THREE.Mesh(new THREE.BoxGeometry(.4,1.3,.4),dark);post.position.y=.95;g.add(post);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(1.1,.75,.16),dark);head.position.set(0,1.75,.08);head.rotation.x=-.35;g.add(head);
+  const scr=new THREE.Mesh(new THREE.PlaneGeometry(.95,.6),new THREE.MeshBasicMaterial({color:c}));scr.position.set(0,1.76,.17);scr.rotation.x=-.35;g.add(scr);
+  const holo=new THREE.Mesh(new THREE.OctahedronGeometry(.18),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.85}));holo.position.y=2.45;g.add(holo);
+  g.position.set(x,y,-z);g.rotation.y=rot;G.ground.add(g);const t={obj:g,holo,kind:k,x,z,city,faction:fac,indoor:true};terminals.push(t);return t}
 function buildTerminals(w){terminals.forEach(t=>G.ground.remove(t.obj));terminals=[];const cities=w.pois.filter(q=>q.cat==='city').sort((a,b)=>b.r-a.r);
   cities.forEach((q,ci)=>{const kinds=['general','artisan','entertainer','scout'].concat(ci<2?['faction']:[]),R=Math.min(70,Math.max(24,q.r*.18))+16,off=(strHash(q.name+'t')%628)/100;
     kinds.forEach((k,j)=>{const a=off+j/kinds.length*TAU,x=q.x+Math.cos(a)*R,z=q.z+Math.sin(a)*R,T=TERMINALS[k],fac=k==='faction'?PLANET_FACTION[w.id]:null,c=col(fac&&FACTION[fac]?FACTION[fac].color:T.color);
@@ -5314,7 +5331,7 @@ window.GG_BRIDGE={
   get terminals(){return terminals},get TERMINALS(){return TERMINALS},get gwHidden(){return gw.hidden},get buffs(){return buffs},get waypoint(){return waypoint},get parkedCart(){return parkedCart},
   fn:{startGather:()=>typeof startGather==='function'&&startGather(),harvestCorpse:(p,k)=>harvestCorpse(p,k),addBuff:(...a)=>addBuff(...a),setWaypoint:(x,z,l)=>setWaypoint(x,z,l),
     nearTravel:()=>nearTravel(),travelPoints:w=>travelPoints(w),setVendor:n=>{vendorName=n},combatLevel:()=>combatLevel(),hamMax:()=>hamMax(),selectPlacement:i=>selectPlacement(i),mmHud:()=>mmHud(),
-    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0},npcStrike:(p,u)=>npcStrike(p,u),npcCallPack:(c,p,r)=>npcCallPack(c,p,r),isNight:()=>isNight(),
+    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0},addTerminal:(k,x,z,r,y,c)=>addTerminalAt(k,x,z,r,y,c),protoHash:k=>protoHash(k),npcStrike:(p,u)=>npcStrike(p,u),npcCallPack:(c,p,r)=>npcCallPack(c,p,r),isNight:()=>isNight(),
     standing:f=>standing(f),creatureFaction:cat=>CREATURE_FACTION[cat],mmLog:(m,k)=>mmLog(m,k||'combat'),toonOneShot:(o,k)=>toonOneShot(o,k),incapacitated:()=>!CH||CH.hp<=0},
   get GD(){return GD},get RACE(){return RACE},get CLASS(){return CLASS},get FACTION(){return FACTION},get WORLDS(){return WORLDS},get PLANET_FACTION(){return PLANET_FACTION},planetName:w=>planetName(w),nearestPoi:(w,x,z)=>nearestPoi(w,x,z),
   groundH:(w,x,z)=>groundH(w,x,z),waterDepth:(w,x,z)=>waterDepth(w,x,z),toast:m=>toast(m),floatMsg:m=>floatMsg(m),

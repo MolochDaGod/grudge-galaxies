@@ -27,6 +27,27 @@ const STREAM_IN = 520; // metres: kit cells closer than this get colliders
 const STREAM_OUT = 760;
 const NATURE_R = 140; // metres: trees, boulders and pillars closer than this are solid
 
+/* baked kit colliders: public/prefabs/kit-colliders.json, checked against the game's own prototype hash */
+type Bake = { uuid: string; hash: string; boxes: number[][] };
+let bakes: Record<string, Bake> | null = null;
+const bakeStats = { used: new Set<string>(), fallback: new Set<string>(), stale: new Set<string>() };
+(window as any).GG_PREFABS = { get bakes() { return bakes; }, stats: bakeStats };
+fetch('prefabs/kit-colliders.json').then((r) => (r.ok ? r.json() : null)).then((j) => { bakes = j?.prefabs || {}; }).catch(() => { bakes = {}; });
+const bakeOk = new Map<string, Bake | null>();
+function bakedFor(B: Bridge, kit: string): Bake | null {
+  if (!bakes) return null;
+  if (bakeOk.has(kit)) return bakeOk.get(kit)!;
+  const b = bakes[kit];
+  let ok: Bake | null = null;
+  if (b) {
+    const h = (B.fn as any).protoHash?.(kit);
+    if (h && h === b.hash) { ok = b; bakeStats.used.add(kit); }
+    else { bakeStats.stale.add(kit); console.warn(`[prefabs] ${kit}: geometry changed since its bake (${b.hash} vs ${h}); using bounding boxes until it is re-baked`); }
+  }
+  bakeOk.set(kit, ok);
+  return ok;
+}
+
 let ready = false;
 export async function initPhysics(): Promise<void> {
   if (ready) return;
@@ -115,6 +136,31 @@ export class PlanetPhysics {
         continue;
       }
       if (have || d > STREAM_IN) continue;
+      // baked colliders (tools/prefab_bake.mjs): one set per prototype, carried by each instance; only when the bake
+      // still matches the geometry the game loaded. Other parts of a baked prototype add nothing.
+      const kit = im.userData.kit as string | undefined, bake = kit ? bakedFor(this.B, kit) : null;
+      if (bake) {
+        const cols: RAPIER.Collider[] = [];
+        if (im.userData.part === 0) {
+          const IM = new THREE.Matrix4(), bp = new THREE.Vector3(), bq = new THREE.Quaternion(), bs = new THREE.Vector3(), cc = new THREE.Vector3();
+          for (const arr of im.userData.inst as number[][]) {
+            IM.fromArray(arr);
+            IM.decompose(bp, bq, bs);
+            if (Math.abs(bs.x * bs.y * bs.z) < 1e-6) continue;
+            bq.normalize();
+            for (const [cx, cy, cz, hx0, hy0, hz0] of bake.boxes) {
+              const hx = Math.abs(hx0 * bs.x), hy = Math.abs(hy0 * bs.y), hz = Math.abs(hz0 * bs.z);
+              if (hy < 0.05 || hx < 0.03 || hz < 0.03) continue;
+              cc.set(cx, cy, cz).applyMatrix4(IM);
+              if (![hx, hy, hz, cc.x, cc.y, cc.z].every(Number.isFinite) || hx > 2000 || hz > 2000) continue;
+              cols.push(this.world.createCollider(RAPIER.ColliderDesc.cuboid(hx, hy, hz).setTranslation(cc.x, cc.y, cc.z).setRotation(bq).setFriction(0.6)));
+            }
+          }
+        }
+        this.cells.set(im, { mesh: im, colliders: cols });
+        continue;
+      }
+      if (kit) bakeStats.fallback.add(kit);
       if (!im.geometry.boundingBox) im.geometry.computeBoundingBox();
       box.copy(im.geometry.boundingBox!);
       box.getCenter(c);
@@ -137,9 +183,40 @@ export class PlanetPhysics {
       this.cells.set(im, { mesh: im, colliders: cols });
     }
     this.streamNature(here);
+    this.streamBuildings(here);
     let n = this.nature.size;
+    for (const v of this.bld.values()) n += v.length;
     for (const v of this.cells.values()) n += v.colliders.length;
     this.stats.colliders = n;
+  }
+
+  /**
+   * Generated buildings (src/buildings): their solid boxes are the colliders, exactly as drawn, so doorways stay open.
+   * Streamed per building within STREAM_IN of the player.
+   */
+  bld = new Map<any, RAPIER.Collider[]>();
+  streamBuildings(here: THREE.Vector2) {
+    const list: any[] = (this.worldRef as any).genBuildings || [];
+    const px = here.x, pz = -here.y;
+    const keep = new Set<any>();
+    for (const P of list) {
+      const d = Math.hypot(P.x - px, P.z - pz) - P.r;
+      const have = this.bld.get(P);
+      if (d > (have ? STREAM_OUT : STREAM_IN)) continue;
+      keep.add(P);
+      if (have) continue;
+      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), P.rot);
+      const cols: RAPIER.Collider[] = [];
+      for (const b of P.b.boxes) {
+        if (!b.solid) continue;
+        // local (three space, floor top at 0) -> world
+        const wx = P.x + b.x * P.cos + b.z * P.sin, wz = -P.z - b.x * P.sin + b.z * P.cos, wy = P.y + b.y;
+        if (![wx, wy, wz, b.hx, b.hy, b.hz].every(Number.isFinite)) continue;
+        cols.push(this.world.createCollider(RAPIER.ColliderDesc.cuboid(b.hx, b.hy, b.hz).setTranslation(wx, wy, wz).setRotation(q).setFriction(0.7)));
+      }
+      this.bld.set(P, cols);
+    }
+    for (const [P, cols] of this.bld) if (!keep.has(P)) { for (const c of cols) this.world.removeCollider(c, false); this.bld.delete(P); }
   }
 
   /**
@@ -334,6 +411,7 @@ export class PlanetPhysics {
     this.world.free();
     this.cells.clear();
     this.nature.clear();
+    this.bld.clear();
   }
 }
 

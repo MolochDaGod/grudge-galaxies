@@ -8,7 +8,11 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prefabs:bake": "node tools/prefab_bake.mjs",
+    "prefabs:verify": "node tools/prefab_bake.mjs --verify",
+    "check": "npm run typecheck && npm test"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.2",
@@ -18,8 +22,12 @@
     "three-mesh-bvh": "0.9.14"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.2.1",
+    "@gltf-transform/extensions": "^4.2.1",
+    "@gltf-transform/functions": "^4.2.1",
     "@types/three": "0.185.4",
     "typescript": "5.8.3",
-    "vite": "6.4.5"
+    "vite": "6.4.5",
+    "vitest": "^3.2.4"
   }
 }
