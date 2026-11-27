@@ -1079,16 +1079,21 @@ function exitPlay(){if(groundMode!=='play')return;if(cam.fov!==55){cam.fov=55;ca
 function updatePlay(dt){
   const w=groundWorld,swim=waterDepth(w,play.x,play.z),gy0=groundH(w,play.x,play.z),H=(RACE_BODY[warlord.race]||{h:1.8}).h;
   if(rts.on){rtsCamera(dt);play.moving=0;if(play.model){play.model.position.set(play.x,gy0+Math.max(0,swim-1.3),-play.z);animateAny(play.model,play.t,0)}return}
-  const rm=play.mount,flying=rm?rideUpdate(dt):0,run=keys.has('shift')&&(swim<1.2||!!rm),sp=(rm?5.5*rm.def.speed*(run?1.35:1)*(flying?1.3:1):(run?14:5.5)*(swim>1.2?.45:swim>.5?.7:1))*mmSpeedMul()*dt;
+  const rm=play.mount,flying=rm?rideUpdate(dt):0,run=keys.has('shift')&&(swim<1.2||!!rm);if(rm)play.spd=0;let sp=rm?5.5*rm.def.speed*(run?1.35:1)*(flying?1.3:1)*mmSpeedMul()*dt:0;
   // over-the-shoulder controls: W/S along the camera, A/D strafe, Q/E turn the camera
   if(keys.has('q'))play.camYaw+=dt*2.2;if(keys.has('e'))play.camYaw-=dt*2.2;
   let fx=0,fz=0;if(keys.has('w')||keys.has('arrowup'))fz+=1;if(keys.has('s')||keys.has('arrowdown'))fz-=1;if(keys.has('a')||keys.has('arrowleft'))fx-=1;if(keys.has('d')||keys.has('arrowright'))fx+=1;
   const c=play.camYaw,fwd={x:-Math.sin(c),z:Math.cos(c)},rt={x:Math.cos(c),z:Math.sin(c)},len=Math.hypot(fx,fz);let mv=0;
-  if(len){const nx=(fx*rt.x+fz*fwd.x)/len,nz=(fx*rt.z+fz*fwd.z)/len,back=fz<0&&!fx?.65:1;play.x+=nx*sp*back;play.z+=nz*sp*back;mv=1;
+  if(!rm){// on foot: speed ramps from a stop through walk into a jog; Shift sprints; letting go eases to a stop
+    const back=len&&fz<0&&!fx,env=(swim>1.2?.45:swim>.5?.7:1)*mmSpeedMul(),target=len?(run&&!back?LOCO.sprint:back?LOCO.back:LOCO.jog)*env:0,cur=play.spd||0;
+    const acc=target>cur?(cur<LOCO.walk?LOCO.accWalk:run?LOCO.accSprint:LOCO.accJog):LOCO.decel;play.spd=cur+Math.max(-acc*dt,Math.min(acc*dt,target-cur));
+    if(play.spd<.02)play.spd=0;sp=play.spd*dt;
+    if(!len&&play.spd>0&&play.mvDir){play.x+=play.mvDir.x*sp;play.z+=play.mvDir.z*sp}}
+  if(len){const nx=(fx*rt.x+fz*fwd.x)/len,nz=(fx*rt.z+fz*fwd.z)/len;play.mvDir={x:nx,z:nz};play.x+=nx*sp;play.z+=nz*sp;mv=1;
     const want=mouselook||combat.p?c:Math.atan2(-nx,nz);let dy=((want-play.yaw+Math.PI)%TAU+TAU)%TAU-Math.PI;play.yaw+=dy*Math.min(1,dt*10)}
   else if(mouselook||combat.p){let dy=((c-play.yaw+Math.PI)%TAU+TAU)%TAU-Math.PI;play.yaw+=dy*Math.min(1,dt*6)}
   play.x=Math.max(-HALF,Math.min(HALF,play.x));play.z=Math.max(-HALF,Math.min(HALF,play.z));
-  const gy=groundH(w,play.x,play.z);play.t+=dt*(run?11:7)*(mv?1:0);play.moving=mv?(run?2:1):0;
+  const gy=groundH(w,play.x,play.z);play.t+=dt*(run?11:7)*(mv?1:0);play.moving=rm?(mv?(run?2:1):0):play.spd<.15?0:play.spd>LOCO.jog+.6?2:1;
   const baseY=gy+(rm?Math.max(play.alt||0,swim>0?Math.max(0,swim-.6):0):Math.max(0,swim-1.3)),seat=rm?(rm.obj.userData.seat||1.2):0;
   if(rm){rm.obj.position.set(play.x,baseY,-play.z);rm.obj.rotation.y=play.yaw+Math.PI;animateMount(rm.obj,dt,play.moving,flying)}
   if(play.model){if(rm){const sz=rm.obj.userData.seatZ||0;play.model.position.set(play.x-Math.sin(play.yaw)*sz,baseY+seat-.45,-(play.z+Math.cos(play.yaw)*sz));play.model.rotation.y=play.yaw+Math.PI;animateAny(play.model,play.t,0)}
@@ -1356,7 +1361,30 @@ function toonOneShot(inst,kind){if(!inst||!inst.userData.mixer)return;const u=in
   if(kind==='stagger')return toonPlay(inst,u.clips.stagger?'stagger':'hit',.08,{once:true,hold:1.1});
   const em={wave:'pointing',point:'pointing',flex:'powerUp',strut:'swagger',look:'lookAround',cheer:'bboy',spin:'soulSpin'}[kind];
   return toonPlay(inst,em&&u.clips[em]?em:kind,.2,{once:true})}
+// Locomotion speeds (m/s, same for every race so nobody is slower) and the native ground speed of each clip at 1.8 m tall.
+const LOCO={walk:1.7,jog:5.2,sprint:8.6,back:2.6,accWalk:3.2,accJog:5.5,accSprint:6.5,decel:11,clip:{walk:1.45,run:3.9,sprint:6.4,walkBack:1.4,runBack:3.4,strafeL:1.5,strafeR:1.5}};
+const LOCO_SET=['idle','walk','run','sprint','walkBack','runBack','strafeL','strafeR'];
+// Player blend tree: idle / walk / jog / sprint weighted by actual speed, phases synced, play rates matched to ground speed
+// so feet do not slide; one-shots (attacks, jumps, hits) take the body and loco fades back in after.
+function locoBlend(inst,dt,spd){const u=inst.userData,k=(RACE_BODY[u.race]||{h:1.8}).h/1.8,T={};
+  if(u.once>0){u.once-=dt;if(spd>.6&&!/^hit|^jump/.test(u.state||'')&&!ATTACK_STATES.test(u.state||''))u.once=0}
+  const oneShot=u.once>0?u.cur:null;
+  if(!oneShot){if(u.dir&&spd>.15){const n=locoClip(u,spd>4?2:1);if(u.clips[n])T[n]=Math.min(1,spd/1.2);T.idle=1-(T[n]||0)}
+    else{const A=[['idle',0],['walk',LOCO.walk],['run',LOCO.jog],['sprint',LOCO.sprint]].filter(([n])=>u.clips[n]);
+      if(spd<=0||A.length<2)T.idle=1;else{let i=0;while(i<A.length-2&&spd>A[i+1][1])i++;const a=A[i],b=A[i+1],f=Math.max(0,Math.min(1,(spd-a[1])/(b[1]-a[1])));T[a[0]]=1-f;T[b[0]]=f}}
+    u.state=Object.entries(T).sort((x,y)=>y[1]-x[1])[0][0]}
+  const rate=oneShot?16:9;let lead=null,lw=0;
+  for(const n of new Set([...Object.keys(u.acts),...Object.keys(T)])){const a=toonAct(inst,n);if(!a)continue;
+    const want=oneShot?(a===oneShot?1:0):(T[n]||0);let w=a.isScheduled()?a.getEffectiveWeight():0;a.stopFading();
+    w+=(want-w)*Math.min(1,dt*rate);if(want===0&&w<.004){if(a.isScheduled())a.stop();continue}
+    if(!a.isScheduled()){a.reset();a.setLoop(a===oneShot?THREE.LoopOnce:THREE.LoopRepeat);a.play()}
+    a.setEffectiveWeight(w);
+    if(LOCO_SET.includes(n)){const c=LOCO.clip[n];a.setEffectiveTimeScale(c?Math.max(.55,Math.min(1.6,spd/(c*k))):1);if(n!=='idle'&&w>lw){lw=w;lead=a}}}
+  if(lead){const ph=lead.time/lead.getClip().duration;for(const n of ['walk','run','sprint']){const a=u.acts[n];if(a&&a!==lead&&a.isScheduled())a.time=ph*a.getClip().duration}}
+  if(!oneShot)u.cur=u.acts[u.state]||u.cur;u.blend=true;u.mixer.update(dt)}
 function toonAnimate(inst,amt){const u=inst.userData,now=performance.now(),dt=Math.min(.1,(now-u.last)/1000);u.last=now;
+  if(typeof play!=='undefined'&&inst===play.model&&!play.mount&&!(typeof rts!=='undefined'&&rts.on)){u.race=u.race||(CH&&CH.race);return locoBlend(inst,dt,play.spd||0)}
+  if(u.blend){u.blend=false;for(const a of Object.values(u.acts))if(a!==u.cur&&a.isScheduled())a.fadeOut(.2)}
   if(u.once>0){u.once-=dt;if(amt>0&&!/^hit/.test(u.state||'')&&!ATTACK_STATES.test(u.state||''))u.once=0}
   if(u.once<=0)toonPlay(inst,locoClip(u,amt),.25,{speed:amt>1.5?1:amt>0?1.05:1});u.mixer.update(dt)}
 loadScript('anim.js').then(()=>{ANIMLIB=window.GRUDGE_ANIM;for(const r of Object.keys(toonReady))clipsForRace(r);if(typeof crRebuild==='function'&&!cr.hidden)crRebuild();if(groundMode==='play')swapPlayerModel();clearNpcToons()}).catch(e=>console.warn('Animation library unavailable; using procedural walk.',e));
@@ -1980,16 +2008,21 @@ function tickPadFx(dt){if(level!=='ground'||!padFx.length)return;const t=now();f
   if(f){portalCd=6;mmLog(`You step into the ${f.star?'starport':'shuttleport'} portal.`,'sys');openWin('travel')}}
 
 /* ---- mounts and vehicles ---- */
-const MOUNTS={horse:{name:'Warhorse',k:'mount_horse',speed:2.1,cost:0,scale:1.15},cart:{name:'Horse Cart',cart:true,speed:1.6,cost:1800},wolf:{name:'Dire Wolf',k:'mount_wolf',speed:2.35,cost:2500,scale:1.35},ram:{name:'Dwarven War Ram',k:'mount_dwarf',speed:2.0,cost:2500,scale:1.25},
+const MOUNTS={horse:{name:'Warhorse',k:'mount_horse',animal:'horse',speed:2.1,cost:0,scale:1.15},cart:{name:'Horse Cart',cart:true,speed:1.6,cost:1800},wolf:{name:'Dire Wolf',k:'mount_wolf',speed:2.35,cost:2500,scale:1.35},ram:{name:'Dwarven War Ram',k:'mount_dwarf',speed:2.0,cost:2500,scale:1.25},
   bone:{name:'Bone Steed',k:'mount_undead',speed:2.35,cost:4000,scale:1.15},
   ember:{name:'Ember Dragon',dragon:'ember',speed:3.2,fly:true,cost:25000},frost:{name:'Frost Dragon',dragon:'frost',speed:3.2,fly:true,cost:25000},jade:{name:'Jade Dragon',dragon:'jade',speed:3.2,fly:true,cost:25000},
   void:{name:'Void Dragon',dragon:'void',speed:3.4,fly:true,cost:40000},gold:{name:'Gold Dragon',dragon:'gold',speed:3.6,fly:true,cost:60000}};
 function makeMountObj(id){const M=MOUNTS[id];if(!M)return null;let obj;if(M.cart)return makeCart();if(M.dragon){obj=makeDragon(DRAGON_COLORS[M.dragon]);obj.userData.seat=obj.userData.dragon.seat;obj.userData.seatZ=obj.userData.dragon.seatZ;return obj}
+  // animated horse (Walk / Gallop / Idle clips) when the animal kit is in; the static kit horse with a procedural gait otherwise
+  if(M.animal&&animalG[M.animal]&&THREE.SkeletonUtils){const A=animalG[M.animal],m=THREE.SkeletonUtils.clone(A.scene);m.scale.setScalar(ANIMAL_SPEC[M.animal].h*(M.scale||1)/A.h);
+    const box=new THREE.Box3().setFromObject(m);obj=new THREE.Group();obj.add(m);obj.userData.seat=box.max.y*.74;obj.userData.seatZ=0;const mixer=new THREE.AnimationMixer(m),find=n=>A.clips.find(c=>c.name===n);
+    const act=n=>find(n)&&mixer.clipAction(find(n));obj.userData.mx={mixer,run:act('Gallop'),walk:act('Walk'),idle:act('Idle'),cur:null};obj.userData.mx.idle.play();obj.userData.mx.cur=obj.userData.mx.idle;obj.userData.animalMount=1;return obj}
+  if(M.animal&&typeof loadAnimal==='function')loadAnimal(M.animal);
   const g=kitSync(M.k);if(!g)return null;const m=THREE.SkeletonUtils.clone(g.scene);m.scale.setScalar(M.scale);const box=new THREE.Box3().setFromObject(m);obj=new THREE.Group();obj.add(m);obj.userData.seat=Math.max(.9,box.max.y*.72);obj.userData.seatZ=0;
-  if(g.animations&&g.animations.length){const mixer=new THREE.AnimationMixer(m),find=re=>g.animations.find(c=>re.test(c.name));const run=find(/run|gallop|move|walk/i),idle=find(/idle/i)||g.animations[0];
-    obj.userData.mx={mixer,run:run&&mixer.clipAction(run),idle:mixer.clipAction(idle),cur:null};obj.userData.mx.idle.play();obj.userData.mx.cur=obj.userData.mx.idle}obj.userData.gait=gaitRig(m);obj.userData.gaitM=m;obj.userData.gaitH=box.max.y;return obj}
-function animateMount(obj,dt,moving,flying){if(!obj)return;if(obj.userData.cart)return animateCart(obj,dt,moving);if(obj.userData.dragon)return dragonTick(obj,dt,moving,flying);if(obj.userData.gait){const bob=gaitTick(obj.userData.gait,dt,moving);obj.userData.gaitM.position.y=bob*obj.userData.gaitH}const mx=obj.userData.mx;if(!mx)return;const want=moving&&mx.run?mx.run:mx.idle;
-  if(mx.cur!==want){want.reset().fadeIn(.2).play();if(mx.cur)mx.cur.fadeOut(.2);mx.cur=want}if(want===mx.run)want.setEffectiveTimeScale(moving>1.5?1.3:1);mx.mixer.update(dt)}
+  if(g.animations&&g.animations.length){const mixer=new THREE.AnimationMixer(m),find=re=>g.animations.find(c=>re.test(c.name));const run=find(/gallop|run/i)||find(/move|walk/i),walk=find(/walk|trot/i),idle=find(/idle/i)||g.animations[0];
+    obj.userData.mx={mixer,run:run&&mixer.clipAction(run),walk:walk&&walk!==run?mixer.clipAction(walk):null,idle:mixer.clipAction(idle),cur:null};obj.userData.mx.idle.play();obj.userData.mx.cur=obj.userData.mx.idle}obj.userData.gait=gaitRig(m);obj.userData.gaitM=m;obj.userData.gaitH=box.max.y;return obj}
+function animateMount(obj,dt,moving,flying){if(!obj)return;if(obj.userData.cart)return animateCart(obj,dt,moving);if(obj.userData.dragon)return dragonTick(obj,dt,moving,flying);if(obj.userData.gait&&!obj.userData.animalMount){const bob=gaitTick(obj.userData.gait,dt,moving);obj.userData.gaitM.position.y=bob*obj.userData.gaitH}const mx=obj.userData.mx;if(!mx)return;const want=moving>1.5&&mx.run?mx.run:moving&&(mx.walk||mx.run)?(obj.userData.animalMount&&!obj.userData.inCart&&mx.run?mx.run:mx.walk||mx.run):mx.idle;
+  if(mx.cur!==want){want.reset().fadeIn(.35).play();if(mx.cur)mx.cur.fadeOut(.35);mx.cur=want}if(want===mx.run)want.setEffectiveTimeScale(obj.userData.animalMount?(moving>1.5?1.05:.82):moving>1.5?1.15:mx.walk?1:.75);mx.mixer.update(dt)}
 function ownedMounts(){if(!CH)return[];CH.mounts=CH.mounts||['horse'];return CH.mounts}
 function mount(id){if(!CH||groundMode!=='play')return;if(!ownedMounts().includes(id))return;if(play.mount)dismount(true);if(combat.p)return toast('You cannot mount while in combat.');let obj=null;if(id==='cart'&&parkedCart){obj=parkedCart;parkedCart=null;if(Math.hypot(CH.cartPark.x-play.x,CH.cartPark.z-play.z)>15)mmLog('Your cart rolls up to meet you.','sys')}else obj=makeMountObj(id);if(!obj)return toast('That mount is still loading. Try again in a moment.');
   G.ground.add(obj);play.mount={id,obj,def:MOUNTS[id]};play.alt=0;CH.lastMount=id;if(play.model&&play.model.userData.mixer)toonOneShot(play.model,'sit');play.dist=Math.max(play.dist,MOUNTS[id].dragon?11:7.5);
@@ -2726,6 +2759,7 @@ function loadAnimal(id){if(animalG[id]||animalLoading[id])return animalLoading[i
   animalLoading[id]=loadScript('kits/animals/'+id+'.js').then(()=>new Promise(res=>{const b64=(window.GRUDGE_ANIMAL||{})[id];if(!b64)return res();const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete window.GRUDGE_ANIMAL[id];
     new THREE.GLTFLoader().parse(buf.buffer,'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.frustumCulled=false;(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if('metalness' in m){m.metalness=0;m.roughness=1}})}});
       const box=new THREE.Box3().setFromObject(g.scene);animalG[id]={scene:g.scene,clips:g.animations,h:box.max.y-box.min.y};res()},e=>{console.warn('animal '+id,e);res()})})).catch(e=>console.warn('animal '+id,e));return animalLoading[id]}
+setTimeout(()=>{try{loadAnimal('horse')}catch(e){}},3000);
 function makeAnimal(id){const G0=animalG[id];if(!G0||!THREE.SkeletonUtils)return null;const obj=THREE.SkeletonUtils.clone(G0.scene),holder=new THREE.Group();holder.add(obj);holder.scale.setScalar(ANIMAL_SPEC[id].h/G0.h*(.9+Math.random()*.2));
   const mixer=new THREE.AnimationMixer(obj),acts={};for(const c of G0.clips)acts[c.name]=mixer.clipAction(c);return{obj:holder,mixer,acts,cur:null}}
 function animPlay(a,name,fade=.3,once=false){const act=a.acts[name]||a.acts[name.replace('Headlow','HeadLow')]||a.acts.Idle;if(!act||a.cur===act)return;act.reset();act.setLoop(once?THREE.LoopOnce:THREE.LoopRepeat);act.clampWhenFinished=once;if(a.cur)act.crossFadeFrom(a.cur,fade,false);else act.fadeIn(fade);act.play();a.cur=act}
@@ -3277,9 +3311,36 @@ let cartGltf=null;const CART_SCALE=1.15,STASH_CAP=15000;
 loadScript('cart.js').then(()=>new Promise((res,rej)=>{const bin=atob(window.GRUDGE_CART),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
   new THREE.GLTFLoader().parse(buf.buffer,'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const m=o.material;if(m&&m.map){m.map.encoding=THREE.LinearEncoding;m.map.anisotropy=renderer.capabilities.getMaxAnisotropy()}}});cartGltf=g;res(g)},rej)}))
   .then(()=>{if(groundMode==='play'&&CH)spawnParkedCart()}).catch(e=>console.warn('Cart model unavailable',e));
-function makeCart(){if(!cartGltf)return null;const m=cartGltf.scene.clone(true);m.scale.setScalar(CART_SCALE);const obj=new THREE.Group();obj.add(m);const mixer=new THREE.AnimationMixer(m);
-  const acts=cartGltf.animations.map(c=>{const a=mixer.clipAction(c);a.play();return a});mixer.update(Math.random()*5);obj.userData={cart:true,mx:{mixer,acts},seat:1.3*CART_SCALE,seatZ:-.45*CART_SCALE};return obj}
-function animateCart(obj,dt,moving){const u=obj.userData.mx;const k=moving>1.5?1.7:moving?1.1:.12;u.acts.forEach(a=>a.setEffectiveTimeScale(k));u.mixer.update(dt)}
+// The cart model ships its four wheels welded into the cart body. Split them out once (connected pieces shaped like a disc
+// on the X axle) so each wheel turns about its own hub by the distance the cart actually travels.
+function splitCartWheels(root){root.updateMatrixWorld(true);let src=null;root.traverse(o=>{if(o.isMesh&&!src&&/Object_10|Cart/i.test(o.name+(o.parent&&o.parent.name)))src=o});
+  if(!src||!src.geometry.index)return 0;const geo=src.geometry,P=geo.attributes.position,I=geo.index.array,nv=P.count,par=new Int32Array(nv).map((_,i)=>i),f=x=>{while(par[x]!==x)x=par[x]=par[par[x]];return x};
+  const key=new Map();for(let v=0;v<nv;v++){const k=P.getX(v).toFixed(4)+','+P.getY(v).toFixed(4)+','+P.getZ(v).toFixed(4);if(key.has(k))par[f(v)]=f(key.get(k));else key.set(k,v)}
+  for(let t=0;t<I.length;t+=3){const a=f(I[t]);par[f(I[t+1])]=a;par[f(I[t+2])]=a}
+  const C=new Map();for(let v=0;v<nv;v++){const r=f(v);let c=C.get(r);if(!c)C.set(r,c={b:new THREE.Box3(),tris:[]});c.b.expandByPoint(new THREE.Vector3(P.getX(v),P.getY(v),P.getZ(v)))}
+  for(let t=0;t<I.length;t+=3)C.get(f(I[t])).tris.push(I[t],I[t+1],I[t+2]);
+  const body=[],wheels=[];for(const c of C.values()){const sz=c.b.getSize(new THREE.Vector3());if(sz.x<.25&&sz.y>.45&&Math.abs(sz.y-sz.z)<.08)wheels.push(c);else body.push(...c.tris)}
+  if(wheels.length<2)return 0;const bg=geo.clone();bg.setIndex(body);src.geometry=bg;
+  for(const c of wheels){const ctr=c.b.getCenter(new THREE.Vector3()),wg=geo.clone();wg.setIndex(c.tris);wg.translate(-ctr.x,-ctr.y,-ctr.z);
+    const w=new THREE.Mesh(wg,src.material);w.name='cartWheel';w.position.copy(src.position).add(ctr);w.userData.r=c.b.getSize(new THREE.Vector3()).y/2;w.frustumCulled=false;src.parent.add(w)}
+  return wheels.length}
+function makeCart(){if(!cartGltf)return null;if(!cartGltf._wheels)cartGltf._wheels=splitCartWheels(cartGltf.scene)||-1;const m=cartGltf.scene.clone(true);m.scale.setScalar(CART_SCALE);const obj=new THREE.Group();obj.add(m);const mixer=new THREE.AnimationMixer(m);
+  const acts=cartGltf.animations.map(c=>{const a=mixer.clipAction(c);a.play();return a});mixer.update(Math.random()*5);obj.userData={cart:true,mx:{mixer,acts},seat:1.3*CART_SCALE,seatZ:-.45*CART_SCALE};
+  const wheels=[];m.traverse(o=>{if(o.name==='cartWheel')wheels.push(o)});obj.userData.wheels=wheels;
+  // a rigged, animated horse in the shafts instead of the cart model's stiff one
+  const hk=animalG.horse||kitSync('mount_horse');if(hk){let horse=null,box=null;m.updateMatrixWorld(true);const hb=new THREE.Box3();m.traverse(o=>{if(/^(Body|Head|Tail)/.test(o.name)){hb.expandByObject(o);o.visible=false}});
+    try{horse=makeMountObj('horse')}catch(e){}if(horse&&!hb.isEmpty()){const inv=new THREE.Matrix4().copy(obj.matrixWorld).invert();hb.applyMatrix4(inv);box=new THREE.Box3().setFromObject(horse);
+      const L=hb.getSize(new THREE.Vector3()),HL=box.getSize(new THREE.Vector3()),k=Math.max(.6,Math.min(1.6,Math.max(L.z,L.x)/Math.max(HL.z,HL.x)));horse.scale.setScalar(k);
+      const c=hb.getCenter(new THREE.Vector3()),bc=box.getCenter(new THREE.Vector3());horse.position.set(c.x-bc.x*k,hb.min.y-box.min.y*k,c.z-bc.z*k);horse.userData.inCart=1;obj.add(horse);obj.userData.horse=horse}
+    else m.traverse(o=>{if(/^(Body|Head|Tail)/.test(o.name))o.visible=true})}
+  return obj}
+const _cartV=new THREE.Vector3();
+function animateCart(obj,dt,moving){const u=obj.userData.mx;const k=moving>1.5?1.7:moving?1.1:.12;u.acts.forEach(a=>a.setEffectiveTimeScale(k));u.mixer.update(dt);
+  // wheels roll by the distance actually covered (works for the player's cart and NPC caravans alike)
+  obj.getWorldPosition(_cartV);const lp=obj.userData.lastP;let d=0;if(lp){d=Math.hypot(_cartV.x-lp.x,_cartV.z-lp.z);if(d>20)d=0;
+    const fx=Math.sin(obj.rotation.y),fz=Math.cos(obj.rotation.y);if((_cartV.x-lp.x)*fx+(_cartV.z-lp.z)*fz<0)d=-d}obj.userData.lastP={x:_cartV.x,z:_cartV.z};
+  for(const w of obj.userData.wheels||[]){if(!w.userData.ws){const s=new THREE.Vector3();w.getWorldScale(s);w.userData.ws=Math.abs(s.y)||1}w.rotation.x+=d/(w.userData.r*w.userData.ws)}
+  if(obj.userData.horse)animateMount(obj.userData.horse,dt,Math.abs(d)/Math.max(dt,1e-3)>6?2:Math.abs(d)>dt*.3?1:0,0)}
 
 /* ---- the player's cart: drive it, park it, haul with it ---- */
 let parkedCart=null;
