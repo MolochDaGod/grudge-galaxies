@@ -2,13 +2,16 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="retarget.js"></script>
 <script>
-// Bakes clips from GLB animation packs (KayKit Rig_Medium, Quaternius UAL / Rigify) into the game's shared format.
+// Bakes clips from GLB animation packs (KayKit Rig_Medium, Quaternius UAL / Rigify, UAL2 / UE mannequin) into the game's shared format.
 const MAPS={
  kaykit:{Hips:'hips',Spine2:'chest',Head:'head',LeftArm:'upperarm.l',LeftForeArm:'lowerarm.l',LeftHand:'wrist.l',RightArm:'upperarm.r',RightForeArm:'lowerarm.r',RightHand:'wrist.r',
    LeftUpLeg:'upperleg.l',LeftLeg:'lowerleg.l',LeftFoot:'foot.l',LeftToeBase:'toes.l',RightUpLeg:'upperleg.r',RightLeg:'lowerleg.r',RightFoot:'foot.r',RightToeBase:'toes.r'},
  rigify:{Hips:'DEF-hips',Spine2:'DEF-spine.003',Neck:'DEF-neck',Head:'DEF-head',LeftShoulder:'DEF-shoulder.L',LeftArm:'DEF-upper_arm.L',LeftForeArm:'DEF-forearm.L',LeftHand:'DEF-hand.L',
    RightShoulder:'DEF-shoulder.R',RightArm:'DEF-upper_arm.R',RightForeArm:'DEF-forearm.R',RightHand:'DEF-hand.R',LeftUpLeg:'DEF-thigh.L',LeftLeg:'DEF-shin.L',LeftFoot:'DEF-foot.L',LeftToeBase:'DEF-toe.L',
    RightUpLeg:'DEF-thigh.R',RightLeg:'DEF-shin.R',RightFoot:'DEF-foot.R',RightToeBase:'DEF-toe.R'}};
+MAPS.ue={Hips:'pelvis',Spine2:'spine_03',Neck:'neck_01',Head:'Head',LeftShoulder:'clavicle_l',LeftArm:'upperarm_l',LeftForeArm:'lowerarm_l',LeftHand:'hand_l',
+   RightShoulder:'clavicle_r',RightArm:'upperarm_r',RightForeArm:'lowerarm_r',RightHand:'hand_r',LeftUpLeg:'thigh_l',LeftLeg:'calf_l',LeftFoot:'foot_l',LeftToeBase:'ball_l',
+   RightUpLeg:'thigh_r',RightLeg:'calf_r',RightFoot:'foot_r',RightToeBase:'ball_r'}; // Quaternius UAL2 (UE mannequin names)
 const FPS=24;
 function q16(arr){const a=new Int16Array(arr.length);for(let i=0;i<arr.length;i++)a[i]=Math.round(Math.max(-1,Math.min(1,arr[i]))*32767);let s='';const u=new Uint8Array(a.buffer);for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s)}
 async function bake(jobs){const out={fps:FPS,keys:RT_KEYS,clips:{},log:[]};const L=new THREE.GLTFLoader();const cache={};

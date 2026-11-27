@@ -13,7 +13,7 @@ rm -rf dist && mkdir -p dist/kits
 cp "$SRC"/{anim.js,kit.js,toon.js,cart.js} dist/
 cp -r "$SRC/ui" dist/ui
 cp "$SRC"/kits/*.js dist/kits/
-for d in trees animals ground fx; do mkdir -p dist/kits/$d; cp "$SRC"/kits/$d/*.{js,jpg,png} dist/kits/$d/ 2>/dev/null || true; done
+for d in trees animals ground fx sky; do mkdir -p dist/kits/$d; cp "$SRC"/kits/$d/*.{js,jpg,png} dist/kits/$d/ 2>/dev/null || true; done
 cp web/shim.js dist/
 cp "$KEEP" dist/config.js && rm -f "$KEEP"
 # the test hook only switches on with ?debug in the address; nothing else differs from the artifact

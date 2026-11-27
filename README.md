@@ -66,6 +66,20 @@ nothing otherwise.
 
 ## Changes in this update
 
+- **Local asset library pass** (see `docs/LOCAL_ASSET_LIBRARY.md`): the best CC0 packs from the studio archive are in.
+- **38 Universal Animation Library 2 clips** (Quaternius, CC0), baked with a new UE-mannequin map in `tools/bake2.html`.
+  Warriors chain sword swings and shield bashes, thieves hook, raiders combo; heavy hits can knock you back.
+  Townsfolk fold their arms, take comlink calls, nod, shake heads and lean on rails; guards carry lanterns and torches at
+  night; farmers harvest and water; undead NPCs slump and claw. New emotes `/yes /no /foldarms /comlink /lean /eat /getup /chop /harvest`.
+- **Actions finally animated:** kneel and dig while sampling, tinker while crafting, pick up when skinning, eat or inject from
+  the action bar, get up after cloning, swim in deep water, drive the horse cart.
+- **Ultimate Space Kit + Sci-fi Turrets** (Quaternius, CC0): alien trees on Dathomir, Lok, Mustafar and the jungles and swamps;
+  xeno brutes, wasps and mites and stray war droids as huntable wildlife; SWG turrets now vary between five turret models;
+  starports get parked ships, a rover and two defence turrets.
+- **Space backdrops:** Kenney space skyboxes (CC0) behind the galaxy, system and planet views.
+
+## Earlier changes
+
 - **100STYLE locomotion** (Mason, Starke & Komura 2022, CC BY 4.0, credited in the in-game menu): 71 clips.
   Neutral walk and run in 8 directions (diagonals blended from straight loops, phase-matched on foot contact) when
   the camera is locked; 27 walk + idle styles. Townsfolk pick styles by role (guards march, priests walk like monks,

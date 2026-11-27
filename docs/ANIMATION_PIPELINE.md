@@ -9,6 +9,7 @@ T-pose in a character-facing frame, 24 fps, int16. Any humanoid rig can be baked
 
 - `kaykit`: KayKit Rig_Medium / Rig_Large (`hips`, `upperarm.l`, `wrist.r` ...)
 - `rigify`: Quaternius Universal Animation Library and other Rigify `DEF-` rigs
+- `ue`: Quaternius Universal Animation Library 2 and other UE-mannequin rigs (`pelvis`, `spine_03`, `upperarm_l` ...); job list in `tools/bake_ual2_jobs.js`
 
 Steps that were needed for the ObjectStore packs:
 
