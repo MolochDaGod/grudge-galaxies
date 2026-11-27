@@ -4805,11 +4805,21 @@ const pbrNoiseTex=(()=>{const N=256,c=document.createElement('canvas');c.width=c
     for(let s=0;s<L;s++){const ix=((Math.round(px+Math.cos(a)*s)%N)+N)%N,iy=((Math.round(py+Math.sin(a)*s)%N)+N)%N;R[iy*N+ix]=Math.max(0,R[iy*N+ix]-dep)}}
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const o=(j*N+i)*4;D[o]=R[j*N+i]*255;D[o+1]=Math.pow(fbm(i,j,[4,8,16],2),1.4)*255*1.25;D[o+2]=fbm(i,j,[16,32],3)*255;D[o+3]=255}
   x.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t})();
-const PBR_U={uPbrNoise:{value:pbrNoiseTex}};
+const PBR_U={uPbrNoise:{value:pbrNoiseTex},uSurfND:{value:null},uSurfR:{value:null}};
+// Poly Haven CC0 surface atlas (3x2 tiles): plaster, clay roof, concrete/stone, metal plate, rusty metal, wood planks.
+// RGB = normal x, normal y, albedo detail; the second image is roughness. Sampled with box mapping in world space and
+// explicit gradients so tile edges don't seam. WebGL2 only; WebGL1 keeps the procedural layer.
+const PBR_REAL=renderer.capabilities.isWebGL2;
+function pbrAtlas(url){const t=new THREE.TextureLoader().load(url);t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return t}
+if(PBR_REAL){PBR_U.uSurfND.value=pbrAtlas('kits/pbr/surface_nd.jpg');PBR_U.uSurfR.value=pbrAtlas('kits/pbr/surface_r.jpg')}
+const PBR_CLASS_GLSL={kit: `vec3 bc=diffuseColor.rgb;float lum=dot(bc,vec3(.299,.587,.114)),mxc=max(bc.r,max(bc.g,bc.b)),sat=(mxc-min(bc.r,min(bc.g,bc.b)))/max(mxc,1e-3);\n        bool slope=an.y>.3&&an.y<.97;bool reddish=bc.r>bc.g*1.25&&bc.r>bc.b*1.5&&sat>.35;bool brown=bc.r>=bc.g&&bc.g>=bc.b*.9&&sat>.2&&lum<.42;\n        int stI=(slope||(reddish&&an.y>.2))?1:brown?5:(lum>.48&&sat<.32)?0:2;float ts=stI==1?.7:stI==5?.5:stI==0?.45:.5;`, metal: `int stI=pbrGrime<.32?4:3;float ts=.6;`, gun: `int stI=3;float ts=4.;`};
+const PBR_SURF_GLSL=`uniform sampler2D uSurfND,uSurfR;
+  vec4 pbrSurf(int t,vec2 p,out vec4 nd){vec2 off=vec2(float(t%3)/3.,float(t/3)/2.),sz=vec2(1./3.,.5)*.96;vec2 uv=off+vec2(1./3.,.5)*.02+fract(p)*sz;
+    vec2 gx=dFdx(p)*sz,gy=dFdy(p)*sz;nd=textureGrad(uSurfND,uv,gx,gy);return textureGrad(uSurfR,uv,gx,gy);}`;
 function pbrInject(m,o,src){const prev=src&&src.onBeforeCompile!==THREE.Material.prototype.onBeforeCompile?src.onBeforeCompile:null,prevKey=prev&&src.customProgramCacheKey?src.customProgramCacheKey():'';
   m.extensions=Object.assign(m.extensions||{},{derivatives:true});
-  const sc=o.scale||1.6,bump=o.bump??1,rough=o.roughVar??.42,grime=o.grime??.24;
-  m.onBeforeCompile=sh=>{if(prev)prev(sh);sh.uniforms.uPbrNoise=PBR_U.uPbrNoise;
+  const sc=o.scale||1.6,bump=o.bump??1,rough=o.roughVar??.42,grime=o.grime??.24,surf=PBR_REAL&&o.surf?o.surf:'';
+  m.onBeforeCompile=sh=>{if(prev)prev(sh);sh.uniforms.uPbrNoise=PBR_U.uPbrNoise;if(surf){sh.uniforms.uSurfND=PBR_U.uSurfND;sh.uniforms.uSurfR=PBR_U.uSurfR}
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vPbrP;varying vec3 vPbrN;').replace('#include <project_vertex>',`#include <project_vertex>
       vec4 pbrW=vec4(transformed,1.);vec3 pbrN=objectNormal;
       #ifdef USE_INSTANCING
@@ -4818,17 +4828,23 @@ function pbrInject(m,o,src){const prev=src&&src.onBeforeCompile!==THREE.Material
       pbrW=modelMatrix*pbrW;vPbrP=pbrW.xyz;vPbrN=normalize(mat3(modelMatrix)*pbrN);`);
     sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
       varying vec3 vPbrP;varying vec3 vPbrN;uniform sampler2D uPbrNoise;
-      vec3 pbrTri(vec3 p,vec3 n){vec3 w=pow(abs(n),vec3(4.));w/=max(1e-4,w.x+w.y+w.z);return texture2D(uPbrNoise,p.zy).rgb*w.x+texture2D(uPbrNoise,p.xz).rgb*w.y+texture2D(uPbrNoise,p.xy).rgb*w.z;}`)
+      vec3 pbrTri(vec3 p,vec3 n){vec3 w=pow(abs(n),vec3(4.));w/=max(1e-4,w.x+w.y+w.z);return texture2D(uPbrNoise,p.zy).rgb*w.x+texture2D(uPbrNoise,p.xz).rgb*w.y+texture2D(uPbrNoise,p.xy).rgb*w.z;}
+      ${surf?PBR_SURF_GLSL:''}`)
       .replace('#include <map_fragment>',`#include <map_fragment>
       vec3 pbrA=pbrTri(vPbrP*${(sc/4).toFixed(3)},vPbrN),pbrB=pbrTri(vPbrP*${(sc/40).toFixed(4)},vPbrN);float pbrGrime=clamp(pbrB.g,0.,1.);
+      ${surf?`vec3 an=abs(vPbrN);vec2 sp;vec3 sT,sB;if(an.y>an.x&&an.y>an.z){sp=vPbrP.xz;sT=vec3(1.,0.,0.);sB=vec3(0.,0.,1.);}else if(an.x>an.z){sp=vPbrP.zy;sT=vec3(0.,0.,1.);sB=vec3(0.,1.,0.);}else{sp=vPbrP.xy;sT=vec3(1.,0.,0.);sB=vec3(0.,1.,0.);}
+        ${PBR_CLASS_GLSL[surf]}vec4 sND;vec4 sR=pbrSurf(stI,sp*ts,sND);diffuseColor.rgb*=mix(1.,.5+sND.b,.55);float sRough=sR.r;
+        vec3 sn=vec3(sND.rg*2.-1.,0.);sn.z=sqrt(max(0.,1.-dot(sn.xy,sn.xy)));vec3 sNw=normalize(sT*sn.x*1.2+sB*sn.y*1.2+vPbrN*sn.z);`:''}
       diffuseColor.rgb*=mix(1.-${grime.toFixed(2)},1.05,pbrGrime)*mix(.9,1.05,pbrA.r)*mix(.96,1.03,pbrB.b);`)
       .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+      ${surf?'roughnessFactor=mix(roughnessFactor,sRough,.75);':''}
       roughnessFactor=clamp(roughnessFactor+(pbrA.b-.5)*${rough.toFixed(2)}+(.5-pbrGrime)*.18+(1.-pbrA.r)*.12,.3,1.);`)
       .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+      ${surf?'{vec3 sNv=normalize((viewMatrix*vec4(sNw,0.)).xyz);if(dot(sNv,normal)>.2)normal=normalize(mix(normal,sNv,.85));}':''}
       {float pbrH=pbrA.r*.75+pbrA.b*.25;vec2 dH=vec2(dFdx(pbrH),dFdy(pbrH));dH*=${(bump*.35).toFixed(3)}/(1.+length(dH)*40.);
        vec3 sX=dFdx(-vViewPosition),sY=dFdy(-vViewPosition),R1=cross(sY,normal),R2=cross(normal,sX);float fD=dot(sX,R1);
        if(abs(fD)>1e-12){vec3 gr=sign(fD)*(dH.x*R1+dH.y*R2);vec3 nb=abs(fD)*normal-gr;float L2=dot(nb,nb);if(L2>1e-20){nb*=inversesqrt(L2);if(dot(nb,normal)>.5)normal=nb;}}}`)};
-  m.customProgramCacheKey=()=>prevKey+'pbr'+sc+'|'+bump+'|'+rough+'|'+grime;return m}
+  m.customProgramCacheKey=()=>prevKey+'pbr'+sc+'|'+bump+'|'+rough+'|'+grime+'|'+surf;return m}
 // one PBR copy per source material and look
 function pbrMat(src,o={}){if(!src||Array.isArray(src))return src;if(src.isShaderMaterial||src.isMeshBasicMaterial||src.isPointsMaterial||src.isLineBasicMaterial||src.isSpriteMaterial||src.userData.pbr)return src;
   const kk=o.kind||'kit';let byKind=PBR.cache.get(src);if(!byKind)PBR.cache.set(src,byKind={});if(byKind[kk])return byKind[kk];
@@ -4840,8 +4856,8 @@ function pbrMat(src,o={}){if(!src||Array.isArray(src))return src;if(src.isShader
     skinning:!!(src.skinning||o.skinned),morphTargets:!!src.morphTargets,roughness:o.rough??.86,metalness:o.metal??.03,envMapIntensity:.7});
   if(toon)m.color.setScalar(1);
   m.userData.pbr=true;pbrInject(m,o,src);byKind[kk]=m;PBR.mats.add(m);return m}
-const PBR_LOOK={kit:{rough:.88,metal:.02,scale:1.2},scifi:{rough:.6,metal:.32,scale:1.6,roughVar:.5,grime:.3},toon:{rough:.78,metal:.04,scale:3,bump:.35,grime:.05,roughVar:.3},
-  creature:{rough:.7,metal:.05,scale:2.5,bump:.8,grime:.18},droid:{rough:.5,metal:.45,scale:2.5,grime:.22},gun:{rough:.42,metal:.55,scale:5,bump:.6,grime:.2}};
+const PBR_LOOK={kit:{rough:.88,metal:.02,scale:1.2,surf:'kit'},scifi:{rough:.6,metal:.32,scale:1.6,surf:'metal',roughVar:.5,grime:.3},toon:{rough:.78,metal:.04,scale:3,bump:.35,grime:.05,roughVar:.3},
+  creature:{rough:.7,metal:.05,scale:2.5,bump:.8,grime:.18},droid:{rough:.5,metal:.45,scale:2.5,grime:.22},gun:{rough:.42,metal:.55,scale:5,surf:'gun',bump:.6,grime:.2}};
 const pbrKindFor=name=>/^(col_|sk_|skt_|mk_)/.test(name)?'scifi':'kit';
 function pbrTree(obj,kind){if(!PBR.on()||!obj)return obj;const o=Object.assign({kind},PBR_LOOK[kind]);
   obj.traverse(n=>{if(!n.isMesh||n.userData.noPbr)return;o.skinned=!!n.isSkinnedMesh;n.material=Array.isArray(n.material)?n.material.map(x=>pbrMat(x,o)):pbrMat(n.material,o)});return obj}
@@ -4870,7 +4886,106 @@ function pbrEnv(){const w=groundWorld;if(!w||!PBR.on())return;const key=w.id+'|'
 {const _sl=setLevel;setLevel=function(l){const r=_sl.apply(this,arguments);if(l==='ground')pbrEnv();else scene.environment=null;return r}}
 let pbrT=0,pbrNight=null;
 {const _gt=gameTick;gameTick=function(dt){_gt(dt);if((pbrT-=dt)>0)return;pbrT=1;if(level==='ground'&&groundWorld&&PBR.envKey.split('|')[0]!==groundWorld.id)pbrEnv();
-  const n=isNight();if(n===pbrNight)return;pbrNight=n;const k=n?.22:.7;for(const m of PBR.mats)m.envMapIntensity=k}}
+  const n=isNight();if(n===pbrNight)return;pbrNight=n;const k=n?.22:.7;for(const m of PBR.mats)m.envMapIntensity=k*(m.userData.envK||1)}}
+
+// terrain: Poly Haven CC0 ground normals + roughness (sand, rocky ground, forest floor, snow, mud, mountainside, rock face)
+// on the planet's dominant biome, rock face on steep slopes. Lambert terrain becomes physically based on Medium/High.
+const GROUND_TILE={desert:0,tropical:0,glass:6,badlands:1,red:1,storm:1,grass:2,temperate:2,forest:2,ethereal:2,jungle:4,swamp:4,abyss:4,ice:3,volcanic:6};
+const PBR_GROUND=PBR_REAL?pbrAtlas('kits/pbr/ground_nr.jpg'):null;
+{const _gm=groundMaterial;groundMaterial=function(w,geo,pa){const m0=_gm(w,geo,pa);if(!PBR.on()||!PBR_GROUND)return m0;
+  const B=planetBiomes(w).slice(0,4),tiles=[0,1,2,3].map(k=>GROUND_TILE[(B[k]||B[0]).key]??1);
+  const m=new THREE.MeshStandardMaterial({vertexColors:true,map:m0.map,color:m0.color.clone().multiplyScalar(.92),roughness:.95,metalness:0,envMapIntensity:.12});m.userData.envK=.17;m.extensions={derivatives:true};
+  const prev=m0.onBeforeCompile;m.userData.pbr=true;PBR.mats.add(m);
+  m.onBeforeCompile=sh=>{prev(sh);sh.uniforms.uGround={value:PBR_GROUND};sh.uniforms.uGT={value:new THREE.Vector4(...tiles)};
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
+      uniform sampler2D uGround;uniform vec4 uGT;
+      vec3 gTile(float t,vec2 p){vec2 off=vec2(mod(t,4.)/4.,floor(t/4.)/2.),sz=vec2(.25,.5)*.96;vec2 uv=off+vec2(.25,.5)*.02+fract(p)*sz;return textureGrad(uGround,uv,dFdx(p)*sz,dFdy(p)*sz).rgb;}`)
+      .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+      vec3 gWN=inverseTransformDirection(normal,viewMatrix);float gFar=1.-smoothstep(60.,260.,vGD);
+      float gb=vBw.x;float gt=uGT.x;if(vBw.y>gb){gb=vBw.y;gt=uGT.y;}if(vBw.z>gb){gb=vBw.z;gt=uGT.z;}if(vBw.w>gb){gb=vBw.w;gt=uGT.w;}
+      float steep=smoothstep(.86,.7,gWN.y);vec2 gp=vGX/3.2;vec3 gA=gTile(gt,gp);vec3 gC=gTile(5.,gp*.6);vec3 gS=mix(gA,gC,steep);
+      roughnessFactor=mix(.95,mix(.75,1.,gS.b),gFar);
+      {vec3 gn=vec3(gS.rg*2.-1.,0.);gn.xy*=gFar*1.3;gn.z=sqrt(max(.05,1.-dot(gn.xy,gn.xy)));vec3 T=normalize(vec3(1.,0.,0.)-gWN*gWN.x),Bt=normalize(cross(T,gWN));
+       vec3 nw=normalize(T*gn.x-Bt*gn.y+gWN*gn.z);normal=normalize((viewMatrix*vec4(nw,0.)).xyz);}`)};
+  m.customProgramCacheKey=()=>'pbrground';m0.dispose();return m}}
+/* ================= Resource nodes: SWG planet resources you can see and gather by hand =================
+   Nodes are placed deterministically from the planet seed and the resource concentration maps, so every player sees
+   the same nodes without a server. Each node belongs to one of the planet's current resources, sits where that resource
+   is rich (40%+), and holds a limited amount; gathering depletes it and it regrows after a while. Depletion is shared over
+   the multiplayer room when there is one. Models: Poly Haven scanned boulders (CC0) for minerals, lichen rock for
+   chemicals, mossy rocks for water and gas vents, Quaternius plants (CC0) for flora; all sized to real-world heights. */
+const NODE_CELL=96,NODE_R=360,NODE_MIN_C=40,NODE_REGROW=15*60e3;
+// resource type -> look: models, target height (m), gather clip, tint/glow, ambient effect
+const NODE_KIND={
+  6:{name:'Mineral deposit',m:['nd_boulder_a','nd_boulder_b','nd_boulder_c'],h:[1.3,2.1],clip:'treeChop',verb:'Mining'},
+  2:{name:'Chemical seep',m:['nd_crystal','nd_crystal','nd_boulder_b'],h:[1.1,1.7],clip:'fixing',verb:'Extracting',glow:'#6dffb0'},
+  3:{name:'Flora patch',m:['nd_plant_a','nd_plant_b','nd_bush'],h:[.9,1.4],clip:'harvest',verb:'Harvesting'},
+  4:{name:'Gas vent',m:['nd_mossy'],h:[.7,1],clip:'fixing',verb:'Siphoning',fx:'#cfd6dc'},
+  5:{name:'Geothermal vent',m:['nd_mossy'],h:[.7,1],clip:'fixing',verb:'Tapping',fx:'#ffb070',glow:'#ff7a30'},
+  7:{name:'Spring',m:['nd_mossy'],h:[.6,.9],clip:'fixing',verb:'Collecting',water:true}};
+const NODE_PROTO={};let nodeLoad=null;
+function loadNodes(){if(nodeLoad)return nodeLoad;
+  return nodeLoad=loadScript('kits/nodes/nodes.js').then(()=>new Promise(res=>{const b64=window.GRUDGE_NODES;if(!b64)return res();const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete window.GRUDGE_NODES;
+    new THREE.GLTFLoader().parse(buf.buffer,'',g=>{g.scene.updateMatrixWorld(true);for(const n of g.scene.children){if(!/^nd_/.test(n.name))continue;
+      // normalise: base on the ground, centred, unit height; real size is applied per node
+      const box=new THREE.Box3().setFromObject(n),c=box.getCenter(new THREE.Vector3()),h=Math.max(1e-3,box.max.y-box.min.y),wrap=new THREE.Group(),inner=n.clone(true);
+      inner.position.sub(new THREE.Vector3(c.x,box.min.y,c.z));inner.position.divideScalar(h);inner.scale.multiplyScalar(1/h);wrap.add(inner);
+      wrap.traverse(o=>{if(o.isMesh){o.castShadow=false;const m=o.material;if(m&&m.isMeshStandardMaterial){m.envMapIntensity=.6;if(m.map)m.map.encoding=THREE.LinearEncoding;PBR.mats&&PBR.mats.add(m)}}});
+      if(/plant|bush/.test(n.name))pbrTree(wrap,'creature');NODE_PROTO[n.name]=wrap}res()},e=>{console.warn('nodes',e);res()})})).catch(e=>console.warn('nodes',e))}
+const nodeG=new THREE.Group();G.ground.add(nodeG);
+const nodeLive=new Map(),nodeState=new Map();let nodeT=0,nodeWorld=null,gather=null,nodeNear=null,nodeHooked=false;
+// deterministic candidates for one map cell
+function nodeCell(w,cx,cz){const R=mulberry(strHash(w.id+':node:'+cx+','+cz)),out=[],res=planetRes().filter(r=>NODE_KIND[r.t]);if(!res.length)return out;
+  const n=R()<.55?1:R()<.5?2:0;
+  for(let i=0;i<n;i++){const x=(cx+R())*NODE_CELL,z=(cz+R())*NODE_CELL;if(Math.abs(x)>HALF*.97||Math.abs(z)>HALF*.97)continue;
+    if(w.pois.some(q=>Math.hypot(q.x-x,q.z-z)<q.r+40))continue;const wd=waterDepth(w,x,z);
+    // pick a resource type first (so minerals, flora, vents and springs all show up), then the richest resource of it
+    const byT={};for(const r of res){if(wd>.4||(r.t===7&&!(surfAt(x,z,'water')>.08)))continue;const c=concentration(r,x,z);if(c<NODE_MIN_C)continue;const q=byT[r.t];if(!q||c>q.c)byT[r.t]={r,c}}
+    const ts=Object.keys(byT);if(!ts.length)continue;const pick=byT[ts[Math.floor(R()*ts.length)]],best=pick.r,bc=pick.c;const K=NODE_KIND[best.t],mi=Math.floor(R()*K.m.length),h=K.h[0]+R()*(K.h[1]-K.h[0]);
+    out.push({id:w.id+':'+cx+','+cz+':'+i,r:best,c:bc,x,z,kind:best.t,model:K.m[mi],h,yaw:R()*TAU,cap:Math.round(30+bc*.9)})}
+  return out}
+function nodeLeft(n){const s=nodeState.get(n.id);if(!s)return n.cap;if(s.left<=0&&Date.now()>s.until){nodeState.delete(n.id);return n.cap}return s.left}
+function nodeMesh(n){const P=NODE_PROTO[n.model];if(!P)return null;const o=P.clone(true),K=NODE_KIND[n.kind];o.scale.setScalar(n.h);o.rotation.y=n.yaw;
+  o.position.set(n.x,groundH(groundWorld,n.x,n.z)-.08*n.h,-n.z);o.userData.node=n;
+  if(K.glow)o.traverse(m=>{if(m.isMesh){m.material=m.material.clone();m.material.userData.own=true;m.material.emissive=new THREE.Color(K.glow).multiplyScalar(.35)}});
+  if(K.water){const d=new THREE.Mesh(new THREE.CircleGeometry(n.h*1.6,20),new THREE.MeshStandardMaterial({color:0x2a5a78,roughness:.05,metalness:.1,transparent:true,opacity:.78}));
+    d.userData.own=true;d.material.userData.own=true;d.rotation.x=-Math.PI/2;d.position.y=.06;d.scale.setScalar(1/n.h);o.add(d)}
+  return o}
+function nodeDispose(o){o.traverse(m=>{if(!m.isMesh)return;if(m.userData.own)m.geometry.dispose();if(m.material&&m.material.userData.own)m.material.dispose()})}
+function nodesClear(){for(const o of nodeLive.values()){nodeG.remove(o);nodeDispose(o)}nodeLive.clear()}
+function tickNodes(dt){const w=groundWorld,on=level==='ground'&&w&&groundMode==='play'&&CH;nodeG.visible=!!on;if(!on)return;
+  if(nodeWorld!==w){nodesClear();nodeWorld=w;gather=null}
+  if(!nodeHooked&&typeof room!=='undefined'&&room){nodeHooked=true;room.on('node',m=>{const d=m.data||{};if(typeof d.id!=='string'||typeof d.left!=='number')return;nodeState.set(d.id,{left:d.left,until:d.until||Date.now()+NODE_REGROW})})}
+  if((nodeT-=dt)<=0){nodeT=1.5;loadNodes();if(Object.keys(NODE_PROTO).length){
+    const want=new Set(),c0x=Math.floor((play.x-NODE_R)/NODE_CELL),c1x=Math.floor((play.x+NODE_R)/NODE_CELL),c0z=Math.floor((play.z-NODE_R)/NODE_CELL),c1z=Math.floor((play.z+NODE_R)/NODE_CELL);
+    w._nodeCells=w._nodeCells||new Map();
+    for(let cx=c0x;cx<=c1x;cx++)for(let cz=c0z;cz<=c1z;cz++){const k=cx+','+cz;let L=w._nodeCells.get(k);if(!L){L=nodeCell(w,cx,cz);w._nodeCells.set(k,L)}
+      for(const n of L){if(Math.hypot(n.x-play.x,n.z-play.z)>NODE_R||nodeLeft(n)<=0)continue;want.add(n.id);if(!nodeLive.has(n.id)){const o=nodeMesh(n);if(o){nodeG.add(o);nodeLive.set(n.id,o)}}}}
+    for(const [id,o] of nodeLive)if(!want.has(id)){nodeG.remove(o);nodeDispose(o);nodeLive.delete(id)}}}
+  // ambient effects and the nearest node
+  nodeNear=null;let nd=4.2;for(const o of nodeLive.values()){const n=o.userData.node,d=Math.hypot(n.x-play.x,n.z-play.z);if(d<nd){nd=d;nodeNear=n}
+    const K=NODE_KIND[n.kind];if(K.fx&&d<120&&Math.random()<dt*3)vfxEmit('auras',n.x,groundH(groundWorld,n.x,n.z)+n.h*.6,n.z,2,{color:K.fx,scale:1.6,r:.3})}
+  const tip=$('#nodeTip');if(tip){const show=nodeNear&&!gather;tip.hidden=!show;if(show){const K=NODE_KIND[nodeNear.kind];tip.textContent=`R · ${K.name}: ${nodeNear.r.n} (${nodeNear.r.c||''}) · ${nodeNear.c}% · ${nodeLeft(nodeNear)} left`}}
+  if(gather)tickGather(dt)}
+function startGather(){if(gather||!nodeNear)return;const n=nodeNear,K=NODE_KIND[n.kind];if(nodeLeft(n)<=0)return floatMsg('This node is spent. It will regrow.');
+  if(combat.p)return toast('You cannot gather while fighting.');
+  if((n.kind===6||n.kind===2)&&!CH.inv.items.some(i=>i.kind==='tool'))return toast('You need a Survey Device to work this deposit (buy one at a market).');
+  gather={n,t:0,x:play.x,z:play.z};floatMsg(`${K.verb} ${n.r.n}… (move to stop)`);
+  if(play.model&&play.model.userData.mixer&&typeof toonLoopFor==='function')toonLoopFor(play.model,K.clip,1e9);}
+function stopGather(msg){if(!gather)return;gather=null;if(msg)floatMsg(msg);if(typeof actStop==='function')actStop()}
+function tickGather(dt){const g=gather;if(Math.hypot(play.x-g.x,play.z-g.z)>1.5)return stopGather('You moved, so gathering stopped');
+  g.t+=dt;if(g.t<3)return;g.t=0;const n=g.n,m=skillMods(CH);let left=nodeLeft(n);if(left<=0)return stopGather('The node is spent.');
+  let units=Math.max(1,Math.round(n.c/12*(1+(m.survey||0)/40)*(1+Math.random()*.8)));if(Math.random()<.06){units*=2;floatMsg('A rich pocket!')}
+  units=Math.min(units,left);left-=units;addRes(n.r,units);gainXP('surveying',Math.round(4+n.c/8),'');floatMsg(`+${units} ${n.r.n}`);
+  vfxEmit('impacts',n.x,groundH(groundWorld,n.x,n.z)+n.h*.5,n.z,6,{color:NODE_KIND[n.kind].glow||'#d8c8a8',scale:.6});
+  const st={left,until:left<=0?Date.now()+NODE_REGROW:0};nodeState.set(n.id,st);if(typeof room!=='undefined'&&room)room.emit('node',{id:n.id,left,until:st.until}).catch(()=>{});
+  if(left<=0){const o=nodeLive.get(n.id);if(o){nodeG.remove(o);nodeDispose(o);nodeLive.delete(n.id)}stopGather(`You exhausted the ${NODE_KIND[n.kind].name.toLowerCase()}.`)}}
+// R gathers; the prompt sits above the action bar
+{const t=document.createElement('div');t.id='nodeTip';t.hidden=true;t.style.cssText='position:fixed;left:50%;bottom:150px;transform:translateX(-50%);padding:6px 12px;border-radius:6px;background:rgba(12,14,18,.82);color:#f1e6c8;font:600 13px system-ui,sans-serif;border:1px solid rgba(240,200,120,.45);pointer-events:none;z-index:30';document.body.append(t)}
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.repeat)return;if(e.key.toLowerCase()!=='r'||level!=='ground'||groundMode!=='play'||!CH)return;if(gather)stopGather('Stopped gathering.');else startGather()});
+{const _gt=gameTick;gameTick=function(dt){_gt(dt);tickNodes(dt)}}
+{const _xp=exitPlay;exitPlay=function(){gather=null;nodesClear();const t=$('#nodeTip');if(t)t.hidden=true;return _xp.apply(this,arguments)}}
+
 // test hook: only with ?debug in the address, lets automated checks read game state
 try{if(/[?&]debug\b/.test(location.search))window.__gg=src=>eval(src)}catch(e){}
 })();
