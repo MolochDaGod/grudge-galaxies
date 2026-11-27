@@ -1398,7 +1398,7 @@ function kitProto(name,g){if(kitProtoCache[name])return kitProtoCache[name];cons
 })();
 const STATIC_KITS=['kk_castle','kk_barracks','kk_watchtower','kk_wall_straight','kk_wall_gate','kk_wall_corner','kk_market','kk_house','kk_mill','kk_watermill','kk_lumbermill','kk_mine','kk_well','kk_farm_plot','kk_archeryrange','kk_detail_treeA','kk_detail_treeB','kk_detail_rocks','houseparts','catapult_human','catapult_orc','boltthrower'];
 const CREATURE_KITS=['anim_general','anim_move','mount_wolf','mount_horse','mount_undead','mount_dwarf','slime','catapult_orc','boltthrower'];
-loadScript('toon.js').then(()=>Promise.allSettled(TOON_RACES.map(r=>loadToon(r).then(()=>{if(!cr.hidden&&warlord.race===r)crRebuild();if(groundMode==='play'&&warlord.race===r)swapPlayerModel()})))).then(rs=>{toonFailed=!rs||rs.some(x=>x.status==='rejected')}).catch(e=>{toonFailed=true;console.warn(e)});
+loadScript('kits/store/toon.js').then(()=>Promise.allSettled(TOON_RACES.map(r=>loadToon(r).then(()=>{if(!cr.hidden&&warlord.race===r)crRebuild();if(groundMode==='play'&&warlord.race===r)swapPlayerModel()})))).then(rs=>{toonFailed=!rs||rs.some(x=>x.status==='rejected')}).catch(e=>{toonFailed=true;console.warn(e)});
 
 /* ================= Character animation: Mixamo clips retargeted onto the Toon RTS Bip001 rigs =================
    anim.js carries Mixamo/Meshy clips baked as world-space rotation deltas from a canonical T-pose (left=+X, up=+Y, forward=+Z).
@@ -1488,8 +1488,8 @@ function toonAnimate(inst,amt){const u=inst.userData,now=performance.now(),dt=Ma
   if(u.once<=0)toonPlay(inst,locoClip(u,amt),.25,{speed:amt>1.5?1:amt>0?1.05:1});u.mixer.update(dt)}
 loadScript('anim.js').then(()=>{ANIMLIB=window.GRUDGE_ANIM;for(const r of Object.keys(toonReady))clipsForRace(r);if(typeof crRebuild==='function'&&!cr.hidden)crRebuild();if(groundMode==='play')swapPlayerModel();clearNpcToons()}).catch(e=>console.warn('Animation library unavailable; using procedural walk.',e));
 
-loadScript('kit.js').then(()=>Promise.all([...new Set([...STATIC_KITS,...CREATURE_KITS])].map(k=>kitScene(k).then(g=>[k,g])))).then(list=>{
-  list.forEach(([k,g])=>{if(STATIC_KITS.includes(k))kitProto(k,g)});loadPacks().then(()=>{kitReady=true;kitWaiters.splice(0).forEach(f=>f())})}).catch(e=>console.warn('Grudge kit failed',e));
+loadScript('kit.js').then(()=>loadScript('kits/store/units.js').catch(()=>console.info('[kits] Toon RTS mounts and siege engines are not in this build; owned animals stand in'))).then(()=>Promise.all([...new Set([...STATIC_KITS,...CREATURE_KITS])].map(k=>kitScene(k).then(g=>[k,g]).catch(()=>null)))).then(list=>{
+  list.filter(Boolean).forEach(([k,g])=>{if(STATIC_KITS.includes(k))kitProto(k,g)});loadPacks().then(()=>{kitReady=true;kitWaiters.splice(0).forEach(f=>f())})}).catch(e=>console.warn('Grudge kit failed',e));
 
 /* ---- which Grudge kit replaces which SWG template ---- */
 const KIT_RULES=[
@@ -1612,7 +1612,7 @@ const ROLE_KIT={Merchant:'kk_rogue',Traveler:'kk_rogue_hooded',Laborer:'kk_range
 let ANIMS=null;
 function animClips(){if(ANIMS)return ANIMS;const a={};['anim_general','anim_move'].forEach(n=>{const g=kitG[n];if(g)g.animations.forEach(c=>a[c.name]=c)});return(a.Idle_A&&a.Walking_A)?(ANIMS=a):null}
 const kitG={};function kitSync(k){return kitG[k]||null}
-kitWaiters.push(()=>{for(const k of CREATURE_KITS)KIT[k].then(g=>{kitG[k]=g})});
+kitWaiters.push(()=>{for(const k of CREATURE_KITS)KIT[k].then(g=>{kitG[k]=g}).catch(()=>{})});
 function creatureFor(p){const g=p.g;if(!g)return null;
   if(g.kind==='friendly'){const hv=strHash(g.name+p.t+Math.round(p.x));return{type:'toon',race:g.race,o:{race:g.race,cls:g.cls,set:GD.armorSets[hv%GD.armorSets.length],tier:g.role==='Guard'||g.role==='Captain'?Math.max(3,g.tier):g.tier,vary:hv,wprof:p.trainer||undefined}}}
   if(g.kind==='boss')return{type:'toon',race:'orc',o:{race:'orc',cls:'raider',set:'Emberclad',tier:Math.min(8,g.tier+2)},scale:2.4};
@@ -2108,13 +2108,13 @@ function tickPadFx(dt){if(level!=='ground'||!padFx.length)return;const t=now();f
   if(f){portalCd=6;mmLog(`You step into the ${f.star?'starport':'shuttleport'} portal.`,'sys');openWin('travel')}}
 
 /* ---- mounts and vehicles ---- */
-const MOUNTS={horse:{name:'Warhorse',k:'mount_horse',animal:'horse',speed:2.1,cost:0,scale:1.15},cart:{name:'Horse Cart',cart:true,speed:1.6,cost:1800},wolf:{name:'Dire Wolf',k:'mount_wolf',speed:2.35,cost:2500,scale:1.35},ram:{name:'Dwarven War Ram',k:'mount_dwarf',speed:2.0,cost:2500,scale:1.25},
-  bone:{name:'Bone Steed',k:'mount_undead',speed:2.35,cost:4000,scale:1.15},
+const MOUNTS={horse:{name:'Warhorse',k:'mount_horse',animal:'horse',speed:2.1,cost:0,scale:1.15},cart:{name:'Horse Cart',cart:true,speed:1.6,cost:1800},wolf:{name:'Dire Wolf',k:'mount_wolf',animal:'wolf',animalScale:1.9,speed:2.35,cost:2500,scale:1.35},ram:{name:'Dwarven War Bull',k:'mount_dwarf',animal:'bull',animalScale:1.05,speed:2.0,cost:2500,scale:1.25},
+  bone:{name:'Bone Steed',k:'mount_undead',animal:'horse-white',tint:0x8a8f96,speed:2.35,cost:4000,scale:1.15},
   ember:{name:'Ember Dragon',dragon:'ember',speed:3.2,fly:true,cost:25000},frost:{name:'Frost Dragon',dragon:'frost',speed:3.2,fly:true,cost:25000},jade:{name:'Jade Dragon',dragon:'jade',speed:3.2,fly:true,cost:25000},
   void:{name:'Void Dragon',dragon:'void',speed:3.4,fly:true,cost:40000},gold:{name:'Gold Dragon',dragon:'gold',speed:3.6,fly:true,cost:60000}};
 function makeMountObj(id){const M=MOUNTS[id];if(!M)return null;let obj;if(M.cart)return makeCart();if(M.dragon){obj=makeDragon(DRAGON_COLORS[M.dragon]);obj.userData.seat=obj.userData.dragon.seat;obj.userData.seatZ=obj.userData.dragon.seatZ;return obj}
   // animated horse (Walk / Gallop / Idle clips) when the animal kit is in; the static kit horse with a procedural gait otherwise
-  if(M.animal&&animalG[M.animal]&&THREE.SkeletonUtils){const A=animalG[M.animal],m=THREE.SkeletonUtils.clone(A.scene);m.scale.setScalar(ANIMAL_SPEC[M.animal].h*(M.scale||1)/A.h);
+  if(M.animal&&animalG[M.animal]&&THREE.SkeletonUtils){const A=animalG[M.animal],m=THREE.SkeletonUtils.clone(A.scene);m.scale.setScalar(ANIMAL_SPEC[M.animal].h*(M.animalScale||M.scale||1)/A.h);if(M.tint)m.traverse(o=>{if(o.isMesh){o.material=Array.isArray(o.material)?o.material.map(x=>x.clone()):o.material.clone();(Array.isArray(o.material)?o.material:[o.material]).forEach(x=>{if(x.color)x.color.multiply(new THREE.Color(M.tint));if('emissive' in x){x.emissive=new THREE.Color(0x1a2a3a);x.emissiveIntensity=.6}})}});
     const box=new THREE.Box3().setFromObject(m);obj=new THREE.Group();obj.add(m);obj.userData.seat=box.max.y*.74;obj.userData.seatZ=0;const mixer=new THREE.AnimationMixer(m),find=n=>A.clips.find(c=>c.name===n);
     const act=n=>find(n)&&mixer.clipAction(find(n));obj.userData.mx={mixer,run:act('Gallop'),walk:act('Walk'),idle:act('Idle'),cur:null};obj.userData.mx.idle.play();obj.userData.mx.cur=obj.userData.mx.idle;obj.userData.animalMount=1;return obj}
   if(M.animal&&typeof loadAnimal==='function')loadAnimal(M.animal);
@@ -2866,7 +2866,7 @@ function loadAnimal(id){if(animalG[id]||animalLoading[id])return animalLoading[i
   animalLoading[id]=loadScript('kits/animals/'+id+'.js').then(()=>new Promise(res=>{const b64=(window.GRUDGE_ANIMAL||{})[id];if(!b64)return res();const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete window.GRUDGE_ANIMAL[id];
     new THREE.GLTFLoader().parse(buf.buffer,'',g=>{g.scene.traverse(o=>{if(o.isMesh){o.frustumCulled=false;(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if('metalness' in m){m.metalness=0;m.roughness=1}})}});
       const box=new THREE.Box3().setFromObject(g.scene);animalG[id]={scene:g.scene,clips:g.animations,h:box.max.y-box.min.y};res()},e=>{console.warn('animal '+id,e);res()})})).catch(e=>console.warn('animal '+id,e));return animalLoading[id]}
-setTimeout(()=>{try{loadAnimal('horse')}catch(e){}},3000);
+setTimeout(()=>{try{['horse','wolf','bull','horse-white'].forEach(a=>loadAnimal(a))}catch(e){}},3000);
 function makeAnimal(id){const G0=animalG[id];if(!G0||!THREE.SkeletonUtils)return null;const obj=THREE.SkeletonUtils.clone(G0.scene),holder=new THREE.Group();holder.add(obj);holder.scale.setScalar(ANIMAL_SPEC[id].h/G0.h*(.9+Math.random()*.2));
   const mixer=new THREE.AnimationMixer(obj),acts={};for(const c of G0.clips)acts[c.name]=mixer.clipAction(c);return{obj:holder,mixer,acts,cur:null}}
 function animPlay(a,name,fade=.3,once=false){const act=a.acts[name]||a.acts[name.replace('Headlow','HeadLow')]||a.acts.Idle;if(!act||a.cur===act)return;act.reset();act.setLoop(once?THREE.LoopOnce:THREE.LoopRepeat);act.clampWhenFinished=once;if(a.cur)act.crossFadeFrom(a.cur,fade,false);else act.fadeIn(fade);act.play();a.cur=act}
@@ -2983,7 +2983,7 @@ function tickProps(dt){const w=groundWorld,on=level==='ground'&&w&&(groundMode==
 
 /* ================= Grudge model packs (castle kit, ancient fortress, palisade fortress, volcanic rocks, pond, wooden props) ================= */
 // Each pack is a GLB published beside the page. Single pieces become instanced kit prototypes, re-oriented so walls run along +X.
-const PACK_FILES={castle:'castle',ancient:'ancient',palisade:'fortress',rocks:'rocks',pond:'pond',props:'props',town:'town',colony:'colony',mars:'mars',spacekit:'spacekit'};
+const PACK_FILES={castle:'castle',ancient:'ancient',palisade:'fortress',rocks:'rocks',pond:'pond',props:'props',town:'store/town',colony:'colony',mars:'mars',spacekit:'spacekit'};
 const PACK_PIECES={
   // Quaternius Ultimate Space Kit + Sci-fi Turrets (CC0): habitats, domes, solar, rovers, parked ships, turrets
   sk_base_large:['spacekit','sk_base_large'],sk_building_l:['spacekit','sk_building_l'],sk_connector:['spacekit','sk_connector'],sk_geodesic_dome:['spacekit','sk_geodesic_dome'],sk_house_cylinder:['spacekit','sk_house_cylinder'],sk_house_long:['spacekit','sk_house_long'],sk_house_open:['spacekit','sk_house_open'],sk_house_pod:['spacekit','sk_house_pod'],sk_house_single_support:['spacekit','sk_house_single_support'],sk_house_single:['spacekit','sk_house_single'],sk_metal_support:['spacekit','sk_metal_support'],sk_pickup_crate:['spacekit','sk_pickup_crate'],sk_ramp:['spacekit','sk_ramp'],sk_roof_antenna:['spacekit','sk_roof_antenna'],sk_roof_radar:['spacekit','sk_roof_radar'],sk_round_rover:['spacekit','sk_round_rover'],sk_rover_wr:['spacekit','sk_rover_wr'],sk_rover:['spacekit','sk_rover'],sk_solar_panel_ground:['spacekit','sk_solar_panel_ground'],sk_solar_panel_structure:['spacekit','sk_solar_panel_structure'],sk_solar_panel:['spacekit','sk_solar_panel'],sk_spaceship_jq:['spacekit','sk_spaceship_jq'],sk_spaceship_vs:['spacekit','sk_spaceship_vs'],sk_spaceship_u1:['spacekit','sk_spaceship_u1'],sk_spaceship:['spacekit','sk_spaceship'],sk_stairs:['spacekit','sk_stairs'],skt_emp:['spacekit','skt_emp'],skt_flamethrower:['spacekit','skt_flamethrower'],skt_gatelng_gun:['spacekit','skt_gatelng_gun'],skt_gun_cannon:['spacekit','skt_gun_cannon'],skt_hive:['spacekit','skt_hive'],skt_lighting:['spacekit','skt_lighting'],skt_missile:['spacekit','skt_missile'],skt_plasma:['spacekit','skt_plasma'],skt_rail_gun:['spacekit','skt_rail_gun'],skt_shield:['spacekit','skt_shield'],
@@ -3008,7 +3008,7 @@ const PACK_PIECES={
   pr_wood1:['props','Firewood_pile_05005'],pr_wood2:['props','Firewood_pile_05002'],pr_logs:['props','Firewood_pile_05012'],r2_town:['town','*']};
 const packG={};let packsP=null;
 function loadPacks(){if(packsP)return packsP;const L=new THREE.GLTFLoader();
-  packsP=Promise.all(Object.entries(PACK_FILES).map(([k,f])=>loadScript('kits/'+f+'.js').then(()=>new Promise(res=>{const b64=(window.GRUDGE_PACK||{})[f];if(!b64)return res();const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete window.GRUDGE_PACK[f];
+  packsP=Promise.all(Object.entries(PACK_FILES).map(([k,f])=>loadScript('kits/'+f+'.js').then(()=>new Promise(res=>{const fk=f.split('/').pop(),b64=(window.GRUDGE_PACK||{})[fk];if(!b64)return res();const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete window.GRUDGE_PACK[fk];
     L.parse(buf.buffer,'',g=>{packG[k]=g;res()},e=>{console.warn('pack '+k+' unavailable',e);res()})})).catch(e=>console.warn('pack '+k+' unavailable',e)))).then(()=>{
     for(const [key,[pack,node,opt]] of Object.entries(PACK_PIECES)){const g=packG[pack];if(!g)continue;let src=node==='*'?g.scene:null;g.scene.traverse(o=>{if(!src&&o.name.replace(/[._\s/]/g,'')===node.replace(/[._\s/]/g,''))src=o});if(!src)continue;
       src.updateMatrixWorld(true);const piece=src.clone(true),wrap=new THREE.Group(),inner=new THREE.Group();inner.add(piece);piece.matrix.copy(src.matrixWorld);piece.matrix.decompose(piece.position,piece.quaternion,piece.scale);wrap.add(inner);
@@ -5331,7 +5331,7 @@ window.GG_BRIDGE={
   get terminals(){return terminals},get TERMINALS(){return TERMINALS},get gwHidden(){return gw.hidden},get buffs(){return buffs},get waypoint(){return waypoint},get parkedCart(){return parkedCart},
   fn:{startGather:()=>typeof startGather==='function'&&startGather(),harvestCorpse:(p,k)=>harvestCorpse(p,k),addBuff:(...a)=>addBuff(...a),setWaypoint:(x,z,l)=>setWaypoint(x,z,l),
     nearTravel:()=>nearTravel(),travelPoints:w=>travelPoints(w),setVendor:n=>{vendorName=n},combatLevel:()=>combatLevel(),hamMax:()=>hamMax(),selectPlacement:i=>selectPlacement(i),mmHud:()=>mmHud(),
-    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0},addTerminal:(k,x,z,r,y,c)=>addTerminalAt(k,x,z,r,y,c),protoHash:k=>protoHash(k),npcStrike:(p,u)=>npcStrike(p,u),npcCallPack:(c,p,r)=>npcCallPack(c,p,r),isNight:()=>isNight(),
+    setMissionTerminal:t=>{missionTerminal=t;boardSalt=0},addTerminal:(k,x,z,r,y,c)=>addTerminalAt(k,x,z,r,y,c),protoHash:k=>protoHash(k),hasKit:k=>!!kitProtoCache[k],npcStrike:(p,u)=>npcStrike(p,u),npcCallPack:(c,p,r)=>npcCallPack(c,p,r),isNight:()=>isNight(),
     standing:f=>standing(f),creatureFaction:cat=>CREATURE_FACTION[cat],mmLog:(m,k)=>mmLog(m,k||'combat'),toonOneShot:(o,k)=>toonOneShot(o,k),incapacitated:()=>!CH||CH.hp<=0},
   get GD(){return GD},get RACE(){return RACE},get CLASS(){return CLASS},get FACTION(){return FACTION},get WORLDS(){return WORLDS},get PLANET_FACTION(){return PLANET_FACTION},planetName:w=>planetName(w),nearestPoi:(w,x,z)=>nearestPoi(w,x,z),
   groundH:(w,x,z)=>groundH(w,x,z),waterDepth:(w,x,z)=>waterDepth(w,x,z),toast:m=>toast(m),floatMsg:m=>floatMsg(m),

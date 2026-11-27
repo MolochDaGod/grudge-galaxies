@@ -67,6 +67,36 @@ function rectsOverlap(a: Placed, b: Placed, pad = 1.5): boolean {
   return true;
 }
 
+/**
+ * Haven Port and any other realm capital built from the store-only R2 town pack: when this build does not carry that
+ * pack, the capital is laid out from owned generated buildings instead (services round the plaza, houses in streets).
+ */
+let storeTown: boolean | null = null;
+fetch('kits/store/town.js', { method: 'HEAD' }).then((r) => { storeTown = r.ok; }).catch(() => { storeTown = false; });
+function ownedCapital(w: any) {
+  if (storeTown !== false) return;
+  const towns = w.placements.filter((p: any) => p.t === 'r2_town');
+  if (!towns.length) return;
+  for (const t of towns) t.genB = true; // re-marked on every rebuild (buildGround clears the marks)
+  if (w.ownedCapital) return;
+  w.ownedCapital = true;
+  for (const t of towns) {
+    t.genB = true; // the store town is not here; nothing to draw for it
+    const pi = w.pois.findIndex((q: any) => q.cat === 'city' && Math.hypot(q.x - t.x, q.z - t.z) < 200);
+    const services = ['cantina', 'hospital', 'armoury', 'temple', 'bank', 'market', 'guild', 'market'];
+    services.forEach((k, i) => {
+      const a = (i / services.length) * Math.PI * 2 + 0.2, R = 120;
+      w.placements.push({ t: 'gen_' + k, k: 'building', x: t.x + Math.cos(a) * R, z: t.z + Math.sin(a) * R, yaw: (-(a + Math.PI / 2) * 180) / Math.PI + 90, w: 18, d: 16, poi: pi, synthetic: true });
+    });
+    let n = 0;
+    for (let ring = 0; ring < 2; ring++)
+      for (let i = 0; i < 14 + ring * 6; i++) {
+        const a = (i / (14 + ring * 6)) * Math.PI * 2 + ring * 0.13, R = 195 + ring * 55;
+        w.placements.push({ t: 'gen_house_' + n++, k: 'building', x: t.x + Math.cos(a) * R, z: t.z + Math.sin(a) * R, yaw: (-(a + Math.PI / 2) * 180) / Math.PI + 90, w: 11, d: 10, poi: pi, synthetic: true });
+      }
+  }
+}
+
 export function planBuildings(B: Bridge, w: any): { placed: Placed[]; rejected: { pi: number; why: string }[] } {
   const style = WORLD_STYLE[w.id] || 'coraxis';
   const cands: { pi: number; kind: Kind; d: number }[] = [];
@@ -270,6 +300,7 @@ export async function installBuildings() {
     if (Array.isArray(w.placements)) while (w.placements.length && w.placements[w.placements.length - 1].genV) w.placements.pop();
     w.floorAt = null;
     for (const p of w.placements) if (p.genB) delete p.genB;
+    try { ownedCapital(w); } catch (e) { console.warn('owned capital failed', e); }
     let plan: ReturnType<typeof planBuildings> = { placed: [], rejected: [] };
     try { plan = planBuildings(B, w); } catch (e) { console.warn('building plan failed', e); }
     current = plan.placed;

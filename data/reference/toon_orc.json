@@ -1,0 +1,1465 @@
+{
+ "id": "toon_orc",
+ "kind": "character",
+ "licence": "Toon RTS Units (Polygon Blacksmith, Unity Asset Store licence): in builds only, not in the public repo",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -0.886,
+   0.002,
+   -0.925
+  ],
+  "max": [
+   1.027,
+   1.687,
+   1.168
+  ],
+  "size": [
+   1.913,
+   1.685,
+   2.093
+  ]
+ },
+ "skeleton": [
+  {
+   "name": "Bip001 Spine",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0.046,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.0004,
+    1
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.871,
+    -0.049
+   ],
+   "length": 0.116
+  },
+  {
+   "name": "Bip001 R Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    -0.045
+   ],
+   "r": [
+    0.02159,
+    0.99866,
+    -0.02091,
+    0.04218
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.115,
+    0.755,
+    -0.049
+   ],
+   "length": 0.115
+  },
+  {
+   "name": "Bip001 Pelvis",
+   "parent": null,
+   "t": [
+    0,
+    0,
+    0
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    -0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.755,
+    -0.049
+   ],
+   "length": 0
+  },
+  {
+   "name": "Bip001 R UpperArm",
+   "parent": "Bip001 R Clavicle",
+   "t": [
+    0.076,
+    0,
+    0
+   ],
+   "r": [
+    -0.06004,
+    -0.19522,
+    -0.02261,
+    0.97866
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.249,
+    1.147,
+    -0.063
+   ],
+   "length": 0.193
+  },
+  {
+   "name": "Bip001 R Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.133,
+    0,
+    -0.026
+   ],
+   "r": [
+    -0.58518,
+    0.02998,
+    0.81008,
+    -0.02117
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.067,
+    1.208,
+    -0.049
+   ],
+   "length": 0.344
+  },
+  {
+   "name": "Bip001 L Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.133,
+    0,
+    0.026
+   ],
+   "r": [
+    0.58518,
+    -0.02998,
+    0.81008,
+    -0.02117
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.067,
+    1.208,
+    -0.049
+   ],
+   "length": 0.344
+  },
+  {
+   "name": "Bip001 Head",
+   "parent": "Bip001 Neck",
+   "t": [
+    0.029,
+    0.006,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.15626,
+    0.98772
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.334,
+    -0.014
+   ],
+   "length": 0.074
+  },
+  {
+   "name": "Bip001 R Forearm",
+   "parent": "Bip001 R UpperArm",
+   "t": [
+    0.12,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.06711,
+    0.99775
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.48,
+    0.947,
+    -0.073
+   ],
+   "length": 0.306
+  },
+  {
+   "name": "Bip001 R Foot",
+   "parent": "Bip001 R Calf",
+   "t": [
+    0.098,
+    0,
+    0
+   ],
+   "r": [
+    -0.02485,
+    0.03999,
+    0.07406,
+    0.99614
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.168,
+    0.113,
+    -0.07
+   ],
+   "length": 0.25
+  },
+  {
+   "name": "Bip001 R Calf",
+   "parent": "Bip001 R Thigh",
+   "t": [
+    0.156,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09568,
+    0.99541
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.149,
+    0.359,
+    -0.033
+   ],
+   "length": 0.397
+  },
+  {
+   "name": "Bip001 L Foot",
+   "parent": "Bip001 L Calf",
+   "t": [
+    0.098,
+    0,
+    0
+   ],
+   "r": [
+    0.02485,
+    -0.03999,
+    0.07406,
+    0.99614
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.168,
+    0.113,
+    -0.07
+   ],
+   "length": 0.25
+  },
+  {
+   "name": "Bip001 L Calf",
+   "parent": "Bip001 L Thigh",
+   "t": [
+    0.156,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09568,
+    0.99541
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.149,
+    0.359,
+    -0.033
+   ],
+   "length": 0.397
+  },
+  {
+   "name": "Bip001 L Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    0.045
+   ],
+   "r": [
+    0.02159,
+    0.99866,
+    0.02091,
+    -0.04218
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.115,
+    0.755,
+    -0.049
+   ],
+   "length": 0.115
+  },
+  {
+   "name": "Bip001 R Hand",
+   "parent": "Bip001 R Forearm",
+   "t": [
+    0.092,
+    0,
+    0
+   ],
+   "r": [
+    0.70682,
+    0.00157,
+    0.04721,
+    0.70581
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.655,
+    0.792,
+    -0.05
+   ],
+   "length": 0.234
+  },
+  {
+   "name": "Bip001 L UpperArm",
+   "parent": "Bip001 L Clavicle",
+   "t": [
+    0.076,
+    0,
+    0
+   ],
+   "r": [
+    0.06004,
+    0.19522,
+    -0.02261,
+    0.97866
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.249,
+    1.147,
+    -0.063
+   ],
+   "length": 0.193
+  },
+  {
+   "name": "Bip001 L Forearm",
+   "parent": "Bip001 L UpperArm",
+   "t": [
+    0.12,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.06711,
+    0.99775
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.48,
+    0.947,
+    -0.073
+   ],
+   "length": 0.306
+  },
+  {
+   "name": "Bip001 L Hand",
+   "parent": "Bip001 L Forearm",
+   "t": [
+    0.092,
+    0,
+    0
+   ],
+   "r": [
+    -0.70682,
+    -0.00157,
+    0.04721,
+    0.70581
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.655,
+    0.792,
+    -0.05
+   ],
+   "length": 0.234
+  },
+  {
+   "name": "Bip001 Neck",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.158,
+    -0.003,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.19404,
+    0.98099
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.273,
+    -0.055
+   ],
+   "length": 0.402
+  },
+  {
+   "name": "Bone_wood",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.098,
+    0.13,
+    0.06
+   ],
+   "r": [
+    0.80728,
+    -0.24994,
+    0.50424,
+    -0.17767
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.153,
+    1.119,
+    0.28
+   ],
+   "length": 0.44
+  },
+  {
+   "name": "Bone_bag",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.165,
+    0.001,
+    0.061
+   ],
+   "r": [
+    -0.4998,
+    0.5002,
+    -0.5002,
+    0.4998
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.155,
+    1.289,
+    -0.045
+   ],
+   "length": 0.446
+  }
+ ],
+ "attach": [
+  {
+   "name": "L_hand_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.037,
+    0.016,
+    -0.024
+   ]
+  },
+  {
+   "name": "L_shield_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.064,
+    -0.016,
+    -0.002
+   ]
+  },
+  {
+   "name": "R_hand_container",
+   "on": "Bip001 R Hand",
+   "t": [
+    0.039,
+    0.014,
+    0.024
+   ]
+  },
+  {
+   "name": "Quiver_container",
+   "on": "Bip001 Spine",
+   "t": [
+    0.107,
+    -0.089,
+    -0.039
+   ]
+  }
+ ],
+ "clips": [],
+ "variants": [
+  {
+   "name": "ORC_weapon_Bow",
+   "tris": 42,
+   "skinned": false,
+   "size": [
+    0.25,
+    0.358,
+    1.524
+   ],
+   "centre": [
+    0.607,
+    0.801,
+    -0.031
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_staff_A",
+   "tris": 38,
+   "skinned": false,
+   "size": [
+    0.223,
+    0.292,
+    1.74
+   ],
+   "centre": [
+    0.674,
+    0.71,
+    -0.052
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_staff_C",
+   "tris": 180,
+   "skinned": false,
+   "size": [
+    0.398,
+    0.53,
+    1.801
+   ],
+   "centre": [
+    0.698,
+    0.619,
+    -0.022
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_staff_B",
+   "tris": 125,
+   "skinned": false,
+   "size": [
+    0.386,
+    0.338,
+    1.798
+   ],
+   "centre": [
+    0.669,
+    0.671,
+    -0.026
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Shield_A",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.171,
+    0.502,
+    0.498
+   ],
+   "centre": [
+    0.847,
+    0.697,
+    -0.056
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Shield_C",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.244,
+    0.718,
+    0.714
+   ],
+   "centre": [
+    0.864,
+    0.701,
+    -0.048
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Shield_B",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.201,
+    0.776,
+    0.877
+   ],
+   "centre": [
+    0.827,
+    0.705,
+    -0.078
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Shield_D",
+   "tris": 58,
+   "skinned": false,
+   "size": [
+    0.32,
+    0.966,
+    1.085
+   ],
+   "centre": [
+    0.867,
+    0.715,
+    -0.021
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_spear",
+   "tris": 34,
+   "skinned": false,
+   "size": [
+    0.19,
+    0.265,
+    1.967
+   ],
+   "centre": [
+    -0.69,
+    0.672,
+    0.185
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Hammer",
+   "tris": 26,
+   "skinned": false,
+   "size": [
+    0.297,
+    0.341,
+    0.811
+   ],
+   "centre": [
+    -0.685,
+    0.641,
+    0.135
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Dagger",
+   "tris": 20,
+   "skinned": false,
+   "size": [
+    0.128,
+    0.17,
+    1.019
+   ],
+   "centre": [
+    -0.694,
+    0.671,
+    0.21
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Axe_C",
+   "tris": 40,
+   "skinned": false,
+   "size": [
+    0.364,
+    0.524,
+    1.203
+   ],
+   "centre": [
+    -0.704,
+    0.581,
+    0.194
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Sword_B",
+   "tris": 50,
+   "skinned": false,
+   "size": [
+    0.183,
+    0.275,
+    1.322
+   ],
+   "centre": [
+    -0.683,
+    0.671,
+    0.338
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Axe_A",
+   "tris": 26,
+   "skinned": false,
+   "size": [
+    0.224,
+    0.345,
+    0.886
+   ],
+   "centre": [
+    -0.7,
+    0.606,
+    0.16
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Mace_A",
+   "tris": 96,
+   "skinned": false,
+   "size": [
+    0.311,
+    0.34,
+    1.091
+   ],
+   "centre": [
+    -0.69,
+    0.619,
+    0.209
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Axe_B",
+   "tris": 34,
+   "skinned": false,
+   "size": [
+    0.178,
+    0.328,
+    1.018
+   ],
+   "centre": [
+    -0.712,
+    0.594,
+    0.205
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_weapon_Sword_A",
+   "tris": 42,
+   "skinned": false,
+   "size": [
+    0.185,
+    0.28,
+    1.335
+   ],
+   "centre": [
+    -0.684,
+    0.613,
+    0.314
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Xtra_quiver",
+   "tris": 51,
+   "skinned": false,
+   "size": [
+    0.563,
+    0.911,
+    0.195
+   ],
+   "centre": [
+    -0.11,
+    1.176,
+    -0.326
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_A",
+   "tris": 160,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.115,
+    0.412
+   ],
+   "centre": [
+    0,
+    0.847,
+    -0.052
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_C",
+   "tris": 160,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.115,
+    0.386
+   ],
+   "centre": [
+    0,
+    0.847,
+    -0.065
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Xtra_Wood",
+   "tris": 48,
+   "skinned": true,
+   "size": [
+    0.832,
+    0.569,
+    0.745
+   ],
+   "centre": [
+    0.242,
+    1.169,
+    0.158
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Xtra_Bag",
+   "tris": 62,
+   "skinned": true,
+   "size": [
+    0.53,
+    0.605,
+    0.82
+   ],
+   "centre": [
+    0.128,
+    1.071,
+    -0.139
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_B",
+   "tris": 160,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.115,
+    0.391
+   ],
+   "centre": [
+    0,
+    0.847,
+    -0.063
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_F",
+   "tris": 220,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.403,
+    0.47
+   ],
+   "centre": [
+    0,
+    0.703,
+    -0.025
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_A",
+   "tris": 94,
+   "skinned": true,
+   "size": [
+    0.262,
+    0.272,
+    0.31
+   ],
+   "centre": [
+    0,
+    1.41,
+    0.009
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_E",
+   "tris": 160,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.115,
+    0.429
+   ],
+   "centre": [
+    0,
+    0.847,
+    -0.043
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Shoulderpads_C",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.872,
+    0.367,
+    0.53
+   ],
+   "centre": [
+    0.006,
+    1.211,
+    -0.071
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_H",
+   "tris": 90,
+   "skinned": true,
+   "size": [
+    0.277,
+    0.342,
+    0.433
+   ],
+   "centre": [
+    0,
+    1.404,
+    -0.053
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Shoulderpads_B",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.879,
+    0.302,
+    0.486
+   ],
+   "centre": [
+    0,
+    1.212,
+    -0.077
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Arms_C",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.636,
+    0.451,
+    0.273
+   ],
+   "centre": [
+    0,
+    0.8,
+    -0.05
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Legs_D",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.547,
+    0.374,
+    0.423
+   ],
+   "centre": [
+    0,
+    0.189,
+    0.021
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Legs_B",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.547,
+    0.374,
+    0.423
+   ],
+   "centre": [
+    0,
+    0.189,
+    0.021
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Arms_A",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.636,
+    0.451,
+    0.273
+   ],
+   "centre": [
+    0,
+    0.8,
+    -0.05
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Legs_C",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.547,
+    0.374,
+    0.423
+   ],
+   "centre": [
+    0,
+    0.189,
+    0.021
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Arms_B",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.636,
+    0.451,
+    0.273
+   ],
+   "centre": [
+    0,
+    0.8,
+    -0.05
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_B",
+   "tris": 148,
+   "skinned": true,
+   "size": [
+    0.267,
+    0.433,
+    0.527
+   ],
+   "centre": [
+    0,
+    1.415,
+    -0.11
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_C",
+   "tris": 102,
+   "skinned": true,
+   "size": [
+    0.277,
+    0.417,
+    0.344
+   ],
+   "centre": [
+    0,
+    1.478,
+    -0.004
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_F",
+   "tris": 192,
+   "skinned": true,
+   "size": [
+    0.503,
+    0.414,
+    0.566
+   ],
+   "centre": [
+    0,
+    1.403,
+    -0.09
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_G",
+   "tris": 94,
+   "skinned": true,
+   "size": [
+    0.325,
+    0.326,
+    0.411
+   ],
+   "centre": [
+    -0.002,
+    1.398,
+    -0.042
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_D",
+   "tris": 160,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.115,
+    0.386
+   ],
+   "centre": [
+    0,
+    0.847,
+    -0.065
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_D",
+   "tris": 118,
+   "skinned": true,
+   "size": [
+    0.405,
+    0.324,
+    0.344
+   ],
+   "centre": [
+    0,
+    1.432,
+    -0.004
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Head_E",
+   "tris": 148,
+   "skinned": true,
+   "size": [
+    0.277,
+    0.419,
+    0.434
+   ],
+   "centre": [
+    0,
+    1.474,
+    -0.05
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Shoulderpads_F",
+   "tris": 132,
+   "skinned": true,
+   "size": [
+    0.876,
+    0.389,
+    0.546
+   ],
+   "centre": [
+    0,
+    1.237,
+    -0.067
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Shoulderpads_E",
+   "tris": 96,
+   "skinned": true,
+   "size": [
+    0.883,
+    0.416,
+    0.524
+   ],
+   "centre": [
+    0,
+    1.236,
+    -0.07
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Shoulderpads_D",
+   "tris": 66,
+   "skinned": true,
+   "size": [
+    0.44,
+    0.42,
+    0.579
+   ],
+   "centre": [
+    0.231,
+    1.236,
+    -0.069
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Shoulderpads_A",
+   "tris": 30,
+   "skinned": true,
+   "size": [
+    0.349,
+    0.302,
+    0.486
+   ],
+   "centre": [
+    0.265,
+    1.212,
+    -0.077
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Legs_A",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.547,
+    0.361,
+    0.412
+   ],
+   "centre": [
+    0,
+    0.182,
+    0.016
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  },
+  {
+   "name": "ORC_Units_Body_G",
+   "tris": 220,
+   "skinned": true,
+   "size": [
+    1.165,
+    1.403,
+    0.47
+   ],
+   "centre": [
+    0,
+    0.703,
+    -0.025
+   ],
+   "materials": [
+    "Orc_Standard_Units"
+   ]
+  }
+ ],
+ "materials": [
+  "Orc_Standard_Units",
+  "Orc_Standard_Units"
+ ],
+ "textures": [
+  {
+   "name": "orc_atlas",
+   "size": [
+    1024,
+    1024
+   ],
+   "mime": "image/webp"
+  }
+ ]
+}

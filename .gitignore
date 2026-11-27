@@ -6,3 +6,6 @@ server/saves.json
 # licensed Asset Store content: shipped in builds, never committed
 kits/store/
 public/kits/store/
+
+# licensed source data kept for retargeting tests (skeletons, clips): never committed, never shipped
+private/

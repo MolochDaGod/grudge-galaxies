@@ -1,0 +1,1395 @@
+{
+ "id": "toon_elf",
+ "kind": "character",
+ "licence": "Toon RTS Units (Polygon Blacksmith, Unity Asset Store licence): in builds only, not in the public repo",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -0.784,
+   0.002,
+   -0.924
+  ],
+  "max": [
+   0.86,
+   1.704,
+   1.448
+  ],
+  "size": [
+   1.645,
+   1.702,
+   2.372
+  ]
+ },
+ "skeleton": [
+  {
+   "name": "Bip001 R Foot",
+   "parent": "Bip001 R Calf",
+   "t": [
+    0.096,
+    0,
+    0
+   ],
+   "r": [
+    -0.02485,
+    0.03999,
+    0.07406,
+    0.99614
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.163,
+    0.11,
+    -0.069
+   ],
+   "length": 0.243
+  },
+  {
+   "name": "Bip001 R Calf",
+   "parent": "Bip001 R Thigh",
+   "t": [
+    0.152,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09568,
+    0.99541
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.145,
+    0.35,
+    -0.033
+   ],
+   "length": 0.387
+  },
+  {
+   "name": "Bip001 R Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    -0.044
+   ],
+   "r": [
+    0.02159,
+    0.99866,
+    -0.02091,
+    0.04218
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.112,
+    0.735,
+    -0.049
+   ],
+   "length": 0.112
+  },
+  {
+   "name": "Bip001 L Foot",
+   "parent": "Bip001 L Calf",
+   "t": [
+    0.096,
+    0,
+    0
+   ],
+   "r": [
+    0.02485,
+    -0.03999,
+    0.07406,
+    0.99614
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.163,
+    0.11,
+    -0.069
+   ],
+   "length": 0.243
+  },
+  {
+   "name": "Bip001 L Calf",
+   "parent": "Bip001 L Thigh",
+   "t": [
+    0.152,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09568,
+    0.99541
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.145,
+    0.35,
+    -0.033
+   ],
+   "length": 0.387
+  },
+  {
+   "name": "Bip001 L Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    0.044
+   ],
+   "r": [
+    0.02159,
+    0.99866,
+    0.02091,
+    -0.04218
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.112,
+    0.735,
+    -0.049
+   ],
+   "length": 0.112
+  },
+  {
+   "name": "Bip001 R Forearm",
+   "parent": "Bip001 R UpperArm",
+   "t": [
+    0.117,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09983,
+    0.995
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.454,
+    0.948,
+    -0.079
+   ],
+   "length": 0.298
+  },
+  {
+   "name": "Bip001 R UpperArm",
+   "parent": "Bip001 R Clavicle",
+   "t": [
+    0.064,
+    0,
+    0
+   ],
+   "r": [
+    -0.06111,
+    -0.20806,
+    -0.01017,
+    0.97615
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.222,
+    1.134,
+    -0.061
+   ],
+   "length": 0.163
+  },
+  {
+   "name": "Bip001 R Hand",
+   "parent": "Bip001 R Forearm",
+   "t": [
+    0.09,
+    0,
+    0
+   ],
+   "r": [
+    0.7064,
+    0.0244,
+    0.02442,
+    0.70697
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.628,
+    0.804,
+    -0.048
+   ],
+   "length": 0.228
+  },
+  {
+   "name": "Bip001 L UpperArm",
+   "parent": "Bip001 L Clavicle",
+   "t": [
+    0.064,
+    0,
+    0
+   ],
+   "r": [
+    0.06111,
+    0.20806,
+    -0.01017,
+    0.97615
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.222,
+    1.134,
+    -0.061
+   ],
+   "length": 0.163
+  },
+  {
+   "name": "Bip001 L Hand",
+   "parent": "Bip001 L Forearm",
+   "t": [
+    0.09,
+    0,
+    0
+   ],
+   "r": [
+    -0.7064,
+    -0.0244,
+    0.02442,
+    0.70697
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.628,
+    0.804,
+    -0.048
+   ],
+   "length": 0.228
+  },
+  {
+   "name": "Bip001 L Forearm",
+   "parent": "Bip001 L UpperArm",
+   "t": [
+    0.117,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09983,
+    0.995
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.454,
+    0.948,
+    -0.079
+   ],
+   "length": 0.298
+  },
+  {
+   "name": "Bip001 Pelvis",
+   "parent": null,
+   "t": [
+    0,
+    0,
+    0
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    -0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.735,
+    -0.049
+   ],
+   "length": 0
+  },
+  {
+   "name": "Bip001 L Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.129,
+    0,
+    0.026
+   ],
+   "r": [
+    0.61052,
+    -0.0293,
+    0.79115,
+    -0.02211
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.065,
+    1.176,
+    -0.049
+   ],
+   "length": 0.335
+  },
+  {
+   "name": "Bip001 R Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.129,
+    0,
+    -0.026
+   ],
+   "r": [
+    -0.61052,
+    0.02929,
+    0.79115,
+    -0.0221
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.065,
+    1.176,
+    -0.049
+   ],
+   "length": 0.335
+  },
+  {
+   "name": "Bip001 Spine",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0.044,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.0004,
+    1
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.848,
+    -0.049
+   ],
+   "length": 0.113
+  },
+  {
+   "name": "Bip001 Head",
+   "parent": "Bip001 Neck",
+   "t": [
+    0.028,
+    0.006,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.15626,
+    0.98772
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.298,
+    -0.015
+   ],
+   "length": 0.072
+  },
+  {
+   "name": "Bip001 Neck",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.154,
+    -0.002,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.19404,
+    0.98099
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.239,
+    -0.055
+   ],
+   "length": 0.391
+  }
+ ],
+ "attach": [
+  {
+   "name": "L_hand_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.037,
+    0.016,
+    -0.024
+   ]
+  },
+  {
+   "name": "L_shield_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.052,
+    -0.007,
+    -0.004
+   ]
+  },
+  {
+   "name": "R_hand_container",
+   "on": "Bip001 R Hand",
+   "t": [
+    0.032,
+    0.012,
+    0.024
+   ]
+  },
+  {
+   "name": "Quiver_container",
+   "on": "Bip001 Spine",
+   "t": [
+    0.1,
+    -0.073,
+    -0.021
+   ]
+  }
+ ],
+ "clips": [],
+ "variants": [
+  {
+   "name": "ELF_weapon_bow",
+   "tris": 60,
+   "skinned": false,
+   "size": [
+    0.277,
+    0.31,
+    1.55
+   ],
+   "centre": [
+    0.591,
+    0.802,
+    -0.027
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_staff_B",
+   "tris": 90,
+   "skinned": false,
+   "size": [
+    0.346,
+    0.286,
+    2.001
+   ],
+   "centre": [
+    0.619,
+    0.679,
+    0.084
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_staff_C",
+   "tris": 108,
+   "skinned": false,
+   "size": [
+    0.489,
+    0.39,
+    2.018
+   ],
+   "centre": [
+    0.548,
+    0.757,
+    0.089
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_staff_A",
+   "tris": 84,
+   "skinned": false,
+   "size": [
+    0.32,
+    0.265,
+    2.01
+   ],
+   "centre": [
+    0.634,
+    0.691,
+    0.081
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_shield_C",
+   "tris": 52,
+   "skinned": false,
+   "size": [
+    0.167,
+    0.834,
+    1.376
+   ],
+   "centre": [
+    0.777,
+    0.769,
+    0.004
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_shield_B",
+   "tris": 38,
+   "skinned": false,
+   "size": [
+    0.158,
+    0.752,
+    0.913
+   ],
+   "centre": [
+    0.756,
+    0.783,
+    -0.121
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_shield_A",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.126,
+    0.575,
+    0.695
+   ],
+   "centre": [
+    0.771,
+    0.749,
+    -0.084
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_axe",
+   "tris": 48,
+   "skinned": false,
+   "size": [
+    0.181,
+    0.236,
+    1.032
+   ],
+   "centre": [
+    -0.669,
+    0.655,
+    0.21
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_hammer",
+   "tris": 26,
+   "skinned": false,
+   "size": [
+    0.286,
+    0.304,
+    0.73
+   ],
+   "centre": [
+    -0.641,
+    0.688,
+    0.128
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_sword_B",
+   "tris": 33,
+   "skinned": false,
+   "size": [
+    0.199,
+    0.174,
+    1.343
+   ],
+   "centre": [
+    -0.652,
+    0.687,
+    0.341
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_dagger",
+   "tris": 24,
+   "skinned": false,
+   "size": [
+    0.124,
+    0.135,
+    0.838
+   ],
+   "centre": [
+    -0.656,
+    0.708,
+    0.195
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_sword_A",
+   "tris": 44,
+   "skinned": false,
+   "size": [
+    0.168,
+    0.185,
+    1.302
+   ],
+   "centre": [
+    -0.65,
+    0.706,
+    0.341
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_weapon_spear",
+   "tris": 32,
+   "skinned": false,
+   "size": [
+    0.25,
+    0.223,
+    2.247
+   ],
+   "centre": [
+    -0.649,
+    0.717,
+    0.324
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Xtra_wood",
+   "tris": 48,
+   "skinned": false,
+   "size": [
+    0.86,
+    0.452,
+    0.751
+   ],
+   "centre": [
+    0.25,
+    0.986,
+    0.189
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Xtra_bag",
+   "tris": 62,
+   "skinned": false,
+   "size": [
+    0.53,
+    0.605,
+    0.82
+   ],
+   "centre": [
+    0.128,
+    1.048,
+    -0.139
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Xtra_quiver",
+   "tris": 51,
+   "skinned": false,
+   "size": [
+    0.538,
+    0.889,
+    0.184
+   ],
+   "centre": [
+    -0.096,
+    1.185,
+    -0.288
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Legs_A",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.476,
+    0.367,
+    0.404
+   ],
+   "centre": [
+    0,
+    0.185,
+    0.029
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Arms_A",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.506,
+    0.381,
+    0.244
+   ],
+   "centre": [
+    0,
+    0.831,
+    -0.059
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Body_F",
+   "tris": 222,
+   "skinned": true,
+   "size": [
+    1.015,
+    1.369,
+    0.492
+   ],
+   "centre": [
+    0,
+    0.686,
+    -0.014
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Body_A",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.095,
+    0.36
+   ],
+   "centre": [
+    0,
+    0.829,
+    -0.045
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_A",
+   "tris": 180,
+   "skinned": true,
+   "size": [
+    0.269,
+    0.4,
+    0.344
+   ],
+   "centre": [
+    0,
+    1.358,
+    -0.064
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Body_B",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.106,
+    0.379
+   ],
+   "centre": [
+    0,
+    0.835,
+    -0.055
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Arms_B",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.507,
+    0.382,
+    0.245
+   ],
+   "centre": [
+    0,
+    0.83,
+    -0.058
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Legs_B",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.476,
+    0.377,
+    0.404
+   ],
+   "centre": [
+    0,
+    0.19,
+    0.029
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Body_E",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.096,
+    0.376
+   ],
+   "centre": [
+    0,
+    0.83,
+    -0.037
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Arms_C",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.505,
+    0.381,
+    0.244
+   ],
+   "centre": [
+    0,
+    0.831,
+    -0.059
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Legs_C",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.476,
+    0.367,
+    0.404
+   ],
+   "centre": [
+    0,
+    0.185,
+    0.029
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_C",
+   "tris": 110,
+   "skinned": true,
+   "size": [
+    0.251,
+    0.394,
+    0.32
+   ],
+   "centre": [
+    -0.002,
+    1.346,
+    -0.031
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Body_C",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.1,
+    0.374
+   ],
+   "centre": [
+    0,
+    0.831,
+    -0.048
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Shoulderpads_B",
+   "tris": 56,
+   "skinned": true,
+   "size": [
+    0.863,
+    0.232,
+    0.363
+   ],
+   "centre": [
+    -0.003,
+    1.241,
+    -0.065
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_E",
+   "tris": 154,
+   "skinned": true,
+   "size": [
+    0.229,
+    0.51,
+    0.354
+   ],
+   "centre": [
+    0,
+    1.412,
+    -0.054
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_B",
+   "tris": 142,
+   "skinned": true,
+   "size": [
+    0.267,
+    0.414,
+    0.393
+   ],
+   "centre": [
+    0,
+    1.325,
+    -0.086
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_D",
+   "tris": 110,
+   "skinned": true,
+   "size": [
+    0.251,
+    0.394,
+    0.32
+   ],
+   "centre": [
+    -0.002,
+    1.346,
+    -0.031
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_G",
+   "tris": 148,
+   "skinned": true,
+   "size": [
+    0.234,
+    0.463,
+    0.362
+   ],
+   "centre": [
+    0,
+    1.386,
+    -0.052
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_L",
+   "tris": 166,
+   "skinned": true,
+   "size": [
+    0.234,
+    0.499,
+    0.379
+   ],
+   "centre": [
+    -0.001,
+    1.405,
+    -0.065
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Body_D",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.097,
+    0.385
+   ],
+   "centre": [
+    0,
+    0.83,
+    -0.043
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Shoulderpads_A",
+   "tris": 56,
+   "skinned": true,
+   "size": [
+    0.716,
+    0.216,
+    0.376
+   ],
+   "centre": [
+    0.001,
+    1.211,
+    -0.065
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Shoulderpads_C",
+   "tris": 80,
+   "skinned": true,
+   "size": [
+    0.868,
+    0.311,
+    0.459
+   ],
+   "centre": [
+    -0.001,
+    1.233,
+    -0.073
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_N",
+   "tris": 234,
+   "skinned": true,
+   "size": [
+    0.267,
+    0.495,
+    0.368
+   ],
+   "centre": [
+    0,
+    1.409,
+    -0.05
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_F",
+   "tris": 194,
+   "skinned": true,
+   "size": [
+    0.231,
+    0.49,
+    0.367
+   ],
+   "centre": [
+    0,
+    1.4,
+    -0.071
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_H",
+   "tris": 162,
+   "skinned": true,
+   "size": [
+    0.234,
+    0.548,
+    0.362
+   ],
+   "centre": [
+    0,
+    1.427,
+    -0.052
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_I",
+   "tris": 216,
+   "skinned": true,
+   "size": [
+    0.234,
+    0.548,
+    0.38
+   ],
+   "centre": [
+    0,
+    1.428,
+    -0.064
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_J",
+   "tris": 208,
+   "skinned": true,
+   "size": [
+    0.335,
+    0.477,
+    0.355
+   ],
+   "centre": [
+    0,
+    1.396,
+    -0.052
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_M",
+   "tris": 240,
+   "skinned": true,
+   "size": [
+    0.374,
+    0.545,
+    0.384
+   ],
+   "centre": [
+    0,
+    1.432,
+    -0.061
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_K",
+   "tris": 276,
+   "skinned": true,
+   "size": [
+    0.382,
+    0.543,
+    0.377
+   ],
+   "centre": [
+    0,
+    1.426,
+    -0.063
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_O",
+   "tris": 86,
+   "skinned": true,
+   "size": [
+    0.246,
+    0.503,
+    0.334
+   ],
+   "centre": [
+    -0.002,
+    1.423,
+    -0.031
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  },
+  {
+   "name": "ELF_Units_Head_P",
+   "tris": 86,
+   "skinned": true,
+   "size": [
+    0.249,
+    0.507,
+    0.333
+   ],
+   "centre": [
+    -0.002,
+    1.427,
+    -0.029
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  }
+ ],
+ "materials": [
+  "ELF_WoodElf_Standard_Units",
+  "ELF_WoodElf_Standard_Units"
+ ],
+ "textures": [
+  {
+   "name": "elf_atlas",
+   "size": [
+    1024,
+    1024
+   ],
+   "mime": "image/webp"
+  }
+ ]
+}

@@ -1,0 +1,1305 @@
+{
+ "id": "toon_human",
+ "kind": "character",
+ "licence": "Toon RTS Units (Polygon Blacksmith, Unity Asset Store licence): in builds only, not in the public repo",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -0.867,
+   0.002,
+   -0.917
+  ],
+  "max": [
+   0.925,
+   1.604,
+   1.153
+  ],
+  "size": [
+   1.792,
+   1.602,
+   2.069
+  ]
+ },
+ "skeleton": [
+  {
+   "name": "Bip001 Pelvis",
+   "parent": null,
+   "t": [
+    0,
+    0,
+    0
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    -0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.735,
+    -0.049
+   ],
+   "length": 0
+  },
+  {
+   "name": "Bip001 Spine",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0.044,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.0004,
+    1
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.848,
+    -0.049
+   ],
+   "length": 0.113
+  },
+  {
+   "name": "Bip001 R Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    -0.044
+   ],
+   "r": [
+    0.02159,
+    0.99866,
+    -0.02091,
+    0.04218
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.112,
+    0.735,
+    -0.049
+   ],
+   "length": 0.112
+  },
+  {
+   "name": "Bip001 R Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.129,
+    0,
+    -0.026
+   ],
+   "r": [
+    -0.61052,
+    0.02929,
+    0.79115,
+    -0.0221
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.065,
+    1.176,
+    -0.049
+   ],
+   "length": 0.335
+  },
+  {
+   "name": "Bip001 L Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.129,
+    0,
+    0.026
+   ],
+   "r": [
+    0.61052,
+    -0.0293,
+    0.79115,
+    -0.02211
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.065,
+    1.176,
+    -0.049
+   ],
+   "length": 0.335
+  },
+  {
+   "name": "Bip001 R UpperArm",
+   "parent": "Bip001 R Clavicle",
+   "t": [
+    0.064,
+    0,
+    0
+   ],
+   "r": [
+    -0.06111,
+    -0.20806,
+    -0.01017,
+    0.97615
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.222,
+    1.134,
+    -0.061
+   ],
+   "length": 0.163
+  },
+  {
+   "name": "Bip001 Head",
+   "parent": "Bip001 Neck",
+   "t": [
+    0.028,
+    0.006,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.15626,
+    0.98772
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.298,
+    -0.015
+   ],
+   "length": 0.072
+  },
+  {
+   "name": "Bip001 Neck",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.154,
+    -0.002,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.19404,
+    0.98099
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.239,
+    -0.055
+   ],
+   "length": 0.391
+  },
+  {
+   "name": "Bip001 R Foot",
+   "parent": "Bip001 R Calf",
+   "t": [
+    0.096,
+    0,
+    0
+   ],
+   "r": [
+    -0.02485,
+    0.03999,
+    0.07406,
+    0.99614
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.163,
+    0.11,
+    -0.069
+   ],
+   "length": 0.243
+  },
+  {
+   "name": "Bip001 R Calf",
+   "parent": "Bip001 R Thigh",
+   "t": [
+    0.152,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09568,
+    0.99541
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.145,
+    0.35,
+    -0.033
+   ],
+   "length": 0.387
+  },
+  {
+   "name": "Bip001 L Foot",
+   "parent": "Bip001 L Calf",
+   "t": [
+    0.096,
+    0,
+    0
+   ],
+   "r": [
+    0.02485,
+    -0.03999,
+    0.07406,
+    0.99614
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.163,
+    0.11,
+    -0.069
+   ],
+   "length": 0.243
+  },
+  {
+   "name": "Bip001 L Calf",
+   "parent": "Bip001 L Thigh",
+   "t": [
+    0.152,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09568,
+    0.99541
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.145,
+    0.35,
+    -0.033
+   ],
+   "length": 0.387
+  },
+  {
+   "name": "Bip001 L Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    0.044
+   ],
+   "r": [
+    0.02159,
+    0.99866,
+    0.02091,
+    -0.04218
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.112,
+    0.735,
+    -0.049
+   ],
+   "length": 0.112
+  },
+  {
+   "name": "Bip001 R Forearm",
+   "parent": "Bip001 R UpperArm",
+   "t": [
+    0.117,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09983,
+    0.995
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.454,
+    0.948,
+    -0.079
+   ],
+   "length": 0.298
+  },
+  {
+   "name": "Bip001 R Hand",
+   "parent": "Bip001 R Forearm",
+   "t": [
+    0.09,
+    0,
+    0
+   ],
+   "r": [
+    0.7064,
+    0.0244,
+    0.02442,
+    0.70697
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.628,
+    0.804,
+    -0.048
+   ],
+   "length": 0.228
+  },
+  {
+   "name": "Bip001 L UpperArm",
+   "parent": "Bip001 L Clavicle",
+   "t": [
+    0.064,
+    0,
+    0
+   ],
+   "r": [
+    0.06111,
+    0.20806,
+    -0.01017,
+    0.97615
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.222,
+    1.134,
+    -0.061
+   ],
+   "length": 0.163
+  },
+  {
+   "name": "Bip001 L Forearm",
+   "parent": "Bip001 L UpperArm",
+   "t": [
+    0.117,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.09983,
+    0.995
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.454,
+    0.948,
+    -0.079
+   ],
+   "length": 0.298
+  },
+  {
+   "name": "Bip001 L Hand",
+   "parent": "Bip001 L Forearm",
+   "t": [
+    0.09,
+    0,
+    0
+   ],
+   "r": [
+    -0.7064,
+    -0.0244,
+    0.02442,
+    0.70697
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.628,
+    0.804,
+    -0.048
+   ],
+   "length": 0.228
+  }
+ ],
+ "attach": [
+  {
+   "name": "L_hand_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.037,
+    0.016,
+    -0.024
+   ]
+  },
+  {
+   "name": "L_shield_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.052,
+    -0.007,
+    -0.004
+   ]
+  },
+  {
+   "name": "R_hand_container",
+   "on": "Bip001 R Hand",
+   "t": [
+    0.032,
+    0.012,
+    0.024
+   ]
+  },
+  {
+   "name": "Quiver_container",
+   "on": "Bip001 Spine",
+   "t": [
+    0.1,
+    -0.073,
+    -0.021
+   ]
+  }
+ ],
+ "clips": [],
+ "variants": [
+  {
+   "name": "WK_weapon_staff_A",
+   "tris": 38,
+   "skinned": false,
+   "size": [
+    0.314,
+    0.253,
+    1.758
+   ],
+   "centre": [
+    0.676,
+    0.708,
+    -0.025
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_staff_B",
+   "tris": 80,
+   "skinned": false,
+   "size": [
+    0.388,
+    0.342,
+    1.897
+   ],
+   "centre": [
+    0.615,
+    0.672,
+    0.041
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_staff_C",
+   "tris": 46,
+   "skinned": false,
+   "size": [
+    0.298,
+    0.265,
+    1.858
+   ],
+   "centre": [
+    0.659,
+    0.711,
+    0.013
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_Bow",
+   "tris": 42,
+   "skinned": false,
+   "size": [
+    0.283,
+    0.31,
+    1.524
+   ],
+   "centre": [
+    0.571,
+    0.812,
+    -0.033
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Shield_A",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.153,
+    0.511,
+    0.504
+   ],
+   "centre": [
+    0.8,
+    0.738,
+    -0.018
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Shield_C",
+   "tris": 36,
+   "skinned": false,
+   "size": [
+    0.11,
+    0.632,
+    0.78
+   ],
+   "centre": [
+    0.773,
+    0.761,
+    -0.064
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Shield_B",
+   "tris": 50,
+   "skinned": false,
+   "size": [
+    0.15,
+    0.75,
+    0.91
+   ],
+   "centre": [
+    0.77,
+    0.722,
+    -0.084
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Shield_D",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.206,
+    0.712,
+    0.92
+   ],
+   "centre": [
+    0.822,
+    0.725,
+    -0.11
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_spear",
+   "tris": 34,
+   "skinned": false,
+   "size": [
+    0.217,
+    0.202,
+    1.945
+   ],
+   "centre": [
+    -0.65,
+    0.706,
+    0.18
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_sword_A",
+   "tris": 26,
+   "skinned": false,
+   "size": [
+    0.167,
+    0.207,
+    1.093
+   ],
+   "centre": [
+    -0.664,
+    0.717,
+    0.287
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_hammer_B",
+   "tris": 38,
+   "skinned": false,
+   "size": [
+    0.305,
+    0.339,
+    1.047
+   ],
+   "centre": [
+    -0.636,
+    0.682,
+    0.245
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_pick",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.44,
+    0.539,
+    0.778
+   ],
+   "centre": [
+    -0.647,
+    0.704,
+    0.12
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_sword_B",
+   "tris": 26,
+   "skinned": false,
+   "size": [
+    0.198,
+    0.243,
+    1.162
+   ],
+   "centre": [
+    -0.665,
+    0.714,
+    0.282
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_axe_B",
+   "tris": 40,
+   "skinned": false,
+   "size": [
+    0.302,
+    0.374,
+    1.08
+   ],
+   "centre": [
+    -0.641,
+    0.664,
+    0.247
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_hammer_A",
+   "tris": 26,
+   "skinned": false,
+   "size": [
+    0.269,
+    0.287,
+    0.718
+   ],
+   "centre": [
+    -0.642,
+    0.7,
+    0.104
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_weapon_axe_A",
+   "tris": 34,
+   "skinned": false,
+   "size": [
+    0.248,
+    0.297,
+    0.872
+   ],
+   "centre": [
+    -0.696,
+    0.625,
+    0.149
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Xtra_wood",
+   "tris": 48,
+   "skinned": false,
+   "size": [
+    0.86,
+    0.452,
+    0.751
+   ],
+   "centre": [
+    0.25,
+    0.986,
+    0.189
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Xtra_bag",
+   "tris": 62,
+   "skinned": false,
+   "size": [
+    0.53,
+    0.605,
+    0.82
+   ],
+   "centre": [
+    0.128,
+    1.048,
+    -0.139
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Xtra_quiver",
+   "tris": 51,
+   "skinned": false,
+   "size": [
+    0.528,
+    0.892,
+    0.228
+   ],
+   "centre": [
+    -0.071,
+    1.144,
+    -0.31
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Body_A",
+   "tris": 156,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.049,
+    0.347
+   ],
+   "centre": [
+    0,
+    0.806,
+    -0.027
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Body_B",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.079,
+    0.349
+   ],
+   "centre": [
+    0,
+    0.821,
+    -0.051
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Body_D",
+   "tris": 156,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.05,
+    0.416
+   ],
+   "centre": [
+    0,
+    0.806,
+    -0.017
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Body_C",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    1.096,
+    1.079,
+    0.349
+   ],
+   "centre": [
+    0,
+    0.821,
+    -0.051
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_shoulderpads_A",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.792,
+    0.364,
+    0.457
+   ],
+   "centre": [
+    0,
+    1.195,
+    -0.053
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_C",
+   "tris": 90,
+   "skinned": true,
+   "size": [
+    0.268,
+    0.432,
+    0.477
+   ],
+   "centre": [
+    0,
+    1.381,
+    -0.061
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_B",
+   "tris": 80,
+   "skinned": true,
+   "size": [
+    0.193,
+    0.304,
+    0.315
+   ],
+   "centre": [
+    0,
+    1.405,
+    -0.017
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_A",
+   "tris": 58,
+   "skinned": true,
+   "size": [
+    0.186,
+    0.284,
+    0.288
+   ],
+   "centre": [
+    0,
+    1.358,
+    -0.019
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Legs_A",
+   "tris": 64,
+   "skinned": true,
+   "size": [
+    0.517,
+    0.358,
+    0.398
+   ],
+   "centre": [
+    0,
+    0.181,
+    0.026
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Arms_A",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.532,
+    0.392,
+    0.21
+   ],
+   "centre": [
+    0,
+    0.814,
+    -0.05
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Legs_B",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.532,
+    0.363,
+    0.411
+   ],
+   "centre": [
+    0,
+    0.183,
+    0.02
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Arms_B",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.547,
+    0.405,
+    0.266
+   ],
+   "centre": [
+    0,
+    0.809,
+    -0.048
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Legs_C",
+   "tris": 64,
+   "skinned": true,
+   "size": [
+    0.532,
+    0.407,
+    0.432
+   ],
+   "centre": [
+    0,
+    0.205,
+    0.031
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Arms_C",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.541,
+    0.413,
+    0.288
+   ],
+   "centre": [
+    0,
+    0.826,
+    -0.061
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Body_E",
+   "tris": 222,
+   "skinned": true,
+   "size": [
+    1.015,
+    1.364,
+    0.492
+   ],
+   "centre": [
+    0,
+    0.684,
+    -0.014
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_E",
+   "tris": 70,
+   "skinned": true,
+   "size": [
+    0.208,
+    0.443,
+    0.314
+   ],
+   "centre": [
+    0.001,
+    1.281,
+    0.002
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_Arms_D",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.532,
+    0.392,
+    0.21
+   ],
+   "centre": [
+    0,
+    0.814,
+    -0.05
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_D",
+   "tris": 76,
+   "skinned": true,
+   "size": [
+    0.433,
+    0.369,
+    0.315
+   ],
+   "centre": [
+    0,
+    1.38,
+    -0.021
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_H",
+   "tris": 80,
+   "skinned": true,
+   "size": [
+    0.242,
+    0.476,
+    0.343
+   ],
+   "centre": [
+    -0.003,
+    1.297,
+    -0.013
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_G",
+   "tris": 80,
+   "skinned": true,
+   "size": [
+    0.242,
+    0.467,
+    0.343
+   ],
+   "centre": [
+    -0.003,
+    1.293,
+    -0.013
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_F",
+   "tris": 92,
+   "skinned": true,
+   "size": [
+    0.499,
+    0.544,
+    0.499
+   ],
+   "centre": [
+    0,
+    1.332,
+    0.013
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_shoulderpads_B",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.726,
+    0.257,
+    0.393
+   ],
+   "centre": [
+    -0.001,
+    1.183,
+    -0.058
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Units_head_I",
+   "tris": 72,
+   "skinned": true,
+   "size": [
+    0.242,
+    0.32,
+    0.333
+   ],
+   "centre": [
+    -0.003,
+    1.375,
+    -0.018
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  }
+ ],
+ "materials": [
+  "WK_Standard_Units",
+  "WK_Standard_Units"
+ ],
+ "textures": [
+  {
+   "name": "human_atlas",
+   "size": [
+    1024,
+    1024
+   ],
+   "mime": "image/webp"
+  }
+ ]
+}

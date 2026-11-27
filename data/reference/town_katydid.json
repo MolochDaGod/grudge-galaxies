@@ -1,0 +1,601 @@
+{
+ "id": "town_katydid",
+ "kind": "town layout",
+ "licence": "Sketchfab Standard (Medieval town by katydid): store only",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -20878.317,
+   -197.524,
+   -6781.25
+  ],
+  "max": [
+   4416.645,
+   5330.31,
+   25674.26
+  ],
+  "size": [
+   25294.961,
+   5527.834,
+   32455.509
+  ]
+ },
+ "skeleton": [],
+ "attach": [],
+ "clips": [],
+ "variants": [
+  {
+   "name": "Material2",
+   "tris": 31705,
+   "skinned": false,
+   "size": [
+    25292.258,
+    2087.961,
+    32455.509
+   ],
+   "centre": [
+    -8230.667,
+    846.457,
+    9446.505
+   ],
+   "materials": [
+    "material"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 435,
+   "skinned": false,
+   "size": [
+    18245.364,
+    1731.156,
+    22581.524
+   ],
+   "centre": [
+    -8556.759,
+    1023.622,
+    9004.107
+   ],
+   "materials": [
+    "Roofing_Slate_Dark"
+   ]
+  },
+  {
+   "name": "Material6",
+   "tris": 21393.333333333332,
+   "skinned": false,
+   "size": [
+    24774.915,
+    2647.336,
+    29031.206
+   ],
+   "centre": [
+    -8162.737,
+    1127.252,
+    10300.713
+   ],
+   "materials": [
+    "edge_color959791255"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 51207.333333333336,
+   "skinned": false,
+   "size": [
+    25292.258,
+    5526.955,
+    31732.448
+   ],
+   "centre": [
+    -8230.802,
+    2566.833,
+    9084.975
+   ],
+   "materials": [
+    "edge_color209200173255"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 57255,
+   "skinned": false,
+   "size": [
+    25101.7,
+    5525.808,
+    28273.604
+   ],
+   "centre": [
+    -8326.215,
+    2566.231,
+    9273.116
+   ],
+   "materials": [
+    "Brick_Tumbled"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 432,
+   "skinned": false,
+   "size": [
+    24852.958,
+    920.646,
+    29345.136
+   ],
+   "centre": [
+    -8212.644,
+    332.579,
+    10157.061
+   ],
+   "materials": [
+    "material_0"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 364,
+   "skinned": false,
+   "size": [
+    17900.922,
+    1222.145,
+    23950.98
+   ],
+   "centre": [
+    -8433.359,
+    610.827,
+    7827.184
+   ],
+   "materials": [
+    "Color_B16"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 9703,
+   "skinned": false,
+   "size": [
+    17692.666,
+    2387.277,
+    23618.333
+   ],
+   "centre": [
+    -8309.462,
+    1249.766,
+    6975.394
+   ],
+   "materials": [
+    "Color_007"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 12107,
+   "skinned": false,
+   "size": [
+    7961.269,
+    2300.819,
+    20988.567
+   ],
+   "centre": [
+    -4754.975,
+    1301.457,
+    6429.564
+   ],
+   "materials": [
+    "Color_D10"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 306,
+   "skinned": false,
+   "size": [
+    25102.084,
+    202.061,
+    32455.509
+   ],
+   "centre": [
+    -8326.22,
+    -95.472,
+    9446.505
+   ],
+   "materials": [
+    "Groundcover_Sand_Smooth"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 636,
+   "skinned": false,
+   "size": [
+    25104.193,
+    201.43,
+    31732.017
+   ],
+   "centre": [
+    -8326.22,
+    -95.472,
+    9084.759
+   ],
+   "materials": [
+    "Vegetation_Grass1"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 13945,
+   "skinned": false,
+   "size": [
+    24518.323,
+    821.987,
+    28056.291
+   ],
+   "centre": [
+    -8307.766,
+    454.315,
+    9885.015
+   ],
+   "materials": [
+    "Roofing_Metal_Standing_Seam_Red"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 22456,
+   "skinned": false,
+   "size": [
+    24484.783,
+    865.79,
+    27704.44
+   ],
+   "centre": [
+    -8306.92,
+    433.071,
+    10044.008
+   ],
+   "materials": [
+    "Color_C23"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 2649,
+   "skinned": false,
+   "size": [
+    24147.634,
+    1049.011,
+    29031.206
+   ],
+   "centre": [
+    -7848.124,
+    340.848,
+    10300.713
+   ],
+   "materials": [
+    "Wood_Bamboo_Medium"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 10978,
+   "skinned": false,
+   "size": [
+    24484.589,
+    543.969,
+    28025.519
+   ],
+   "centre": [
+    -8307.654,
+    271.958,
+    9882.803
+   ],
+   "materials": [
+    "Roofing_Metal_Standing_Seam_Red_1"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 2803,
+   "skinned": false,
+   "size": [
+    19539.484,
+    951.198,
+    28437.872
+   ],
+   "centre": [
+    -7612.682,
+    475.593,
+    9355.245
+   ],
+   "materials": [
+    "Roofing_Shingles_Asphalt_2"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 16,
+   "skinned": false,
+   "size": [
+    817.329,
+    384.324,
+    20988.567
+   ],
+   "centre": [
+    -8317.26,
+    1020.986,
+    6429.564
+   ],
+   "materials": [
+    "Color_D01"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 4541,
+   "skinned": false,
+   "size": [
+    25265.976,
+    1246.269,
+    27970.21
+   ],
+   "centre": [
+    -8216.344,
+    623.823,
+    10965.663
+   ],
+   "materials": [
+    "Vegetation_Blur5"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 139,
+   "skinned": false,
+   "size": [
+    25102.36,
+    205.311,
+    21330.149
+   ],
+   "centre": [
+    -8326.22,
+    -94.488,
+    11547.137
+   ],
+   "materials": [
+    "Water_Deep"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 14265,
+   "skinned": false,
+   "size": [
+    24283.302,
+    482.511,
+    27640.635
+   ],
+   "centre": [
+    -8249.812,
+    241.181,
+    9690.361
+   ],
+   "materials": [
+    "Color_C24"
+   ]
+  },
+  {
+   "name": "Material2",
+   "tris": 832,
+   "skinned": false,
+   "size": [
+    19959.361,
+    583.28,
+    21048.836
+   ],
+   "centre": [
+    -9107.339,
+    94.792,
+    6755.855
+   ],
+   "materials": [
+    "Stone_Coursed_Rough"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 90,
+   "skinned": false,
+   "size": [
+    24849.038,
+    434.603,
+    27598.157
+   ],
+   "centre": [
+    -8212.708,
+    98.425,
+    10827.046
+   ],
+   "materials": [
+    "Vegetation_Bark_Ponderosa"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 66,
+   "skinned": false,
+   "size": [
+    24425.571,
+    469.284,
+    27656.542
+   ],
+   "centre": [
+    -8418.307,
+    106.109,
+    11001.358
+   ],
+   "materials": [
+    "Wood_Lumber_ButtJoined"
+   ]
+  },
+  {
+   "name": "Material3",
+   "tris": 3297,
+   "skinned": false,
+   "size": [
+    24889.949,
+    1323.942,
+    27737.611
+   ],
+   "centre": [
+    -8422.329,
+    686.371,
+    10990.907
+   ],
+   "materials": [
+    "Vegetation_Blur7"
+   ]
+  }
+ ],
+ "materials": [
+  "material",
+  "Roofing_Slate_Dark",
+  "edge_color959791255",
+  "edge_color209200173255",
+  "Brick_Tumbled",
+  "material_0",
+  "Color_B16",
+  "Color_007",
+  "Color_D10",
+  "Groundcover_Sand_Smooth",
+  "Vegetation_Grass1",
+  "Roofing_Metal_Standing_Seam_Red",
+  "Color_C23",
+  "Wood_Bamboo_Medium",
+  "Roofing_Metal_Standing_Seam_Red_1",
+  "Roofing_Shingles_Asphalt_2",
+  "Color_D01",
+  "Vegetation_Blur5",
+  "Water_Deep",
+  "Color_C24",
+  "Stone_Coursed_Rough",
+  "Vegetation_Bark_Ponderosa",
+  "Wood_Lumber_ButtJoined",
+  "Vegetation_Blur7"
+ ],
+ "textures": [
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    128,
+    128
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    128,
+    128
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    128,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    128,
+    128
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    512
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    512,
+    256
+   ],
+   "mime": "image/jpeg"
+  },
+  {
+   "name": "",
+   "size": [
+    256,
+    256
+   ],
+   "mime": "image/jpeg"
+  }
+ ]
+}

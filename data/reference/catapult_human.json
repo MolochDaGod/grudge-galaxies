@@ -1,0 +1,365 @@
+{
+ "id": "catapult_human",
+ "kind": "siege",
+ "licence": "Toon RTS Units (Polygon Blacksmith, Unity Asset Store licence): in builds only, not in the public repo",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -0.943,
+   0.016,
+   -1.747
+  ],
+  "max": [
+   0.933,
+   1.658,
+   1.184
+  ],
+  "size": [
+   1.875,
+   1.642,
+   2.931
+  ]
+ },
+ "skeleton": [
+  {
+   "name": "Bone_body_A",
+   "parent": "Bone_Platform",
+   "t": [
+    0.092,
+    -0.01,
+    0.2
+   ],
+   "r": [
+    0,
+    0.70711,
+    0.70711,
+    0
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.449,
+    0.296,
+    0.518
+   ],
+   "length": 0.56
+  },
+  {
+   "name": "Bone_wheel_A",
+   "parent": "Bone_Root",
+   "t": [
+    -0.109,
+    0.305,
+    0.124
+   ],
+   "r": [
+    0,
+    0,
+    -0.70711,
+    0.70711
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.774,
+    0.315,
+    0.277
+   ],
+   "length": 0.88
+  },
+  {
+   "name": "Bone_Platform",
+   "parent": "Bone_Root",
+   "t": [
+    -0.112,
+    -0.023,
+    0.127
+   ],
+   "r": [
+    0,
+    0.70711,
+    0.70711,
+    0
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.059,
+    0.322,
+    0.285
+   ],
+   "length": 0.434
+  },
+  {
+   "name": "Bone_Root",
+   "parent": null,
+   "t": [
+    0,
+    0,
+    0
+   ],
+   "r": [
+    -0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "s": [
+    2.54,
+    2.54,
+    2.54
+   ],
+   "world": [
+    0,
+    0,
+    0
+   ],
+   "length": 0
+  },
+  {
+   "name": "Bone_body_B",
+   "parent": "Bone_Platform",
+   "t": [
+    0.092,
+    -0.01,
+    -0.16
+   ],
+   "r": [
+    0,
+    0.70711,
+    0.70711,
+    0
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.466,
+    0.296,
+    0.518
+   ],
+   "length": 0.47
+  },
+  {
+   "name": "Bone_stone",
+   "parent": "Bone_Arm",
+   "t": [
+    0.607,
+    -0.001,
+    0.053
+   ],
+   "r": [
+    -0.52133,
+    -0.47771,
+    -0.47771,
+    0.52133
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.001,
+    0.579,
+    -1.418
+   ],
+   "length": 1.547
+  },
+  {
+   "name": "Bone_wheel_B",
+   "parent": "Bone_Root",
+   "t": [
+    0.36,
+    0.263,
+    0.115
+   ],
+   "r": [
+    0,
+    0,
+    -0.70711,
+    0.70711
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.667,
+    0.291,
+    -0.915
+   ],
+   "length": 1.169
+  },
+  {
+   "name": "Bone_Arm",
+   "parent": "Bone_Platform",
+   "t": [
+    -0.071,
+    -0.004,
+    0.024
+   ],
+   "r": [
+    0.03084,
+    0.70643,
+    0.70643,
+    0.03084
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.002,
+    0.311,
+    0.105
+   ],
+   "length": 0.19
+  },
+  {
+   "name": "Bone_front",
+   "parent": "Bone_Platform",
+   "t": [
+    0.225,
+    -0.022,
+    0.023
+   ],
+   "r": [
+    -0.70711,
+    0,
+    0,
+    0.70711
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.267,
+    0.856
+   ],
+   "length": 0.578
+  },
+  {
+   "name": "Bone_wheel_C001D",
+   "parent": "Bone_Root",
+   "t": [
+    -0.11,
+    -0.3,
+    0.124
+   ],
+   "r": [
+    0,
+    0,
+    -0.70711,
+    0.70711
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.761,
+    0.315,
+    0.28
+   ],
+   "length": 0.87
+  },
+  {
+   "name": "Bone_wheel_C",
+   "parent": "Bone_Root",
+   "t": [
+    0.36,
+    -0.272,
+    0.115
+   ],
+   "r": [
+    0,
+    0,
+    -0.70711,
+    0.70711
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.69,
+    0.291,
+    -0.915
+   ],
+   "length": 1.183
+  }
+ ],
+ "attach": [],
+ "clips": [],
+ "variants": [
+  {
+   "name": "WK_Catapult_rock",
+   "tris": 40,
+   "skinned": false,
+   "size": [
+    0.511,
+    0.457,
+    0.559
+   ],
+   "centre": [
+    0.001,
+    0.717,
+    -1.435
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  },
+  {
+   "name": "WK_Catapult",
+   "tris": 586,
+   "skinned": true,
+   "size": [
+    1.875,
+    1.642,
+    2.931
+   ],
+   "centre": [
+    -0.005,
+    0.837,
+    -0.281
+   ],
+   "materials": [
+    "WK_Standard_Units"
+   ]
+  }
+ ],
+ "materials": [
+  "WK_Standard_Units"
+ ],
+ "textures": [
+  {
+   "name": "atlas",
+   "size": [
+    1024,
+    1024
+   ],
+   "mime": "image/webp"
+  }
+ ]
+}

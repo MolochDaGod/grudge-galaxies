@@ -1,0 +1,1413 @@
+{
+ "id": "toon_dwarf",
+ "kind": "character",
+ "licence": "Toon RTS Units (Polygon Blacksmith, Unity Asset Store licence): in builds only, not in the public repo",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -0.821,
+   0.003,
+   -0.73
+  ],
+  "max": [
+   0.821,
+   1.388,
+   0.933
+  ],
+  "size": [
+   1.642,
+   1.384,
+   1.662
+  ]
+ },
+ "skeleton": [
+  {
+   "name": "Bip001 L Foot",
+   "parent": "Bip001 L Calf",
+   "t": [
+    0.068,
+    0,
+    0
+   ],
+   "r": [
+    0.02448,
+    -0.05133,
+    0.05945,
+    0.99661
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.153,
+    0.105,
+    -0.055
+   ],
+   "length": 0.172
+  },
+  {
+   "name": "Bip001 Pelvis",
+   "parent": null,
+   "t": [
+    0,
+    0,
+    0
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    -0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.503,
+    -0.038
+   ],
+   "length": 0
+  },
+  {
+   "name": "Bip001 R Calf",
+   "parent": "Bip001 R Thigh",
+   "t": [
+    0.091,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.07071,
+    0.9975
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.136,
+    0.274,
+    -0.034
+   ],
+   "length": 0.231
+  },
+  {
+   "name": "Bip001 R Foot",
+   "parent": "Bip001 R Calf",
+   "t": [
+    0.068,
+    0,
+    0
+   ],
+   "r": [
+    -0.02448,
+    0.05133,
+    0.05945,
+    0.99661
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.153,
+    0.105,
+    -0.055
+   ],
+   "length": 0.172
+  },
+  {
+   "name": "Bip001 R Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    -0.044
+   ],
+   "r": [
+    0.01118,
+    0.99832,
+    -0.02079,
+    0.05293
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.112,
+    0.503,
+    -0.038
+   ],
+   "length": 0.112
+  },
+  {
+   "name": "Bip001 Spine",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0.044,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.0004,
+    1
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.616,
+    -0.039
+   ],
+   "length": 0.113
+  },
+  {
+   "name": "Bip001 L Calf",
+   "parent": "Bip001 L Thigh",
+   "t": [
+    0.091,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.07071,
+    0.9975
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.136,
+    0.274,
+    -0.034
+   ],
+   "length": 0.231
+  },
+  {
+   "name": "Bip001 L Thigh",
+   "parent": "Bip001 Pelvis",
+   "t": [
+    0,
+    0,
+    0.044
+   ],
+   "r": [
+    0.01118,
+    0.99832,
+    0.02079,
+    -0.05293
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.112,
+    0.503,
+    -0.038
+   ],
+   "length": 0.112
+  },
+  {
+   "name": "Bip001 R Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.111,
+    0,
+    -0.026
+   ],
+   "r": [
+    -0.58354,
+    0.03002,
+    0.81125,
+    -0.0211
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.065,
+    0.898,
+    -0.038
+   ],
+   "length": 0.29
+  },
+  {
+   "name": "Bip001 L Clavicle",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.111,
+    0,
+    0.026
+   ],
+   "r": [
+    0.58354,
+    -0.03002,
+    0.81125,
+    -0.02111
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.065,
+    0.898,
+    -0.038
+   ],
+   "length": 0.29
+  },
+  {
+   "name": "Bip001 R UpperArm",
+   "parent": "Bip001 R Clavicle",
+   "t": [
+    0.074,
+    0,
+    0
+   ],
+   "r": [
+    -0.06515,
+    -0.17526,
+    0.01219,
+    0.98229
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.242,
+    0.839,
+    -0.051
+   ],
+   "length": 0.187
+  },
+  {
+   "name": "Bip001 Head",
+   "parent": "Bip001 Neck",
+   "t": [
+    0.028,
+    0.006,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.15626,
+    0.98772
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    1.021,
+    -0.004
+   ],
+   "length": 0.072
+  },
+  {
+   "name": "Bip001 R Forearm",
+   "parent": "Bip001 R UpperArm",
+   "t": [
+    0.085,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.10234,
+    0.99475
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.408,
+    0.705,
+    -0.074
+   ],
+   "length": 0.215
+  },
+  {
+   "name": "Bip001 R Hand",
+   "parent": "Bip001 R Forearm",
+   "t": [
+    0.068,
+    0,
+    0
+   ],
+   "r": [
+    0.7064,
+    0.0244,
+    0.02442,
+    0.70697
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.54,
+    0.595,
+    -0.056
+   ],
+   "length": 0.173
+  },
+  {
+   "name": "Bip001 L UpperArm",
+   "parent": "Bip001 L Clavicle",
+   "t": [
+    0.074,
+    0,
+    0
+   ],
+   "r": [
+    0.06515,
+    0.17526,
+    0.01219,
+    0.98229
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.242,
+    0.839,
+    -0.051
+   ],
+   "length": 0.187
+  },
+  {
+   "name": "Bip001 L Forearm",
+   "parent": "Bip001 L UpperArm",
+   "t": [
+    0.085,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    -0.10234,
+    0.99475
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.408,
+    0.705,
+    -0.074
+   ],
+   "length": 0.215
+  },
+  {
+   "name": "Bip001 L Hand",
+   "parent": "Bip001 L Forearm",
+   "t": [
+    0.068,
+    0,
+    0
+   ],
+   "r": [
+    -0.7064,
+    -0.0244,
+    0.02442,
+    0.70697
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.54,
+    0.595,
+    -0.056
+   ],
+   "length": 0.173
+  },
+  {
+   "name": "Bip001 Neck",
+   "parent": "Bip001 Spine",
+   "t": [
+    0.136,
+    -0.002,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.19404,
+    0.98099
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.961,
+    -0.045
+   ],
+   "length": 0.345
+  }
+ ],
+ "attach": [
+  {
+   "name": "L_hand_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.036,
+    0.006,
+    -0.024
+   ]
+  },
+  {
+   "name": "L_shield_container",
+   "on": "Bip001 L Hand",
+   "t": [
+    0.052,
+    -0.007,
+    -0.004
+   ]
+  },
+  {
+   "name": "R_hand_container",
+   "on": "Bip001 R Hand",
+   "t": [
+    0.036,
+    0.006,
+    0.024
+   ]
+  },
+  {
+   "name": "Quiver_container",
+   "on": "Bip001 Spine",
+   "t": [
+    0.1,
+    -0.073,
+    -0.021
+   ]
+  }
+ ],
+ "clips": [],
+ "variants": [
+  {
+   "name": "DWF_Weapon_bow",
+   "tris": 50,
+   "skinned": false,
+   "size": [
+    0.285,
+    0.354,
+    1.247
+   ],
+   "centre": [
+    0.506,
+    0.64,
+    -0.035
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_staff_B",
+   "tris": 108,
+   "skinned": false,
+   "size": [
+    0.365,
+    0.329,
+    1.536
+   ],
+   "centre": [
+    0.566,
+    0.469,
+    0.038
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_staff_A",
+   "tris": 34,
+   "skinned": false,
+   "size": [
+    0.175,
+    0.226,
+    1.528
+   ],
+   "centre": [
+    0.591,
+    0.514,
+    0.035
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Shield_B",
+   "tris": 50,
+   "skinned": false,
+   "size": [
+    0.174,
+    0.713,
+    0.713
+   ],
+   "centre": [
+    0.734,
+    0.524,
+    -0.043
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Shield_A",
+   "tris": 30,
+   "skinned": false,
+   "size": [
+    0.165,
+    0.579,
+    0.573
+   ],
+   "centre": [
+    0.733,
+    0.523,
+    -0.046
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Shield_C",
+   "tris": 38,
+   "skinned": false,
+   "size": [
+    0.209,
+    0.786,
+    0.862
+   ],
+   "centre": [
+    0.714,
+    0.519,
+    -0.072
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Shield_D",
+   "tris": 60,
+   "skinned": false,
+   "size": [
+    0.175,
+    0.807,
+    0.808
+   ],
+   "centre": [
+    0.714,
+    0.51,
+    -0.07
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_dagger",
+   "tris": 22,
+   "skinned": false,
+   "size": [
+    0.129,
+    0.154,
+    0.71
+   ],
+   "centre": [
+    -0.59,
+    0.517,
+    0.134
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_spear",
+   "tris": 20,
+   "skinned": false,
+   "size": [
+    0.164,
+    0.217,
+    1.563
+   ],
+   "centre": [
+    -0.589,
+    0.506,
+    0.151
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_axe_B",
+   "tris": 58,
+   "skinned": false,
+   "size": [
+    0.282,
+    0.339,
+    0.99
+   ],
+   "centre": [
+    -0.62,
+    0.419,
+    0.211
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_pick",
+   "tris": 64,
+   "skinned": false,
+   "size": [
+    0.484,
+    0.576,
+    0.826
+   ],
+   "centre": [
+    -0.578,
+    0.494,
+    0.089
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_axe_A",
+   "tris": 58,
+   "skinned": false,
+   "size": [
+    0.246,
+    0.346,
+    0.871
+   ],
+   "centre": [
+    -0.643,
+    0.417,
+    0.144
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_axe_C",
+   "tris": 102,
+   "skinned": false,
+   "size": [
+    0.353,
+    0.432,
+    1.142
+   ],
+   "centre": [
+    -0.565,
+    0.471,
+    0.205
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_sword_B",
+   "tris": 46,
+   "skinned": false,
+   "size": [
+    0.181,
+    0.228,
+    1.136
+   ],
+   "centre": [
+    -0.585,
+    0.505,
+    0.273
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_hammer_B",
+   "tris": 44,
+   "skinned": false,
+   "size": [
+    0.355,
+    0.389,
+    1.126
+   ],
+   "centre": [
+    -0.567,
+    0.474,
+    0.196
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_hammer_A",
+   "tris": 32,
+   "skinned": false,
+   "size": [
+    0.293,
+    0.321,
+    0.746
+   ],
+   "centre": [
+    -0.576,
+    0.488,
+    0.143
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Weapon_sword_A",
+   "tris": 34,
+   "skinned": false,
+   "size": [
+    0.129,
+    0.176,
+    0.999
+   ],
+   "centre": [
+    -0.585,
+    0.5,
+    0.228
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Xtra_wood",
+   "tris": 48,
+   "skinned": false,
+   "size": [
+    0.86,
+    0.452,
+    0.751
+   ],
+   "centre": [
+    0.25,
+    0.754,
+    0.2
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Xtra_bag",
+   "tris": 62,
+   "skinned": false,
+   "size": [
+    0.53,
+    0.605,
+    0.82
+   ],
+   "centre": [
+    0.128,
+    0.816,
+    -0.128
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Xtra_quiver",
+   "tris": 51,
+   "skinned": false,
+   "size": [
+    0.497,
+    0.788,
+    0.133
+   ],
+   "centre": [
+    -0.073,
+    0.912,
+    -0.263
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Body_A",
+   "tris": 158,
+   "skinned": true,
+   "size": [
+    0.945,
+    0.856,
+    0.429
+   ],
+   "centre": [
+    0,
+    0.63,
+    -0.014
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_A",
+   "tris": 102,
+   "skinned": true,
+   "size": [
+    0.343,
+    0.585,
+    0.41
+   ],
+   "centre": [
+    0,
+    0.921,
+    0.054
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Body_E",
+   "tris": 226,
+   "skinned": true,
+   "size": [
+    0.945,
+    1.055,
+    0.497
+   ],
+   "centre": [
+    0,
+    0.53,
+    -0.011
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Body_B",
+   "tris": 158,
+   "skinned": true,
+   "size": [
+    0.945,
+    0.856,
+    0.429
+   ],
+   "centre": [
+    0,
+    0.63,
+    -0.014
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Body_C",
+   "tris": 158,
+   "skinned": true,
+   "size": [
+    0.945,
+    0.856,
+    0.431
+   ],
+   "centre": [
+    0,
+    0.63,
+    -0.015
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Body_D",
+   "tris": 158,
+   "skinned": true,
+   "size": [
+    0.945,
+    0.856,
+    0.433
+   ],
+   "centre": [
+    0,
+    0.63,
+    -0.016
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Shoulderpads_A",
+   "tris": 56,
+   "skinned": true,
+   "size": [
+    0.712,
+    0.291,
+    0.448
+   ],
+   "centre": [
+    -0.001,
+    0.899,
+    -0.065
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Shoulderpads_B",
+   "tris": 56,
+   "skinned": true,
+   "size": [
+    0.686,
+    0.268,
+    0.412
+   ],
+   "centre": [
+    0,
+    0.898,
+    -0.066
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Shoulderpads_C",
+   "tris": 60,
+   "skinned": true,
+   "size": [
+    0.842,
+    0.31,
+    0.447
+   ],
+   "centre": [
+    0,
+    0.899,
+    -0.054
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_M",
+   "tris": 110,
+   "skinned": true,
+   "size": [
+    0.323,
+    0.631,
+    0.445
+   ],
+   "centre": [
+    0,
+    0.943,
+    0.037
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_N",
+   "tris": 110,
+   "skinned": true,
+   "size": [
+    0.323,
+    0.631,
+    0.445
+   ],
+   "centre": [
+    0,
+    0.943,
+    0.037
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Arms_A",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.419,
+    0.385,
+    0.278
+   ],
+   "centre": [
+    0,
+    0.607,
+    -0.055
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Legs_A",
+   "tris": 64,
+   "skinned": true,
+   "size": [
+    0.508,
+    0.289,
+    0.412
+   ],
+   "centre": [
+    0,
+    0.148,
+    0.031
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Legs_B",
+   "tris": 64,
+   "skinned": true,
+   "size": [
+    0.508,
+    0.272,
+    0.412
+   ],
+   "centre": [
+    0,
+    0.139,
+    0.031
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Arms_B",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.419,
+    0.385,
+    0.278
+   ],
+   "centre": [
+    0,
+    0.607,
+    -0.055
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Legs_C",
+   "tris": 64,
+   "skinned": true,
+   "size": [
+    0.508,
+    0.289,
+    0.412
+   ],
+   "centre": [
+    0,
+    0.148,
+    0.031
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Arms_C",
+   "tris": 44,
+   "skinned": true,
+   "size": [
+    1.419,
+    0.385,
+    0.278
+   ],
+   "centre": [
+    0,
+    0.607,
+    -0.055
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_B",
+   "tris": 112,
+   "skinned": true,
+   "size": [
+    0.343,
+    0.645,
+    0.41
+   ],
+   "centre": [
+    0,
+    0.95,
+    0.054
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_C",
+   "tris": 162,
+   "skinned": true,
+   "size": [
+    0.379,
+    0.676,
+    0.41
+   ],
+   "centre": [
+    0,
+    0.966,
+    0.054
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_D",
+   "tris": 116,
+   "skinned": true,
+   "size": [
+    0.343,
+    0.645,
+    0.439
+   ],
+   "centre": [
+    0,
+    0.95,
+    0.04
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_E",
+   "tris": 126,
+   "skinned": true,
+   "size": [
+    0.343,
+    0.654,
+    0.413
+   ],
+   "centre": [
+    0,
+    0.955,
+    0.053
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_F",
+   "tris": 178,
+   "skinned": true,
+   "size": [
+    0.423,
+    0.696,
+    0.413
+   ],
+   "centre": [
+    0,
+    0.976,
+    0.053
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_G",
+   "tris": 128,
+   "skinned": true,
+   "size": [
+    0.334,
+    0.628,
+    0.436
+   ],
+   "centre": [
+    0,
+    0.942,
+    0.041
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_H",
+   "tris": 180,
+   "skinned": true,
+   "size": [
+    0.444,
+    0.76,
+    0.436
+   ],
+   "centre": [
+    0,
+    1.008,
+    0.041
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_I",
+   "tris": 184,
+   "skinned": true,
+   "size": [
+    0.736,
+    0.63,
+    0.436
+   ],
+   "centre": [
+    0,
+    0.943,
+    0.041
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_J",
+   "tris": 118,
+   "skinned": true,
+   "size": [
+    0.333,
+    0.692,
+    0.445
+   ],
+   "centre": [
+    0,
+    0.974,
+    0.037
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_K",
+   "tris": 164,
+   "skinned": true,
+   "size": [
+    0.547,
+    0.707,
+    0.445
+   ],
+   "centre": [
+    0,
+    0.981,
+    0.037
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  },
+  {
+   "name": "DWF_Units_Head_L",
+   "tris": 136,
+   "skinned": true,
+   "size": [
+    0.525,
+    0.668,
+    0.438
+   ],
+   "centre": [
+    0,
+    0.962,
+    0.04
+   ],
+   "materials": [
+    "DWF_Standard_Units"
+   ]
+  }
+ ],
+ "materials": [
+  "DWF_Standard_Units",
+  "DWF_Standard_Units"
+ ],
+ "textures": [
+  {
+   "name": "dwarf_atlas",
+   "size": [
+    1024,
+    1024
+   ],
+   "mime": "image/webp"
+  }
+ ]
+}

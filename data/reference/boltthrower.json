@@ -1,0 +1,433 @@
+{
+ "id": "boltthrower",
+ "kind": "siege",
+ "licence": "Toon RTS Units (Polygon Blacksmith, Unity Asset Store licence): in builds only, not in the public repo",
+ "retained": "2026-11-27",
+ "note": "Facts kept for rebuilding with owned assets. The source meshes and textures are not in the repo.",
+ "bounds": {
+  "min": [
+   -1.734,
+   -0.024,
+   -1.608
+  ],
+  "max": [
+   1.734,
+   1.348,
+   1.23
+  ],
+  "size": [
+   3.468,
+   1.372,
+   2.839
+  ]
+ },
+ "skeleton": [
+  {
+   "name": "Bone_R_block",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.014,
+    -0.099,
+    -0.089
+   ],
+   "r": [
+    0,
+    -0.04362,
+    0,
+    0.99905
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.251,
+    0.583,
+    0.009
+   ],
+   "length": 0.34
+  },
+  {
+   "name": "Bone_Ballista",
+   "parent": null,
+   "t": [
+    0,
+    0.01,
+    0.14
+   ],
+   "r": [
+    0.70711,
+    0.70711,
+    0,
+    0
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.357,
+    -0.027
+   ],
+   "length": 0
+  },
+  {
+   "name": "Bone_R_wheel_A",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.103,
+    -0.233,
+    -0.001
+   ],
+   "r": [
+    0.5,
+    -0.5,
+    0.5,
+    -0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.593,
+    0.359,
+    0.234
+   ],
+   "length": 0.648
+  },
+  {
+   "name": "Bone_string",
+   "parent": "Bone_Ballista",
+   "t": [
+    0.316,
+    0,
+    -0.192
+   ],
+   "r": [
+    0.70711,
+    0,
+    0,
+    0.70711
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.843,
+    -0.829
+   ],
+   "length": 0.938
+  },
+  {
+   "name": "Bone_R_wing_A",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.172,
+    -0.115,
+    -0.229
+   ],
+   "r": [
+    0.02769,
+    -0.0337,
+    -0.6343,
+    0.77185
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.292,
+    0.94,
+    0.409
+   ],
+   "length": 0.784
+  },
+  {
+   "name": "Bone_R_wheel_B",
+   "parent": "Bone_Ballista",
+   "t": [
+    0.293,
+    -0.23,
+    0.044
+   ],
+   "r": [
+    0.03084,
+    -0.03084,
+    -0.70643,
+    0.70643
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.583,
+    0.246,
+    -0.77
+   ],
+   "length": 0.951
+  },
+  {
+   "name": "Bone_front",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.269,
+    0,
+    -0.168
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    -0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.785,
+    0.658
+   ],
+   "length": 0.807
+  },
+  {
+   "name": "Bone_Bolt",
+   "parent": "Bone_Ballista",
+   "t": [
+    0.295,
+    0,
+    -0.196
+   ],
+   "r": [
+    0,
+    1,
+    0,
+    0
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0,
+    0.855,
+    -0.776
+   ],
+   "length": 0.9
+  },
+  {
+   "name": "Bone_L_block",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.014,
+    0.093,
+    -0.089
+   ],
+   "r": [
+    0,
+    -0.04362,
+    0,
+    0.99905
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.236,
+    0.583,
+    0.009
+   ],
+   "length": 0.329
+  },
+  {
+   "name": "Bone_L_wheel_B",
+   "parent": "Bone_Ballista",
+   "t": [
+    0.293,
+    0.21,
+    0.044
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.532,
+    0.246,
+    -0.77
+   ],
+   "length": 0.921
+  },
+  {
+   "name": "Bone_L_wing_A",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.172,
+    0.115,
+    -0.229
+   ],
+   "r": [
+    0.77185,
+    0.6343,
+    0.0337,
+    0.02769
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.292,
+    0.94,
+    0.409
+   ],
+   "length": 0.784
+  },
+  {
+   "name": "Bone_R_wing_B",
+   "parent": "Bone_R_wing_A",
+   "t": [
+    0.191,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.24614,
+    0.96923
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    -0.767,
+    0.931,
+    0.316
+   ],
+   "length": 0.484
+  },
+  {
+   "name": "Bone_L_wheel_A",
+   "parent": "Bone_Ballista",
+   "t": [
+    -0.103,
+    0.267,
+    -0.001
+   ],
+   "r": [
+    -0.5,
+    -0.5,
+    0.5,
+    0.5
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.679,
+    0.359,
+    0.234
+   ],
+   "length": 0.727
+  },
+  {
+   "name": "Bone_L_wing_B",
+   "parent": "Bone_L_wing_A",
+   "t": [
+    0.191,
+    0,
+    0
+   ],
+   "r": [
+    0,
+    0,
+    0.24614,
+    0.96923
+   ],
+   "s": [
+    1,
+    1,
+    1
+   ],
+   "world": [
+    0.767,
+    0.931,
+    0.316
+   ],
+   "length": 0.484
+  }
+ ],
+ "attach": [],
+ "clips": [
+  {
+   "name": "Take 001",
+   "duration": 0,
+   "channels": 1,
+   "rootTravel": 0,
+   "rootSpeed": 0
+  }
+ ],
+ "variants": [
+  {
+   "name": "ELF_BoltThrower",
+   "tris": 578,
+   "skinned": true,
+   "size": [
+    3.468,
+    1.372,
+    2.839
+   ],
+   "centre": [
+    0,
+    0.662,
+    -0.189
+   ],
+   "materials": [
+    "ELF_WoodElf_Standard_Units"
+   ]
+  }
+ ],
+ "materials": [
+  "ELF_WoodElf_Standard_Units"
+ ],
+ "textures": [
+  {
+   "name": "atlas",
+   "size": [
+    1024,
+    1024
+   ],
+   "mime": "image/webp"
+  }
+ ]
+}

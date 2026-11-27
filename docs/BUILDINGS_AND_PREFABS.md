@@ -102,3 +102,24 @@ Read from the glTF metadata inside every pack in `public/kits/`:
 - `castle.js`, `ancient.js` and `rocks.js` are CC BY 4.0: credit them.
 - 94 model blobs in 12 packs carry no licence metadata: animals, colony, guns, guns2, mars, nature, nodes, qtrees, spacekit, trees, vehicles and whale.
   `vehicles.js` says Quaternius and Majadroid CC0 in its header; the rest need their source written into their header.
+
+## 4. Replaced and retained, 2026-11-27
+
+Assets that are not ours to publish left the public repo. What was worth keeping from them was extracted first by
+`node tools/retain_assets.mjs`; owned (CC0) assets or generated content stand in where the public build needs them.
+
+| Asset | Licence (from the file and the game's own text) | Moved to | Retained (public, `data/reference/`) | Owned replacement in a public build |
+| --- | --- | --- | --- | --- |
+| Six playable races (`toon.js`) | Toon RTS Units, Polygon Blacksmith (Unity Asset Store) | `public/kits/store/toon.js` | Bip001 skeletons (18–20 bones each, rest pose, bone lengths), heights, hand/shield/quiver attachment points, 42–50 variant names per race (weapons, shields, bodies), materials, atlas sizes | The game's existing stand-in model until owned characters on the same rig are made |
+| Mounts: horse, wolf, war ram, bone steed | Toon RTS Units | `public/kits/store/units.js` | 39–40 bone rigs, seat heights, attachment points | Quaternius Ultimate Animated Animals (CC0), animated: horse, wolf (scaled to a dire wolf), bull (the war ram is now the Dwarven War Bull), white horse tinted pale (bone steed) |
+| Catapults (human, orc), bolt thrower | Toon RTS Units | `public/kits/store/units.js` | 11–14 bone rigs, the bolt thrower's firing clip timing | None yet: siege placements show nothing in a public build |
+| Medieval town (`town.js`) | Sketchfab Standard, katydid | `public/kits/store/town.js` | Overall footprint and material layout (the source is merged by material, so no per-building layout exists) | Not needed in play today: Haven Port's realm is not one of the built worlds, so the pack was loaded but never placed. If realm capitals are switched on, a build without the pack lays Haven Port out from generated buildings (8 services round the plaza, 34 houses in two rings) |
+| "xwing" in `kit.js` | Actually the Khronos DamagedHelmet sample under a Star Wars name | Removed (it was not used) | — | — |
+| Robot (upload) | Sketchfab Standard, harrikisan5577 | Not added to the game | 309-bone rig, 8 clips (walk 1.0 s, run 0.6 s, idle 1.17 s, all in place) | — |
+
+The mesh-free skeleton and animation files (`*.rig.glb`) are in `private/retained/`, which is git-ignored and not
+shipped. Use them only to test retargeting onto owned models.
+
+`public/kits/store/` stays in local builds (and the published playtest), so the game you play still has the Toon RTS
+characters and the R2 town. The GitHub Pages build, made from the public repo, runs on the owned replacements above.
+Removing these files from earlier commits in git history is a separate step that only the owner should decide.
