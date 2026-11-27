@@ -66,6 +66,15 @@ nothing otherwise.
 
 ## Changes in this update
 
+- **100STYLE locomotion** (Mason, Starke & Komura 2022, CC BY 4.0, credited in the in-game menu): 71 clips.
+  Neutral walk and run in 8 directions (diagonals blended from straight loops, phase-matched on foot contact) when
+  the camera is locked; 27 walk + idle styles. Townsfolk pick styles by role (guards march, priests walk like monks,
+  nobles keep hands behind their backs, merchants in pockets, undead shamble like zombies). Players: `/walk <style>`.
+  Converter: `tools/bake_bvh.html` (finds straight stretches, cuts seamless loops, removes heading).
+- **Mars environment kit** (SOLDMARS, CC BY 4.0): the Sketchfab diorama was merged by material, so it is split back
+  into 48 pieces (rocket and launch pad, habitats, dish, hangar, turrets, shuttle pads, rovers, tanks, crystal trees,
+  rock formations). Starports and shuttleports use them; SWG turrets, dishes, tank farms and speeders map to them.
+
 - **Guns:** Blaster Pistol, Blaster Carbine, Assault Blaster and Long Rifle (sci-fi models from the Grudge ObjectStore)
   are main-hand weapons sold at markets and craftable at the engineering bench. They attach to the right hand
   socket and switch combat to ranged: aim stance in a fight, shoot / full-auto, magazines and reloads, rifle run,

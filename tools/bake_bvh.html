@@ -1,0 +1,49 @@
+<!doctype html><meta charset=utf-8><body><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/BVHLoader.js"></script>
+<script src="retarget.js"></script>
+<script>
+/* 100STYLE (CC BY 4.0, Mason, Starke & Komura) BVH -> game clip format.
+   Finds a straight, steady stretch inside the Frame_Cuts window, cuts a seamless loop where the pose repeats,
+   removes the walker's heading, and can blend two loops (phase-aligned on left-foot contact) into diagonals. */
+const FPS=24;
+const MAP={Hips:'Hips',Spine2:'Chest4',Neck:'Neck',Head:'Head',LeftShoulder:'LeftCollar',LeftArm:'LeftShoulder',LeftForeArm:'LeftElbow',LeftHand:'LeftWrist',
+  RightShoulder:'RightCollar',RightArm:'RightShoulder',RightForeArm:'RightElbow',RightHand:'RightWrist',LeftUpLeg:'LeftHip',LeftLeg:'LeftKnee',LeftFoot:'LeftAnkle',LeftToeBase:'LeftToe',
+  RightUpLeg:'RightHip',RightLeg:'RightKnee',RightFoot:'RightAnkle',RightToeBase:'RightToe'};
+function q16(arr){const a=new Int16Array(arr.length);for(let i=0;i<arr.length;i++)a[i]=Math.round(Math.max(-1,Math.min(1,arr[i]))*32767);let s='';const u=new Uint8Array(a.buffer);for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s)}
+const K=RT_KEYS.length,Y=new THREE.Vector3(0,1,0);
+// sample a BVH file between frame a and b (60 fps source) at 24 fps: per frame yaw, hips position, left-foot height, canonical deltas (heading removed later)
+async function sample(url,a,b){const txt=await (await fetch(url)).text();const res=new THREE.BVHLoader().parse(txt);
+  const root=new THREE.Group();root.add(res.skeleton.bones[0]);root.skeleton=res.skeleton;const all={};res.skeleton.bones.forEach(b=>all[b.name]=b);
+  const map={};for(const k of RT_KEYS)map[k]=all[MAP[k]];root.updateMatrixWorld(true);
+  const F=rtFrame(map),Fi=F.clone().invert(),T=rtTPose(root,map,F),Ti={};for(const k of RT_KEYS)Ti[k]=T[k].clone().invert();
+  const hipsY0=rtWorldP(map.Hips).y,legLen=hipsY0-rtWorldP(map.LeftFoot).y;
+  const mixer=new THREE.AnimationMixer(root);mixer.clipAction(res.clip).play();const dt=res.clip.duration/ (res.clip.tracks[0].times.length-1);
+  const t0=(a||0)*dt,t1=Math.min(res.clip.duration,(b||1e9)*dt),fr=[];
+  for(let t=t0;t<=t1;t+=1/FPS){mixer.setTime(t);root.updateMatrixWorld(true);
+    const l=rtWorldP(map.LeftUpLeg).sub(rtWorldP(map.RightUpLeg));l.y=0;l.normalize();const f=new THREE.Vector3().crossVectors(l,Y);
+    fr.push({yaw:Math.atan2(f.x,f.z),hip:rtWorldP(map.Hips),lf:rtWorldP(map.LeftFoot).y,rf:rtWorldP(map.RightFoot).y,W:RT_KEYS.map(k=>rtWorldQ(map[k]).multiply(Ti[k]))})}
+  return{fr,F,Fi,hipsY0,legLen}}
+const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
+// pose distance between two frames after removing each frame's heading
+function pdist(A,B){const ra=new THREE.Quaternion().setFromAxisAngle(Y,-A.yaw),rb=new THREE.Quaternion().setFromAxisAngle(Y,-B.yaw);let d=0;
+  for(let k=0;k<K;k++){const qa=ra.clone().multiply(A.W[k]),qb=rb.clone().multiply(B.W[k]);d+=1-Math.abs(qa.dot(qb))}return d}
+// find a loop: steady heading, moving the wanted way (dir in local frame: 'f','b','l','r', or null for idle)
+function findLoop(S,dir,Lmin=14,Lmax=60){const fr=S.fr,n=fr.length;let best=null;
+  for(let s=4;s+Lmax+2<n;s+=2){let turn=0;for(let i=s;i<s+Lmax&&i+1<n;i++)turn=Math.max(turn,Math.abs(wrap(fr[i+1].yaw-fr[i].yaw)));if(turn>.06)continue;
+    for(let L=Lmin;L<=Lmax;L++){const e=s+L;const d=pdist(fr[s],fr[e]);if(best&&d>=best.d)continue;
+      if(dir){const my=fr[s].yaw,dv=fr[e].hip.clone().sub(fr[s].hip),c=Math.cos(-my),sn=Math.sin(-my),lx=dv.x*c+dv.z*sn,lz=-dv.x*sn+dv.z*c,m=Math.hypot(lx,lz);
+        if(m<L/FPS*.25)continue;const ok=dir==='f'?lz>Math.abs(lx)*1.5:dir==='b'?-lz>Math.abs(lx)*1.5:dir==='l'?lx>Math.abs(lz)*1.5:-lx>Math.abs(lz)*1.5;if(!ok)continue}
+      best={s,L,d}}}
+  return best}
+// build loop frames (heading removed with the loop's mean yaw), start at left-foot contact for phase alignment
+function loopFrames(S,lp,align=true){const fr=S.fr.slice(lp.s,lp.s+lp.L);let my=0,sx=0,sy=0;fr.forEach(f=>{sx+=Math.sin(f.yaw);sy+=Math.cos(f.yaw)});my=Math.atan2(sx,sy);
+  const r=new THREE.Quaternion().setFromAxisAngle(Y,-my);let start=0;if(align){let lo=1e9;fr.forEach((f,i)=>{const v=f.lf-f.rf;if(v<lo){lo=v;start=i}})}
+  const out=[];for(let i=0;i<fr.length;i++){const f=fr[(start+i)%fr.length];out.push({W:f.W.map(q=>S.Fi.clone().multiply(r.clone().multiply(q)).multiply(S.F)),h:(f.hip.y-S.hipsY0)/S.legLen})}
+  return out}
+function resample(fr,n){const out=[];for(let i=0;i<n;i++){const u=i/n*fr.length,a=Math.floor(u)%fr.length,b=(a+1)%fr.length,t=u-Math.floor(u);
+  out.push({W:fr[a].W.map((q,k)=>q.clone().slerp(fr[b].W[k],t)),h:fr[a].h*(1-t)+fr[b].h*t})}return out}
+function blend(A,B,w=.5){const n=Math.round((A.length+B.length)/2),a=resample(A,n),b=resample(B,n);return a.map((f,i)=>({W:f.W.map((q,k)=>q.clone().slerp(b[i].W[k],w)),h:f.h*(1-w)+b[i].h*w}))}
+function toClip(fr){const n=fr.length+1,Q=[],H=[];for(let i=0;i<n;i++){const f=fr[i%fr.length];for(const q of f.W)Q.push(q.x,q.y,q.z,q.w);H.push(f.h/2)}
+  return{n,dur:(n-1)/FPS,q:q16(Q),h:q16(H)}}
+window.__bvh={sample,findLoop,loopFrames,blend,toClip};
+</script>
