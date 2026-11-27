@@ -1028,7 +1028,7 @@ function scatterFlora(w){
     const crowns=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial(),pts.length);
     const trunks=new THREE.InstancedMesh(new THREE.CylinderGeometry(.06,.09,1,5).translate(0,.5,0),new THREE.MeshLambertMaterial({color:0x4a3a2a}),pts.length);
     const base=col(T.color);
-    pts.forEach(([x,z,bk],i)=>{const y=groundH(w,x,z),hgt=T.kind==='conifer'?16+R()*22:10+R()*14,wd=T.kind==='conifer'?hgt*.38:hgt*.75;
+    pts.forEach(([x,z,bk],i)=>{const y=groundH(w,x,z),hgt=(T.kind==='conifer'?16+R()*22:10+R()*14)*((bk&&bk.ts)||1),wd=T.kind==='conifer'?hgt*.38:hgt*.75;
       const rot=R()*TAU;q.setFromAxisAngle(new V3(0,1,0),rot);w._trees.push({x,z,y,rot,b:bk,cr:crowns,tr:trunks,i});
       ps.set(x,y+(T.kind==='conifer'?hgt*.18:hgt*.45),-z);sc.set(wd,T.kind==='conifer'?hgt*.85:hgt*.62,wd);M.compose(ps,q,sc);crowns.setMatrixAt(i,M);
       c.copy(base).offsetHSL((R()-.5)*.03,(R()-.5)*.1,(R()-.5)*.08);crowns.setColorAt(i,c);
@@ -1080,7 +1080,7 @@ function buildGround(w){
   clearGroup(G.ground);groundWorld=w;indexPois(w);
   const hemi=new THREE.HemisphereLight(0xdfe8f0,0x3a3328,.5);G.ground.add(hemi);
   const sun=new THREE.DirectionalLight(0xfff2dc,.62);sun.position.set(.5,1,.35);G.ground.add(sun);G.ground.userData.sun=sun;G.ground.userData.hemi=hemi;
-  const S=288,N=S+1,cell=EXT/S,geo=new THREE.PlaneGeometry(EXT,EXT,S,S);geo.rotateX(-Math.PI/2);
+  const S=(typeof TERRAIN_RES!=='undefined'&&TERRAIN_RES[quality])||288,N=S+1,cell=EXT/S,geo=new THREE.PlaneGeometry(EXT,EXT,S,S);geo.rotateX(-Math.PI/2);
   const pa=geo.attributes.position,H=new Float32Array(pa.count);
   for(let i=0;i<pa.count;i++){H[i]=groundH(w,pa.getX(i),-pa.getZ(i));pa.setY(i,H[i])}
   const surf=surfaceLayers(w,H,N,cell,pa);w.surfGrid={N,cell,wt:surf.wt,water:surf.wa,bio:surf.bio,cols:surf.cols};w.hGrid={H,N,cell};
@@ -2882,7 +2882,7 @@ function mmMenuExtras(B){const d=document.createElement('div');d.className='gw-m
 Object.assign(CLASS_ANIM,{warrior:{atk:['attackShield','attack1h','snsAtk','combo1'],idle:'idle'},raider:{atk:['attack2h','club','sword2h','spin'],idle:'idle'},
   thief:{atk:['slash','dual','backhand','attack1h'],idle:'idle'},worge:{atk:['club','chop','club1h','kick'],idle:'idle'},ranger:{atk:['chop','slash','kick2','throw'],idle:'idle'},
   mage:{atk:['cast','cast3','cast2','castArea'],idle:'idle'},priest:{atk:['cast2','channel','cast2h','snsCast'],idle:'idle'},verduror:{atk:['channel','cast4','cast','castArea2'],idle:'idle'}});
-const ATTACK_STATES=/attack|slash|chop|club|cast|channel|combo|spin|kick|dual|sns|backhand|throw|leap|sword2h|power|stagger|chest|taunt|Shoot|Fire|Reload|punch|dodge/;
+const ATTACK_STATES=/attack|slash|chop|club|cast|channel|combo|spin|kick|dual|sns|backhand|throw|leap|sword2h|power|stagger|chest|taunt|Shoot|Fire|Reload|punch|dodge|vault|Flip/;
 const ABIL_ANIM={power:'leapAtk',intimidate:'chest',berserk:'powerUp',aimed:'cast',headshot:'cast4',suppress:'castArea',heal:'cast2h',stim:'channel',dash:'taunt',camp:'crouch',rally:'chest',inspire:'bboy'};
 function abilAnim(a){if(!a)return null;if(ABIL_ANIM[a.id])return ABIL_ANIM[a.id];if(/^elite_/.test(a.id))return a.hit&&a.hit.range?'castArea2':'combo2';return null}
 // emotes: chat command -> clip
@@ -4547,7 +4547,7 @@ const DIR8={f:'F',b:'B',l:'L',r:'R',fl:'FL',fr:'FR',bl:'BL',br:'BR'};
 
 // credits (100STYLE is CC BY 4.0 and must be credited)
 {const _me2=menuExtras;menuExtras=function(){_me2();const B=$('#gwBody');if(!B||B.querySelector('.credits-row'))return;const c=document.createElement('section');c.className='credits-row';
-  c.innerHTML='<h3>Credits</h3><p class="gw-note">Locomotion styles: <a href="https://www.ianxmason.com/100style/" target="_blank" rel="noopener">100STYLE</a> dataset by I. Mason, S. Starke and T. Komura (2022), CC BY 4.0. Ranged and movement clips: KayKit Character Animations (Kay Lousberg) and the Universal Animation Library 1 and 2 (Quaternius), CC0. Alien flora, xeno creatures, war droids, habitats, rovers, ships and turrets: Ultimate Space Kit and Sci-fi Turrets (Quaternius), CC0. Space backdrops: Kenney Space Skyboxes, CC0. Mars environment kit by <a href="https://sketchfab.com/SOLDMARS" target="_blank" rel="noopener">SOLDMARS</a>, CC BY 4.0. World data: SWGEmu Core3 and ProjectSWG Holocore.</p>';B.append(c)}}
+  c.innerHTML='<h3>Credits</h3><p class="gw-note">Locomotion styles: <a href="https://www.ianxmason.com/100style/" target="_blank" rel="noopener">100STYLE</a> dataset by I. Mason, S. Starke and T. Komura (2022), CC BY 4.0. Ranged and movement clips: KayKit Character Animations (Kay Lousberg) and the Universal Animation Library 1 and 2 (Quaternius), CC0. Alien flora, xeno creatures, war droids, habitats, rovers, ships and turrets: Ultimate Space Kit and Sci-fi Turrets (Quaternius), CC0. Space backdrops: Kenney Space Skyboxes, CC0. Parkour motion capture: hhtools Parkour Mocap by YaojieShen (Apache-2.0), packaged as codepawl/parkour-mocap-glb on Hugging Face. Glow whale model: Quaternius Animated Fish Pack, CC0. Surface and ground materials and scanned rocks: Poly Haven, CC0. Mars environment kit by <a href="https://sketchfab.com/SOLDMARS" target="_blank" rel="noopener">SOLDMARS</a>, CC BY 4.0. World data: SWGEmu Core3 and ProjectSWG Holocore.</p>';B.append(c)}}
 
 /* ================= Waypoints and the planet map (Shift+M), SWG datapad style =================
    Every character keeps a datapad of waypoints (name, colour, planet, on/off). Active waypoints on the current planet
@@ -5145,6 +5145,43 @@ whaleTo=async function(t){saveNow();const from=curWorld,to=t.world;combat.p=null
   await hyper(false);
   try{if(arr)await cineArrive(arr.d)}catch(e){console.warn('arrive',e)}
   CINE.on=false;CINE.fn=null;busy=false;if(play.model){play.model.visible=true;play.model.scale.setScalar(1)}CH.pos={x:play.x,z:play.z};markDirty();toast(`Arrived on ${to.name}.`)};
+/* ================= Parkour (codepawl/parkour-mocap-glb on Hugging Face, Apache-2.0; hhtools Parkour Mocap by YaojieShen) =================
+   Real optical mocap of vaults and flips, cut around the apex and turned to face forward. A running jump becomes a speed
+   or kong vault now and then; /flip /backflip /sideflip /wallflip /vault play them on demand. */
+const PK_RUN=['vaultSpeed','vaultKong','jumpRun','jumpRun'];
+{const _os=toonOneShot;toonOneShot=function(inst,kind){const u=inst&&inst.userData;if(u&&u.mixer){
+    if(kind==='jumpRun'&&!u.gun){const k=PK_RUN[Math.random()*PK_RUN.length|0];if(k!=='jumpRun'&&u.clips[k])return toonPlay(inst,k,.1,{once:true,hold:u.clips[k].duration*.95})}
+    const pk={flip:'frontFlip',backflip:'backFlip',sideflip:'sideFlip',wallflip:'wallFlip',vault:'vaultHigh'}[kind];if(pk&&u.clips[pk])return toonPlay(inst,pk,.12,{once:true,hold:u.clips[pk].duration})}
+  return _os(inst,kind)}}
+Object.assign(EMOTES,{flip:'does a front flip',backflip:'does a back flip',sideflip:'does a side flip',wallflip:'flips off the wall',vault:'vaults'});
+
+/* ================= Terrain protection: building pads, mesh-true heights, finer ground =================
+   The planet mesh is a grid (57 m cells at 288², finer on Medium/High). Two rules keep buildings and props out of the ground:
+   1. Before the mesh is sampled, every building / static footprint pulls the terrain to its base (a flat pad that reaches the
+      nearest grid vertices, then eases back out), like the town plateaus already do.
+   2. Once the mesh exists, every height query (player, NPCs, kit pieces, nodes, wildlife) reads the mesh itself (exact
+      triangle interpolation), so nothing is placed on a height the player can't see. */
+const TERRAIN_RES={low:288,medium:336,high:384};
+function buildPads(w){const cell=EXT/(TERRAIN_RES[quality]||288),bins=new Map();let n=0;
+  for(const p of w.placements){const c=clsOf(p);if(c==='npc'||c==='travel')continue;const r=p.w?Math.max(p.w,p.d||p.w)/2:Math.min((p.r||0)*1.15,70)/1;if(!(r>=2.5)||r>90)continue;
+    const base=w._padRaw?w._padRaw(p.x,p.z):0;const pad={x:p.x,z:p.z,r,base,inner:r+cell*.55,outer:r+cell*1.7};n++;
+    const b0x=Math.floor((p.x-pad.outer)/512),b1x=Math.floor((p.x+pad.outer)/512),b0z=Math.floor((p.z-pad.outer)/512),b1z=Math.floor((p.z+pad.outer)/512);
+    for(let bx=b0x;bx<=b1x;bx++)for(let bz=b0z;bz<=b1z;bz++){const k=bx+','+bz;(bins.get(k)||bins.set(k,[]).get(k)).push(pad)}}
+  w._pads=bins;return n}
+{const _gh=groundH;groundH=function(w,x,z){
+  if(w&&w.hGrid)return hGridAt(w,x,z);
+  const h=_gh(w,x,z);const B=w&&w._pads;if(!B)return h;const a=B.get(Math.floor(x/512)+','+Math.floor(z/512));if(!a)return h;
+  let best=0,bh=h;for(const p of a){const d=Math.hypot(x-p.x,z-p.z);if(d>=p.outer)continue;const k=d<=p.inner?1:1-smooth(p.inner,p.outer,d);if(k>best){best=k;bh=p.base}}
+  return h+(bh-h)*best}}
+{const _hg=hGridAt;hGridAt=function(w,x,z){if(!w.hGrid)return groundH(w,x,z);return _hg(w,x,z)}}
+{const _bg=buildGround;buildGround=function(w){if(groundWorld===w)return _bg(w);
+  w.hGrid=null;w._pads=null;indexPois(w);w._padRaw=(x,z)=>groundH(w,x,z);buildPads(w);
+  const r=_bg(w);w._meshH=true;return r}}
+
+/* ---- tree scale per planet: wroshyr-scale forests on Kashyyyk, redwood giants on Endor, Massassi canopy on Yavin 4 ---- */
+const WORLD_TREE_SCALE={kashyyyk:5,endor:3.5,yavin4:2.6,dathomir:1.6,rori:1.4};
+{const _pb=planetBiomes;planetBiomes=function(w){const had=!!w._biomes,L=_pb(w);if(!had&&WORLD_TREE_SCALE[w.id])for(const b of L)b.ts=Math.max(b.ts||1,WORLD_TREE_SCALE[w.id]*(.85+((b.i*37)%30)/100));return L}}
+
 // test hook: only with ?debug in the address, lets automated checks read game state
 try{if(/[?&]debug\b/.test(location.search))window.__gg=src=>eval(src)}catch(e){}
 })();

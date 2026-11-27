@@ -37,7 +37,7 @@ for i,(k,d) in enumerate(SURF):
     A[oy:oy+T,ox:ox+T,0]=N[...,0];A[oy:oy+T,ox:ox+T,1]=N[...,1];A[oy:oy+T,ox:ox+T,2]=Al;R[oy:oy+T,ox:ox+T]=Ro
 Image.fromarray((A*255).astype(np.uint8)).save(OUT+'/surface_nd.jpg',quality=90)
 Image.fromarray((R*255).astype(np.uint8)).save(OUT+'/surface_r.jpg',quality=88)
-GROUND=[('sand','damp_sand_2k'),('rock','rocks_ground_02_2k'),('forest','forest_floor_2k'),('snow','snow_01_2k'),('mud','mud_forest_2k'),('cliff','mountainside_2k'),('stone','rock_face_02_2k')]
+GROUND=[('sand','damp_sand_2k'),('rock','st_rock_ground'),('forest','forest_floor_2k'),('snow','snow_01_2k'),('mud','mud_forest_2k'),('cliff','st_cliff_side'),('stone','rock_face_02_2k')]
 G=np.zeros((T*2,T*4,3),np.float32)
 for i,(k,d) in enumerate(GROUND):
     ox,oy=(i%4)*T,(i//4)*T;N=nrm(d);G[oy:oy+T,ox:ox+T,0]=N[...,0];G[oy:oy+T,ox:ox+T,1]=N[...,1];G[oy:oy+T,ox:ox+T,2]=rough(d)
