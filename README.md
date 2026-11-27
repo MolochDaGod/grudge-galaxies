@@ -66,6 +66,11 @@ nothing otherwise.
 
 ## Changes in this update
 
+- **PBR pass for the cartoon assets** (Medium and High quality; Low keeps the old flat look): KayKit / Quaternius kit pieces,
+  colony and Mars buildings, toon characters and NPCs, mounts, wildlife, xeno creatures and guns now use physically based
+  materials with a roughened world-space grunge layer (roughness breakup, grit and scratch micro-bump, large grime and
+  colour drift) and a per-planet sky/ground environment map for reflections, dimmed at night. Sci-fi pieces are a bit
+  metallic, guns more so; characters only get light wear so skin and cloth stay clean.
 - **Local asset library pass** (see `docs/LOCAL_ASSET_LIBRARY.md`): the best CC0 packs from the studio archive are in.
 - **38 Universal Animation Library 2 clips** (Quaternius, CC0), baked with a new UE-mannequin map in `tools/bake2.html`.
   Warriors chain sword swings and shield bashes, thieves hook, raiders combo; heavy hits can knock you back.

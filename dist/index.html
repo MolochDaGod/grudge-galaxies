@@ -4786,6 +4786,91 @@ const SPACE_SKY={galaxy:'kits/sky/space_galaxy.jpg',system:'kits/sky/space_nebul
 function spaceSky(l){const url=SPACE_SKY[l];if(!url)return null;if(spaceSkyTex[url])return spaceSkyTex[url].ok?spaceSkyTex[url].t:null;
   const t=new THREE.TextureLoader().load(url,()=>{spaceSkyTex[url].ok=true;if(level===l)scene.background=t},undefined,()=>{});t.mapping=THREE.EquirectangularReflectionMapping;t.encoding=THREE.sRGBEncoding;spaceSkyTex[url]={t,ok:false};return null}
 {const _sl=setLevel;setLevel=function(l){const r=_sl.apply(this,arguments);if(l!=='ground'){const t=spaceSky(l);if(t)scene.background=t}return r}}
+/* ================= PBR pass: cartoon kits get physically based, roughened materials =================
+   KayKit / Quaternius / toon-character / colony materials become MeshStandardMaterial with a world-space triplanar grunge
+   layer: roughness breakup, fine grit and scratches as micro-bump, large-scale grime and colour drift so flat palette
+   colours stop reading as plastic. A sky/ground environment map that follows the planet gives the reflections. Low quality
+   keeps the old flat-lit look. */
+const PBR={cache:new WeakMap(),mats:new Set(),envKey:'',envRT:null,on:()=>quality!=='low'};
+// tileable detail texture: R = fine grit + scratches, G = large grime blotches, B = mid-frequency wear
+const pbrNoiseTex=(()=>{const N=256,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),img=x.createImageData(N,N),D=img.data;
+  const rnd=(i,j,s)=>{let h=(i*374761393+j*668265263+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295};
+  const vn=(u,v,P,s)=>{const x0=Math.floor(u),y0=Math.floor(v),fx=u-x0,fy=v-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy),w=a=>((a%P)+P)%P;
+    const a=rnd(w(x0),w(y0),s),b=rnd(w(x0+1),w(y0),s),c2=rnd(w(x0),w(y0+1),s),d=rnd(w(x0+1),w(y0+1),s);return a+(b-a)*sx+(c2-a)*sy+(a-b-c2+d)*sx*sy};
+  const fbm=(i,j,periods,s)=>{let t=0,a=.5,n=0;for(const P of periods){t+=vn(i/N*P,j/N*P,P,s)*a;n+=a;a*=.55}return t/n};
+  const R=new Float32Array(N*N);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++)R[j*N+i]=fbm(i,j,[8,16,32],1);
+  // scratches: short random strokes, wrapped
+  for(let k=0;k<60;k++){let px=rnd(k,1,7)*N,py=rnd(k,2,7)*N;const a=rnd(k,3,7)*Math.PI*2,L=10+rnd(k,4,7)*50,dep=.08+rnd(k,5,7)*.14;
+    for(let s=0;s<L;s++){const ix=((Math.round(px+Math.cos(a)*s)%N)+N)%N,iy=((Math.round(py+Math.sin(a)*s)%N)+N)%N;R[iy*N+ix]=Math.max(0,R[iy*N+ix]-dep)}}
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const o=(j*N+i)*4;D[o]=R[j*N+i]*255;D[o+1]=Math.pow(fbm(i,j,[4,8,16],2),1.4)*255*1.25;D[o+2]=fbm(i,j,[16,32],3)*255;D[o+3]=255}
+  x.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t})();
+const PBR_U={uPbrNoise:{value:pbrNoiseTex}};
+function pbrInject(m,o,src){const prev=src&&src.onBeforeCompile!==THREE.Material.prototype.onBeforeCompile?src.onBeforeCompile:null,prevKey=prev&&src.customProgramCacheKey?src.customProgramCacheKey():'';
+  m.extensions=Object.assign(m.extensions||{},{derivatives:true});
+  const sc=o.scale||1.6,bump=o.bump??1,rough=o.roughVar??.42,grime=o.grime??.24;
+  m.onBeforeCompile=sh=>{if(prev)prev(sh);sh.uniforms.uPbrNoise=PBR_U.uPbrNoise;
+    sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vPbrP;varying vec3 vPbrN;').replace('#include <project_vertex>',`#include <project_vertex>
+      vec4 pbrW=vec4(transformed,1.);vec3 pbrN=objectNormal;
+      #ifdef USE_INSTANCING
+      pbrW=instanceMatrix*pbrW;pbrN=mat3(instanceMatrix)*pbrN;
+      #endif
+      pbrW=modelMatrix*pbrW;vPbrP=pbrW.xyz;vPbrN=normalize(mat3(modelMatrix)*pbrN);`);
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
+      varying vec3 vPbrP;varying vec3 vPbrN;uniform sampler2D uPbrNoise;
+      vec3 pbrTri(vec3 p,vec3 n){vec3 w=pow(abs(n),vec3(4.));w/=max(1e-4,w.x+w.y+w.z);return texture2D(uPbrNoise,p.zy).rgb*w.x+texture2D(uPbrNoise,p.xz).rgb*w.y+texture2D(uPbrNoise,p.xy).rgb*w.z;}`)
+      .replace('#include <map_fragment>',`#include <map_fragment>
+      vec3 pbrA=pbrTri(vPbrP*${(sc/4).toFixed(3)},vPbrN),pbrB=pbrTri(vPbrP*${(sc/40).toFixed(4)},vPbrN);float pbrGrime=clamp(pbrB.g,0.,1.);
+      diffuseColor.rgb*=mix(1.-${grime.toFixed(2)},1.05,pbrGrime)*mix(.9,1.05,pbrA.r)*mix(.96,1.03,pbrB.b);`)
+      .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+      roughnessFactor=clamp(roughnessFactor+(pbrA.b-.5)*${rough.toFixed(2)}+(.5-pbrGrime)*.18+(1.-pbrA.r)*.12,.3,1.);`)
+      .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+      {float pbrH=pbrA.r*.75+pbrA.b*.25;vec2 dH=vec2(dFdx(pbrH),dFdy(pbrH));dH*=${(bump*.35).toFixed(3)}/(1.+length(dH)*40.);
+       vec3 sX=dFdx(-vViewPosition),sY=dFdy(-vViewPosition),R1=cross(sY,normal),R2=cross(normal,sX);float fD=dot(sX,R1);
+       if(abs(fD)>1e-12){vec3 gr=sign(fD)*(dH.x*R1+dH.y*R2);vec3 nb=abs(fD)*normal-gr;float L2=dot(nb,nb);if(L2>1e-20){nb*=inversesqrt(L2);if(dot(nb,normal)>.5)normal=nb;}}}`)};
+  m.customProgramCacheKey=()=>prevKey+'pbr'+sc+'|'+bump+'|'+rough+'|'+grime;return m}
+// one PBR copy per source material and look
+function pbrMat(src,o={}){if(!src||Array.isArray(src))return src;if(src.isShaderMaterial||src.isMeshBasicMaterial||src.isPointsMaterial||src.isLineBasicMaterial||src.isSpriteMaterial||src.userData.pbr)return src;
+  const kk=o.kind||'kit';let byKind=PBR.cache.get(src);if(!byKind)PBR.cache.set(src,byKind={});if(byKind[kk])return byKind[kk];
+  const em=src.emissive?src.emissive.clone():new THREE.Color(0,0,0),toon=kk==='toon';
+  // toon characters were lit by a 50% emissive copy of their texture; keep a little of that so faces don't go muddy
+  if(toon)em.multiplyScalar(.32);
+  const m=new THREE.MeshStandardMaterial({map:src.map||null,color:src.color?src.color.clone():new THREE.Color(1,1,1),vertexColors:!!src.vertexColors,
+    emissive:em,emissiveMap:src.emissiveMap||null,transparent:!!src.transparent,opacity:src.opacity??1,alphaTest:src.alphaTest||0,side:src.side,
+    skinning:!!(src.skinning||o.skinned),morphTargets:!!src.morphTargets,roughness:o.rough??.86,metalness:o.metal??.03,envMapIntensity:.7});
+  if(toon)m.color.setScalar(1);
+  m.userData.pbr=true;pbrInject(m,o,src);byKind[kk]=m;PBR.mats.add(m);return m}
+const PBR_LOOK={kit:{rough:.88,metal:.02,scale:1.2},scifi:{rough:.6,metal:.32,scale:1.6,roughVar:.5,grime:.3},toon:{rough:.78,metal:.04,scale:3,bump:.35,grime:.05,roughVar:.3},
+  creature:{rough:.7,metal:.05,scale:2.5,bump:.8,grime:.18},droid:{rough:.5,metal:.45,scale:2.5,grime:.22},gun:{rough:.42,metal:.55,scale:5,bump:.6,grime:.2}};
+const pbrKindFor=name=>/^(col_|sk_|skt_|mk_)/.test(name)?'scifi':'kit';
+function pbrTree(obj,kind){if(!PBR.on()||!obj)return obj;const o=Object.assign({kind},PBR_LOOK[kind]);
+  obj.traverse(n=>{if(!n.isMesh||n.userData.noPbr)return;o.skinned=!!n.isSkinnedMesh;n.material=Array.isArray(n.material)?n.material.map(x=>pbrMat(x,o)):pbrMat(n.material,o)});return obj}
+// kit and pack pieces (KayKit, Quaternius, colony, Mars)
+function pbrProto(name,P){if(!PBR.on()||!P||!P.parts||P._pbr)return P;const kind=pbrKindFor(name),o=Object.assign({kind},PBR_LOOK[kind]);
+  for(const p of P.parts)p.mat=Array.isArray(p.mat)?p.mat.map(x=>pbrMat(x,o)):pbrMat(p.mat,o);P._pbr=true;return P}
+{const _kp=kitProto;kitProto=function(name,g){return pbrProto(name,_kp(name,g))}}
+for(const k of Object.keys(kitProtoCache))pbrProto(k,kitProtoCache[k]);
+// characters and NPCs, mounts and carts, wildlife, guns
+{const _wm=warlordModel;warlordModel=function(o,opts){return pbrTree(_wm(o,opts),'toon')}}
+{const _mm=makeMountObj;makeMountObj=function(id){return pbrTree(_mm(id),'creature')}}
+{const _ma=makeAnimal;makeAnimal=function(id){const a=_ma(id);if(a)pbrTree(a.obj,id==='war-droid'?'droid':'creature');return a}}
+{const _lg=loadGun;loadGun=function(id){return _lg(id).then(p=>{if(!p._pbr){pbrTree(p,'gun');p._pbr=true}return p})}}
+
+// environment: sky above, the planet's ground below, rebuilt per planet; reflections dim at night
+const pbrEnvScene=new THREE.Scene(),pbrEnvMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color()},hor:{value:new THREE.Color()},bot:{value:new THREE.Color()}},
+  vertexShader:'varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform vec3 top,hor,bot;varying vec3 vD;void main(){float y=vD.y;vec3 c=y>0.?mix(hor,top,pow(y,.6)):mix(hor,bot,pow(-y,.4));gl_FragColor=linearToOutputTexel(vec4(c,1.));}'});
+pbrEnvScene.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16),pbrEnvMat));
+{const sun=new THREE.Mesh(new THREE.SphereGeometry(.9,12,8),new THREE.MeshBasicMaterial({color:0xfff2d0}));sun.position.set(5,6,3);pbrEnvScene.add(sun)}
+let pbrPMREM=null;
+function pbrEnv(){const w=groundWorld;if(!w||!PBR.on())return;const key=w.id+'|'+(w.biome&&w.biome.sky);if(PBR.envKey===key&&PBR.envRT){scene.environment=PBR.envRT.texture;return}
+  PBR.envKey=key;const sky=col((w.biome&&w.biome.sky)||'#8fb4d8'),g=col((w.biome&&(w.biome.ground||w.biome.soil))||'#6b5a44');
+  pbrEnvMat.uniforms.top.value.copy(sky).multiplyScalar(.9);pbrEnvMat.uniforms.hor.value.copy(sky).lerp(new THREE.Color(1,1,1),.45);pbrEnvMat.uniforms.bot.value.copy(g).multiplyScalar(.55);
+  try{pbrPMREM=pbrPMREM||new THREE.PMREMGenerator(renderer);if(PBR.envRT)PBR.envRT.dispose();PBR.envRT=pbrPMREM.fromScene(pbrEnvScene,.02);scene.environment=PBR.envRT.texture}catch(e){console.warn('pbr env',e)}}
+{const _sl=setLevel;setLevel=function(l){const r=_sl.apply(this,arguments);if(l==='ground')pbrEnv();else scene.environment=null;return r}}
+let pbrT=0,pbrNight=null;
+{const _gt=gameTick;gameTick=function(dt){_gt(dt);if((pbrT-=dt)>0)return;pbrT=1;if(level==='ground'&&groundWorld&&PBR.envKey.split('|')[0]!==groundWorld.id)pbrEnv();
+  const n=isNight();if(n===pbrNight)return;pbrNight=n;const k=n?.22:.7;for(const m of PBR.mats)m.envMapIntensity=k}}
 // test hook: only with ?debug in the address, lets automated checks read game state
 try{if(/[?&]debug\b/.test(location.search))window.__gg=src=>eval(src)}catch(e){}
 })();
