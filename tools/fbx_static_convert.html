@@ -1,0 +1,9 @@
+<!doctype html><script src="three.min.js"></script><script src="fflate.min.js"></script><script src="FBXLoader.js"></script><script src="GLTFExporter.js"></script>
+<script>
+window.inspect=async()=>{const o=await new THREE.FBXLoader().loadAsync('veh/maja.fbx');window.M=o;const out=[];o.updateMatrixWorld(true);
+ for(const c of o.children){const b=new THREE.Box3().setFromObject(c),s=b.getSize(new THREE.Vector3());let tris=0,mats=new Set();c.traverse(m=>{if(m.isMesh){tris+=(m.geometry.index?m.geometry.index.count:m.geometry.attributes.position.count)/3;[].concat(m.material).forEach(x=>mats.add(x.name+(x.map?'*':'')))}});
+  out.push([c.name,c.type,s.toArray().map(v=>+v.toFixed(1)),b.getCenter(new THREE.Vector3()).toArray().map(v=>+v.toFixed(0)),tris|0,[...mats].join('|')])}return out};
+window.exp=async(name,id)=>{const c=M.getObjectByName(name).clone();c.position.set(0,0,0);c.updateMatrixWorld(true);const g=new THREE.Group();g.add(c);
+ c.traverse(m=>{if(m.isMesh){m.material=[].concat(m.material).map(x=>new THREE.MeshStandardMaterial({color:x.color,map:x.map||null,roughness:.55,metalness:.2,name:x.name,emissive:x.emissive||new THREE.Color(0)}));if(m.material.length===1)m.material=m.material[0]}});
+ return new Promise(r=>new THREE.GLTFExporter().parse(g,b=>{const u=new Uint8Array(b);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));r(btoa(s))},{binary:true}))};
+</script>

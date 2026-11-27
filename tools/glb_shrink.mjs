@@ -1,0 +1,5 @@
+const G='/home/claude/.npm-global/lib/node_modules/@gltf-transform/cli/node_modules/';
+const {NodeIO}=await import(G+'@gltf-transform/core/dist/index.js');const {ALL_EXTENSIONS}=await import(G+'@gltf-transform/extensions/dist/index.js');const F=await import(G+'@gltf-transform/functions/dist/index.js');import fs from 'fs';import {execFileSync} from 'child_process';
+const io=new NodeIO().registerExtensions(ALL_EXTENSIONS);for(const f of process.argv.slice(2)){const d=await io.read(f);
+for(const t of d.getRoot().listTextures()){fs.writeFileSync('/tmp/vt.png',Buffer.from(t.getImage()));execFileSync('python3',['-c',"from PIL import Image;im=Image.open('/tmp/vt.png').convert('RGB');print(im.size);im.resize((min(512,im.size[0]),min(512,im.size[1])),Image.LANCZOS).save('/tmp/vt.jpg',quality=85)"],{stdio:'inherit'});t.setImage(fs.readFileSync('/tmp/vt.jpg')).setMimeType('image/jpeg')}
+await d.transform(F.dedup(),F.prune(),F.weld(),F.quantize());await io.write(f,d);console.log(f,fs.statSync(f).size/1024|0)}

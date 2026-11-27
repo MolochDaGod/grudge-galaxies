@@ -81,6 +81,23 @@ a "what to test" card (Menu → Playtest to reopen). A crash inside one system i
 
 ## Changes in this update
 
+**Original names everywhere.** Every planet, city, point of interest, creature, species, faction and lore name the player sees is now
+an original Grudge Galaxies name (for example Sarrak, Veylara, Coraxis, Ashport, Theran, Crownhaven, the Legion and the Insurgents).
+Internal ids and template paths are unchanged, so saves and world data keep working; display names come from `PLANET_NAMES` and
+`CREATURE_NAMES`. The rename table is in `tools/rename_names.py`.
+
+**20 vehicles** in the stable window (V to summon):
+- 12 airships that fly (Space climbs, X descends): Spitfire, Striker, Omen Interceptor, Insurgent Raider, Legion Lancer, Zenith Cruiser,
+  Challenger Gunship, Executioner Heavy, Dispatcher Hauler, Disc Runner, Wren Courier, Vanguard Shuttle.
+- 8 ground vehicles: Razor Skiff, Glide Skiff, Mantis Speeder, Hornet Speeder and Viper Speeder hover a metre up and bank into turns;
+  Dune Rover, Ridge Crawler and Bubble Rover drive on the ground.
+- Models: Quaternius Ultimate Spaceships and Space Kit (CC0), Majadroid LowPoly Spaceships (CC0), in `kits/vehicles.js` (2.7 MB, loaded on demand).
+  Build with `tools/vehicles_build.mjs`, `tools/fbx_static_convert.html` and `tools/glb_shrink.mjs`.
+
+World layout data credit: SWGEmu Core3 and ProjectSWG Holocore (open-source emulator data).
+
+## Earlier changes (previous update)
+
 - **Playtest build:** F8 bug reports with screenshot and state, F3 performance overlay, welcome card with controls and test
   goals, crash-proof frame loop, GitHub Pages workflow.
 - **PBR pass for the cartoon assets** (Medium and High quality; Low keeps the old flat look): KayKit / Quaternius kit pieces,
