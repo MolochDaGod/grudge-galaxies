@@ -66,6 +66,9 @@ nothing otherwise.
 
 ## Changes in this update
 
+- **Sectors, not realms:** the nine realm worlds are gone from the galaxy map. The 3x3 layout is now an invisible
+  sector split of every planet (about 5.5 km a side) that the server uses for interest: players get full positions
+  only from their own and bordering sectors on the same planet. Characters saved on a realm move to Tatooine.
 - **Waypoints and planet map:** Shift+M (or the map button) opens the planet map with towns, roads, travel points,
   a coordinate grid and your position. Click to drop a waypoint, click a town or port to mark it, right-click to delete,
   wheel to zoom, drag to pan. Each character keeps up to 40 named, coloured waypoints across planets. Active ones show

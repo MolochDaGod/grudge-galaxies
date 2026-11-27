@@ -120,17 +120,28 @@ wss.on('connection', (ws, req) => {
   });
   ws.on('close', () => { peers.delete(ws); const out = JSON.stringify({ t: 'left', peer: me.peer }); for (const [c] of peers) if (c.readyState === 1) c.send(out) });
 });
-// presence: each player gets the full roster count, but positions only for players on the same planet
+// Sectors: every planet is split 3x3 (about 5.5 km a side). They are never drawn; they decide who hears whom.
+// A player receives full positions only from players on the same planet in their own or a bordering sector,
+// and just a planet tag for everyone else (enough for the online count). This keeps each update small however many log in.
+const HALF = 8192, SECT = (HALF * 2) / 3;
+const sectorOf = d => { const c = v => Math.max(0, Math.min(2, Math.floor(((+v || 0) + HALF) / SECT))); return [c(d.x), c(d.z)] };
 setInterval(() => {
   if (!peers.size) return;
-  const byPlanet = new Map(), all = [];
-  for (const p of peers.values()) { const pl = p.presence && p.presence.pl; all.push({ peer: p.peer, presence: pl ? { pl } : null }); if (pl) (byPlanet.get(pl) || byPlanet.set(pl, []).get(pl)).push({ peer: p.peer, presence: p.presence }) }
+  const list = [];
+  for (const p of peers.values()) { const d = p.presence, pl = d && d.pl; p.sec = pl ? sectorOf(d) : null; list.push(p) }
   const cache = new Map();
-  for (const [c, p] of peers) {
+  for (const [c, me] of peers) {
     if (c.readyState !== 1) continue;
-    const pl = p.presence && p.presence.pl || '';
-    if (!cache.has(pl)) { const local = byPlanet.get(pl) || [], ids = new Set(local.map(x => x.peer)); cache.set(pl, JSON.stringify({ t: 'peers', peers: local.concat(all.filter(x => !ids.has(x.peer))) })) }
-    c.send(cache.get(pl));
+    const pl = me.presence && me.presence.pl || '', key = pl + (me.sec ? me.sec.join('') : '');
+    if (!cache.has(key)) {
+      const out = list.map(p => {
+        const ppl = p.presence && p.presence.pl;
+        const near = ppl && ppl === pl && me.sec && p.sec && Math.abs(p.sec[0] - me.sec[0]) <= 1 && Math.abs(p.sec[1] - me.sec[1]) <= 1;
+        return { peer: p.peer, presence: near ? p.presence : ppl ? { pl: ppl } : null };
+      });
+      cache.set(key, JSON.stringify({ t: 'peers', peers: out }));
+    }
+    c.send(cache.get(key));
   }
 }, 250);
 // drop connections that stopped answering (closed laptops, dead mobile radios)

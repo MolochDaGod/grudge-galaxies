@@ -811,8 +811,6 @@ function buildGalaxy(){
   G.galaxy.add(new THREE.Points(g,new THREE.PointsMaterial({size:2.4,map:DOT,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})));
   G.galaxy.add(glowSprite(0xffd9a0,180,.55));ambientWhales.length=0;
   const pickMat=new THREE.MeshBasicMaterial({visible:false});
-  {const pts=[];REALMS.forEach(a=>REALMS.forEach(b=>{if(a.id<b.id&&Math.abs(a.grid[0]-b.grid[0])+Math.abs(a.grid[1]-b.grid[1])===1)pts.push(new V3(REALM_C.x+(a.grid[0]-1)*40,4+(a.grid[1]-1)*2,REALM_C.z+(a.grid[1]-1)*40),new V3(REALM_C.x+(b.grid[0]-1)*40,4+(b.grid[1]-1)*2,REALM_C.z+(b.grid[1]-1)*40))}));
-   G.galaxy.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xe8c46a,transparent:true,opacity:.35})));const neb=glowSprite(0xc08aff,190,.35);neb.position.set(REALM_C.x,0,REALM_C.z);G.galaxy.add(neb);G.galaxy.add(realmLabel())}
   WORLDS.forEach((w,i)=>{
     const arm=i%3,r=70+((i*53)%260),ang=arm*TAU/3+r*.017+((i*0.37)%0.3);
     w.gpos=new V3(Math.cos(ang)*r,((i*7)%9)-4,Math.sin(ang)*r);if(w.realm&&w.realm.grid)w.gpos=new V3(REALM_C.x+(w.realm.grid[0]-1)*40,4+(w.realm.grid[1]-1)*2,REALM_C.z+(w.realm.grid[1]-1)*40);
@@ -2140,7 +2138,8 @@ function newCharacter(o){return{id:'c'+Date.now().toString(36)+Math.random().toS
   prof:o.prof,skills:[PROF[o.prof].novice],xp:{},credits:2500,hp:null,inv:{res:{},items:[{id:'i1',kind:'tool',name:'Survey Device',q:300},{id:'i2',kind:'deed',name:'Personal Harvester Deed',size:'personal',q:250}]},gear:{},
   planet:o.planet,pos:o.pos,harvesters:[],discovered:[],created:Date.now(),played:0}}
 // Older saves used placeholder skill ids; keep what maps onto the real SWG boxes and make sure the starting novice box is there.
-function migrate(c){c.skills=(c.skills||[]).map(id=>BOXES[id]?id:(PROF[id.replace(/_novice$/,'')]?PROF[id.replace(/_novice$/,'')].novice:null)).filter(Boolean);
+function migrate(c){if(c&&c.planet&&typeof WORLDS!=='undefined'&&WORLDS.length&&!WORLDS.some(w=>w.id===c.planet)){const w=WORLDS[0],q=w.pois.find(p=>p.cat==='city')||w.pois[0];c.planet=w.id;c.pos={x:q.x+6,z:q.z+6}}
+  c.skills=(c.skills||[]).map(id=>BOXES[id]?id:(PROF[id.replace(/_novice$/,'')]?PROF[id.replace(/_novice$/,'')].novice:null)).filter(Boolean);
   if(!PROF[c.prof])c.prof='artisan';if(!c.skills.includes(PROF[c.prof].novice))c.skills.unshift(PROF[c.prof].novice);c.skills=[...new Set(c.skills)];
   c.inv=c.inv||{res:{},items:[]};c.inv.items.forEach(i=>{if(i.kind==='deed'&&!i.size)i.size=/heavy/i.test(i.name)?'heavy':/medium/i.test(i.name)?'medium':'personal'});
   (c.harvesters||[]).forEach(h=>{if(!h.size){h.size='personal';h.hopper=0;h.maint=150;h.power=0;h.on=true;h.updated=Date.now()}});c.harvesters=c.harvesters||[];c.xp=c.xp||{};return c}
@@ -2926,7 +2925,7 @@ const CHRONICLE=[
  ['The Galaxy Beyond','Glow whales carry warlords between the old star worlds and the nine realms. Starports on every capital dock them, and portal rings open where the whales have sung long enough. The sandbox is wide: harvest, craft, build, and choose who to hold a grudge against.']];
 let codexTab='factions',codexRealm='haven_shore',codexWorld=null;
 function winCodex(B){if(groundWorld&&groundWorld!==codexWorld){codexWorld=groundWorld;if(REALM[groundWorld.id])codexRealm=groundWorld.id}$('#gwTitle').textContent='Codex';
-  B.innerHTML=`<div class="bk-head"><nav>${[['factions','Factions'],['realms','Realms'],['bestiary','Bestiary'],['lore','Chronicle']].map(([k,l])=>`<button data-cx="${k}" aria-pressed="${codexTab===k}">${l}</button>`).join('')}</nav></div><div id="cxPage" class="cx-page"></div>`;
+  B.innerHTML=`<div class="bk-head"><nav>${[['factions','Factions'],['bestiary','Bestiary'],['lore','Chronicle']].map(([k,l])=>`<button data-cx="${k}" aria-pressed="${codexTab===k}">${l}</button>`).join('')}</nav></div><div id="cxPage" class="cx-page"></div>`;
   B.querySelectorAll('[data-cx]').forEach(b=>b.onclick=()=>{codexTab=b.dataset.cx;renderWin()});const P=$('#cxPage'),mine=typeof playerFaction==='function'?playerFaction():null;
   if(codexTab==='factions'){P.innerHTML=`<div class="cx-facs">${GD.factions.map(f=>{const L=FACTION_LORE[f.id]||{},v=CH?standing(f.id):0,pct=(v+5000)/100,races=GD.races.filter(r=>r.faction===f.id).map(r=>r.name).join(' · ');
       return`<article class="cx-fac${f.id===mine?' mine':''}" style="--fc:${f.color}"><header><span class="cx-em">${L.emblem||'◆'}</span><div><h3>${esc(f.name)}${f.id===mine?' <small>your banner</small>':''}</h3><small>Patron ${esc(f.patron||'')} · ${esc(races)}</small></div></header>
@@ -4282,7 +4281,8 @@ function buildoutPlacements(id){return(BO.worlds[id]||[]).map(([ti,x,y,z,yaw])=>
 const ORDER=['tatooine','naboo','corellia','talus','rori','dantooine','lok','yavin4','endor','dathomir','kashyyyk','mustafar'];
 WORLDS=ORDER.filter(id=>BO.worlds[id]||CORE3.worlds.some(w=>w.id===id)).map(id=>{const c3=CORE3.worlds.find(w=>w.id===id);
   const pl=buildoutPlacements(id).concat(c3?c3.placements:[]);const w=finalizeWorld(id,pl,true,c3?c3.pois:null);addTrainers(w);return w});
-REALMS.forEach(R=>WORLDS.push(buildRealmWorld(R)));WORLDS.push(buildRealmWorld(HOTH));
+// the nine realms are the 3x3 sector layout (LOD and server interest), not worlds on the galaxy map
+WORLDS.push(buildRealmWorld(HOTH));
 buildGalaxy();spawnGalaxyWhales();applyQuality();resize();setLevel('galaxy');ctl.target.set(0,0,0);ctl.dist=620;ctl.phi=.95;ctl.theta=.4;applyOrbit();
 requestAnimationFrame(frame);
 /* ================= Waypoints and the planet map (Shift+M), SWG datapad style =================
