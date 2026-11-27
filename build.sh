@@ -18,4 +18,5 @@ cp web/shim.js dist/
 cp "$KEEP" dist/config.js && rm -f "$KEEP"
 # the test hook only switches on with ?debug in the address; nothing else differs from the artifact
 cp web/_headers web/favicon.svg dist/
+touch dist/.nojekyll
 echo "built dist: $(du -sh dist | cut -f1), $(find dist -type f | wc -l) files"

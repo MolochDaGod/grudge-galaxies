@@ -64,8 +64,25 @@ chat lines up to 240 characters. Dead sockets are dropped after 30 s without a p
 Open the site with `?debug` in the address to expose `window.__gg(expr)` for automated checks; it does
 nothing otherwise.
 
+## Playtesting
+
+Two ways to put the game in front of testers:
+
+- **claude.ai artifact (multiplayer + cloud saves built in):** share the artifact link. Testers sign in to claude.ai and play;
+  chat, emotes, presence and saves work with no server. Bug reports (F8) are stored in the artifact's database.
+- **GitHub Pages (static, no account needed):** `.github/workflows/pages.yml` publishes `dist/` to
+  `https://molochdagod.github.io/grudge-galaxies/` on every push. One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
+  Without a backend address in `dist/config.js` it runs single-player with saves in the browser; add the Railway URL
+  (section 1) for multiplayer and accounts.
+
+In the playtest build: **F8** files a report (screenshot, planet, position, animation state, frame rate, GPU stats, last
+errors; saved to the feedback store or downloaded as JSON), **F3** toggles the performance overlay, and first-time players get
+a "what to test" card (Menu → Playtest to reopen). A crash inside one system is logged and no longer freezes the frame loop.
+
 ## Changes in this update
 
+- **Playtest build:** F8 bug reports with screenshot and state, F3 performance overlay, welcome card with controls and test
+  goals, crash-proof frame loop, GitHub Pages workflow.
 - **PBR pass for the cartoon assets** (Medium and High quality; Low keeps the old flat look): KayKit / Quaternius kit pieces,
   colony and Mars buildings, toon characters and NPCs, mounts, wildlife, xeno creatures and guns now use physically based
   materials with a roughened world-space grunge layer (roughness breakup, grit and scratch micro-bump, large grime and
