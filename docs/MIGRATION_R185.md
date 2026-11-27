@@ -35,7 +35,24 @@ GitHub Pages builds in CI (`.github/workflows/pages.yml`); `dist/` is no longer 
 New code must import from `'three'` and must not depend on any of these shims. When a system moves to `src/`, it drops the
 legacy units (lights in physical units, colour management on) behind a per-system switch.
 
-## Phase 2: physics (Rapier) and the deterministic tick
+## Phase 2 (in testing): physics (Rapier) and the deterministic tick
+
+Shipped in `src/physics/world.ts` and `src/core/tick.ts`, loaded lazily from `src/main.ts` (`?nophysics` turns both off).
+
+- Heightfield from `w.hGrid` (heights transposed to Rapier's column-major rows=z, cols=x), friction 0.9.
+- Kit pieces: one oriented cuboid per instance part, streamed in within 520 m and out beyond 760 m of the player
+  (about 3,000 colliders around a big city). Zero-scale (hidden) instances and anything non-finite are skipped: a NaN
+  reaching Rapier panics inside WASM and poisons the world, after which every call throws "recursive use of an object".
+- If that ever happens anyway, physics switches itself off for that planet and the legacy movement takes over.
+- Capsule r 0.38 / half-height 0.52, autostep 0.65 m (landing pads), snap 0.45 m, climb 50 deg, slide from 60 deg,
+  gravity -24 m/s2, jump 8.2 m/s (about 1.2 m apex) started by the legacy jump clip's wind-up.
+- Flying mounts skip building collisions for now. A >30 m jump in one frame is treated as a teleport.
+- gameTick runs at a fixed 60 Hz from a real-time accumulator (max 5 steps per frame, stalls drop time) with a seeded
+  mulberry32 `Math.random` inside the step. `window.GG_SIM` exposes step, seed, alpha.
+
+Verified: collides with a 9 m building (stops at wall + capsule radius, no overlap), real jump arc, fixed tick advancing.
+
+### Original plan
 
 - `@dimforge/rapier3d-compat` 0.19.2. One world per planet: terrain heightfield from `hGrid`, static cuboids/capsules for
   building pieces, rocks and trees from the instanced kit placements, kinematic capsule character controller (step-up, slopes,

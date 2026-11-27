@@ -28,6 +28,26 @@ from the action bar, swim / swim idle in deep water, drive for the horse cart.
 - **complete-sky-system-for-three-js** — day/night sky with sun, moon, clouds, lens flare (check its LICENSE.txt; MIT-style would be fine).
 - **Human Soldier / Melee / Crafting / Throwing Animations FREE**, **Fighting Animations**, **Pistol_Handgun Locomotion Pack** — check licences; most are Mixamo-rig FBX (bake with `tools/bake2.html` after adding a `mixamorig` map).
 
+## Warcraft III doodads (Hive Workshop): not shippable
+
+Checked 2026-11-27: *Lots of doodads Part II* (Mr. Smite), *Lava Doodads* (vindorei), *Misc. Doodads* (SADGASM), 121 `.mdx` models.
+Every model (118 of 118 that parse) samples Warcraft III Reforged textures from Blizzard's game archives
+(e.g. `Buildings/Other/FruitStand/Human_FruitStand_Diffuse`, `Abilities/Spells/Other/Volcano/...`), and many meshes are edits of
+Blizzard models. They are for WC3 maps only; do not convert or deploy them.
+
+CC0 packs already on disk that cover the same props (use these for vendors, terminals, interiors, mines and farms):
+
+| Doodad need | CC0 pack |
+|---|---|
+| Beds, dressers, bookshelves, tables, curtains, rugs | KayKit Furniture Bits 1.0, Quaternius Medieval Village MegaKit [Standard] |
+| Market goods, crates, barrels, sacks, food | KayKit Resource Bits 1.0, kenney_food-kit, Ultimate Food Pack (Quaternius) |
+| Anvil, grindstone, weapon racks, tools | KayKit RPG Tools Bits 1.0, KayKit Fantasy Weapons Bits 1.0, blacksmith_asset_pack (check licence) |
+| Shop signs, stalls, town dressing | kenney_fantasy-town-kit 2.0, Medieval Village Pack (Dec 2020) |
+| Gold/ore nodes, mine props | KayKit Resource Bits, Mines Asset / MinesAndCaves (check licence) |
+| Crops, scarecrow, farm | Farm Animals Animated (Quaternius), kenney_nature-kit, Voxel Farm |
+| Lava falls / flows | procedural shader (the lava flow material already in the game), no mesh needed |
+| Statues, dungeon dressing | KayKit Dungeon Remastered 1.1, Bestiary Dungeon Monsters Kit |
+
 ## Tools worth using
 
 - **mesh2motion-app** (F:\GitHub) — browser auto-rigger + animation library; rig a static Meshy/Tripo model, then bake clips with `tools/bake2.html`.

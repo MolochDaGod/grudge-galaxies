@@ -18,6 +18,13 @@ function loadClassic(src: string): Promise<void> {
   });
 }
 
+// phase 2: deterministic 60 Hz simulation tick + Rapier physics. Loaded lazily (Rapier ships its WASM inline) and
+// installed as soon as the runtime's bridge is up; ?nophysics in the address keeps the legacy movement for comparison.
+if (!/[?&]nophysics\b/.test(location.search)) {
+  import('./core/tick').then((m) => m.installFixedTick()).catch((e) => console.warn('fixed tick unavailable', e));
+  import('./physics/world').then((m) => m.installPhysics()).catch((e) => console.warn('physics unavailable', e));
+}
+
 loadClassic('legacy/game.js').catch((e) => {
   console.error(e);
   const t = document.getElementById('toast');

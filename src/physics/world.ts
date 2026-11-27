@@ -78,7 +78,10 @@ export class PlanetPhysics {
     // ground mesh vertex (row r, col c): x = -EXT/2 + c*cell, three z = -EXT/2 + r*cell, height H[r*N + c].
     // Rapier: rows run along z, columns along x, heights column-major -> heights[c*N + r].
     const N = g.N, n = N - 1, heights = new Float32Array(N * N);
-    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) heights[c * N + r] = g.H[r * N + c];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const v = g.H[r * N + c];
+      heights[c * N + r] = Number.isFinite(v) ? v : 0;
+    }
     this.world.createCollider(RAPIER.ColliderDesc.heightfield(n, n, heights, { x: EXT, y: 1, z: EXT }).setFriction(0.9));
   }
 
@@ -108,10 +111,13 @@ export class PlanetPhysics {
       for (let i = 0; i < im.count; i++) {
         im.getMatrixAt(i, M);
         M.decompose(pos, q, s);
-        if (s.x === 0 && s.y === 0) continue; // hidden instance
+        if (Math.abs(s.x * s.y * s.z) < 1e-6) continue; // hidden (zero-scaled) instance
+        q.normalize();
         const hx = Math.abs(half.x * s.x), hy = Math.abs(half.y * s.y), hz = Math.abs(half.z * s.z);
         if (hy < 0.12 || hx < 0.05 || hz < 0.05) continue; // decals, flat trims: not worth a collider
         const ctr = c.clone().multiply(s).applyQuaternion(q).add(pos);
+        // a NaN reaching Rapier panics inside WASM and poisons the whole world, so reject anything non-finite
+        if (![hx, hy, hz, ctr.x, ctr.y, ctr.z, q.x, q.y, q.z, q.w].every(Number.isFinite) || hx > 2000 || hz > 2000) continue;
         const desc = RAPIER.ColliderDesc.cuboid(hx, hy, hz).setTranslation(ctr.x, ctr.y, ctr.z).setRotation(q).setFriction(0.6);
         cols.push(this.world.createCollider(desc));
       }
@@ -131,6 +137,9 @@ export class PlanetPhysics {
 
   /** collision-corrected move for this frame. dx/dz in legacy coords (z north). Returns the new legacy position + feet y. */
   move(dx: number, dz: number, dt: number, opts: { flying?: boolean; swimDepth?: number } = {}) {
+    if (!Number.isFinite(dx)) dx = 0;
+    if (!Number.isFinite(dz)) dz = 0;
+    if (!(dt > 0)) dt = FIXED_DT;
     const t = this.body.translation();
     if (opts.flying) {
       // flying mounts: no gravity, no building collisions for now (altitude is owned by the ride code)
@@ -189,6 +198,18 @@ export async function installPhysics() {
   const B = await bridge();
   await initPhysics();
   let P: PlanetPhysics | null = null;
+  // a Rapier panic poisons its world (every later call throws "recursive use of an object"): drop physics for that
+  // planet, fall back to the legacy movement, and report it once
+  let broken: unknown = null;
+  let phase = '';
+  const fail = (e: unknown) => {
+    console.warn('[physics] disabled for this planet after an error in ' + phase + ':', e);
+    broken = B.groundWorld;
+    try {
+      P?.dispose();
+    } catch {}
+    P = null;
+  };
   const ensure = () => {
     const w = B.groundWorld;
     if (!w || B.level !== 'ground') return null;
@@ -197,7 +218,9 @@ export async function installPhysics() {
       P = null;
     }
     if (!P && w.hGrid) {
+      phase = 'create';
       P = new PlanetPhysics(B, w);
+      phase = 'stream-initial';
       P.stream(true);
     }
     return P;
@@ -211,13 +234,23 @@ export async function installPhysics() {
   });
   B.wrap('updatePlay', (orig) => function (this: unknown, dt: number) {
     const p = B.play;
-    const P2 = B.groundMode === 'play' && !B.rts?.on ? ensure() : null;
+    let P2: PlanetPhysics | null = null;
+    if (B.groundMode === 'play' && !B.rts?.on && broken !== B.groundWorld) {
+      try {
+        phase = 'build';
+        P2 = ensure();
+      } catch (e) {
+        fail(e);
+      }
+    }
     if (!P2) return orig.call(this, dt);
     const x0 = p.x, z0 = p.z;
     // a teleport (travel, respawn, cart summon) shows up as a jump of more than 30 m in one frame
     const t = P2.body.translation();
     if (Math.hypot(t.x - x0, -t.z - z0) > 30) P2.teleport(x0, z0);
     const r = orig.call(this, dt);
+    try {
+    phase = 'move';
     const dx = p.x - x0, dz = p.z - z0;
     const rm = p.mount, flying = !!(rm && rm.def && rm.def.fly && (p.alt || 0) > 1);
     // the legacy jump plays its wind-up clip, then starts a fake model offset (play.jy). Physics takes over at that
@@ -240,9 +273,14 @@ export async function installPhysics() {
       const y = Math.max(res.y, gy + Math.max(0, swim - 1.3));
       p.model.position.set(p.x, y, -p.z);
     }
+    phase = 'stream';
     P2.stream();
+    phase = 'step';
     P2.step(dt);
+    } catch (e) {
+      fail(e);
+    }
     return r;
   });
-  (window as any).GG_PHYSICS = { get planet() { return P; } };
+  (window as any).GG_PHYSICS = { get planet() { return P; }, get broken() { return !!broken; }, get phase() { return phase; } };
 }
