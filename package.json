@@ -1,0 +1,22 @@
+{
+  "name": "grudge-galaxies",
+  "private": true,
+  "version": "0.4.0",
+  "type": "module",
+  "description": "Grudge Galaxies browser MMO: three.js r185 + Rapier client, built with Vite.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.19.2",
+    "three": "0.185.1"
+  },
+  "devDependencies": {
+    "@types/three": "0.185.4",
+    "typescript": "5.8.3",
+    "vite": "6.4.5"
+  }
+}

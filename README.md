@@ -26,14 +26,14 @@ Without `DATABASE_URL` the server keeps saves in `saves.json`, which is wiped on
 
 ## 2. Frontend on Cloudflare Pages
 
-1. Put the Railway address in `dist/config.js`:
+1. Put the Railway address in `public/config.js`:
    ```js
    window.GRUDGE_BACKEND = 'https://<name>.up.railway.app';
    ```
    and commit it.
 2. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → pick this repo.
-   - Framework preset: **None**
-   - Build command: *(leave empty)*
+   - Framework preset: **Vite**
+   - Build command: `npm ci && npm run build`
    - Build output directory: `dist`
 3. Every push to `main` redeploys. Add a custom domain under the project's **Custom domains** tab and
    add it to `CORS_ORIGIN` on Railway.
@@ -58,8 +58,18 @@ chat lines up to 240 characters. Dead sockets are dropped after 30 s without a p
 
 ## Updating the game
 
-`dist/index.html` is the game. Edit it directly, or rebuild from the artifact sources with
-`SRC=/path/to/sources bash build.sh` (keeps whatever backend address is already in `dist/config.js`).
+The client is a Vite + TypeScript project on **three.js r185** (see `docs/MIGRATION_R185.md`).
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # -> dist/ (what Pages, Cloudflare and the claude.ai artifact serve)
+```
+
+- `index.html`: markup, styles and the inline data blocks.
+- `src/`: typed modules (three compat layer now; physics, animation and skills as they migrate).
+- `public/legacy/game.js`: the game runtime that is being split into `src/` phase by phase.
+- `public/`: runtime assets (`kits/`, `anim.js`, `ui/`, `config.js`).
 
 Open the site with `?debug` in the address to expose `window.__gg(expr)` for automated checks; it does
 nothing otherwise.

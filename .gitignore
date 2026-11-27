@@ -1,6 +1,8 @@
 .env
 .wrangler/
-dist/kits/store/
-kits/store/
 node_modules/
+dist/
 server/saves.json
+# licensed Asset Store content: shipped in builds, never committed
+kits/store/
+public/kits/store/
