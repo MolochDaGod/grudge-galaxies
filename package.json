@@ -12,7 +12,8 @@
     "test": "vitest run",
     "prefabs:bake": "node tools/prefab_bake.mjs",
     "prefabs:verify": "node tools/prefab_bake.mjs --verify",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "verify:play": "node tools/verify_play.cjs 8796"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.2",
