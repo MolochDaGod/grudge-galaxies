@@ -31,6 +31,7 @@ import('./script/runtime').then((m) => m.installScripts()).catch((e) => console.
 // F interactions: townsfolk by role, travel pads, harvesters, corpses, nodes, terminals
 import('./interact/interact').then((m) => m.installInteract()).catch((e) => console.warn('interactions unavailable', e));
 import('./buildings/runtime').then((m) => m.installBuildings()).catch((e) => console.warn('generated buildings unavailable', e));
+import('./mount/rig').then((m) => m.installMountRig()).catch((e) => console.warn('mount rig unavailable', e));
 // openers + tutorial for new characters (?notutorial skips it)
 import('./tutorial/tutorial').then((m) => m.installTutorial()).catch((e) => console.warn('tutorial unavailable', e));
 

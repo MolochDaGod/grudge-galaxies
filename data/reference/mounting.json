@@ -1,0 +1,17 @@
+{
+  "note": "Mounting points read from the sources on 2026-11-27, in each model's own metres (y up, +z forward, ground at y = 0). The Toon RTS files carry no animations; the game rides with its own 'sit' clip plus src/mount/rig.ts (seat, rein and stirrup anchors measured from bones, two-bone IK for the rider).",
+  "toonRtsMounts": {
+    "mount_horse":  { "height": 1.667, "riderBone": "Bone_Mount", "riderBoneParent": "Bip001 Spine", "seat": [0, 1.378, 0.037], "saddleMesh": "WK_horse_Seat", "saddleMeshAt": [0, 1.179, 0.099], "pelvis": [0, 1.104, -0.423], "neck": [0, 1.195, 0.527], "head": [0, 1.485, 0.946] },
+    "mount_undead": { "height": 1.631, "riderBone": "Bone_Mount", "riderBoneParent": "Bip001 Spine", "seat": [0, 1.378, 0.037], "pelvis": [0, 1.104, -0.423], "neck": [0, 1.195, 0.527], "head": [0, 1.485, 0.946] },
+    "mount_wolf":   { "height": 1.187, "riderBone": "Bone_Mount", "riderBoneParent": "Bip001 Spine", "seat": [0, 1.253, -0.181], "pelvis": [0, 0.918, -0.41], "neck": [0, 1.0, 0.51], "head": [0, 0.948, 0.761] },
+    "mount_dwarf":  { "height": 1.422, "riderBone": "Bone_Mount", "riderBoneParent": "Bip001 Spine", "seat": [0, 1.129, 0.001], "pelvis": [0, 0.824, -0.247], "neck": [0, 1.017, 0.487], "head": [0, 1.197, 0.795] }
+  },
+  "toonRtsRiders": {
+    "human": { "height": 1.582, "pelvis": [0, 0.735, -0.049], "thigh": [0.112, 0.735, -0.049], "calf": [0.145, 0.35, -0.033], "foot": [0.163, 0.11, -0.069], "leftHandContainer": [0.669, 0.712, 0.016], "rightHandContainer": [-0.664, 0.728, 0.015], "headTop": [0, 1.545, 0.005] },
+    "dwarf": { "height": 1.384, "pelvis": [0, 0.503, -0.038], "thigh": [0.112, 0.503, -0.038], "calf": [0.136, 0.274, -0.034], "foot": [0.153, 0.105, -0.055], "leftHandContainer": [0.596, 0.522, 0.005], "rightHandContainer": [-0.596, 0.522, 0.005], "headTop": [0, 1.268, 0.015] }
+  },
+  "ownedAnimalMounts": {
+    "note": "Quaternius Ultimate Animated Animals (CC0): no rider bone; the seat is the back surface over Torso/Torso2, found at runtime by a downward ray on the posed skinned mesh. Each animal also has leg IK controls (IKFrontLeg.L/R, IKBackLeg.L/R with PoleTarget nodes) from its source rig, unused by the game.",
+    "clips": ["Idle", "Idle_2", "Walk", "Gallop", "Gallop_Jump", "Jump_toIdle", "Eating", "Attack_Headbutt", "Attack_Kick", "Idle_HitReact1", "Idle_HitReact2", "Death"]
+  }
+}
