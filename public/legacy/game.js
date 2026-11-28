@@ -3612,7 +3612,7 @@ const g=p.g,playing=CH&&groundMode==='play'&&level==='ground',px=play.x,pz=play.
   const dP=playing?Math.hypot(px-u.pos.x,pz-u.pos.z):1e9;u.ai=u.ai||{state:'idle',t:0,goalT:Math.random()*10};const ai=u.ai;ai.t+=dt;u.run=1;
   if(g.kind==='friendly'){
     // trainers stand their post and face you
-    if(p.trainer){u.aiHold=true;u.target=null;if(dP<10){const want=Math.atan2(px-u.pos.x,-(pz-u.pos.z));let dy=((want-u.yaw+Math.PI)%TAU+TAU)%TAU-Math.PI;u.yaw+=dy*Math.min(1,dt*4)}return}
+    if(p.trainer||p.genV){u.aiHold=true;u.target=null;if(dP<10){const want=Math.atan2(px-u.pos.x,-(pz-u.pos.z));let dy=((want-u.yaw+Math.PI)%TAU+TAU)%TAU-Math.PI;u.yaw+=dy*Math.min(1,dt*4)}return}
     const f=g.faction,st=standing(f);
     if(g.role==='Guard'||g.role==='Captain'){u.aiHold=true;
       // engage hostile creatures near the guard, or the player if the guard's faction is hostile to them
@@ -4866,6 +4866,7 @@ function buildPads(w){const cell=EXT/(TERRAIN_RES[quality]||288),bins=new Map();
     for(let bx=b0x;bx<=b1x;bx++)for(let bz=b0z;bz<=b1z;bz++){const k=bx+','+bz;(bins.get(k)||bins.set(k,[]).get(k)).push(pad)}}
   w._pads=bins;return n}
 {const _gh=groundH;groundH=function(w,x,z){
+  if(w&&w.floorAt){const f=w.floorAt(x,z);if(f!=null)return f} // generated building floors win over the terrain grid
   if(w&&w.hGrid)return hGridAt(w,x,z);
   const h=_gh(w,x,z);const B=w&&w._pads;if(!B)return h;const a=B.get(Math.floor(x/512)+','+Math.floor(z/512));if(!a)return h;
   let best=0,bh=h;for(const p of a){const d=Math.hypot(x-p.x,z-p.z);if(d>=p.outer)continue;const k=d<=p.inner?1:1-smooth(p.inner,p.outer,d);if(k>best){best=k;bh=p.base}}

@@ -97,9 +97,18 @@ export async function installInteract() {
     // resource node (also on R)
     const n = B.nodeNear;
     if (n) out.push({ key: 'node' + n.x + n.z, label: `${n.r?.n || 'Resource'} (${n.c}%)`, verb: 'Gather', icon: '⛏', d: Math.hypot(n.x - p.x, n.z - p.z), x: n.x, z: n.z, run: () => B.fn.startGather() });
-    // the game's own candidate: terminals, caravans, cart
+    // mission terminals, ranked by their real distance (indoor ones stand beside counters and townsfolk)
+    let termNear = false;
+    for (const t of B.terminals || []) {
+      const d = Math.hypot(t.x - p.x, t.z - p.z);
+      if (d > 3.2) continue;
+      termNear = true;
+      const T = B.TERMINALS[t.kind] || { name: 'Mission' };
+      out.push({ key: 'term' + t.x.toFixed(1) + t.z.toFixed(1), label: `${T.name} mission terminal`, verb: 'Use the', icon: '🖥', d, x: t.x, z: t.z, run: () => { B.fn.setMissionTerminal(t); B.openWin('missions'); } });
+    }
+    // the game's own candidate: caravans, cart (its terminal prompt is replaced by the entries above)
     const L = B.interact;
-    if (L) {
+    if (L && !(termNear && /terminal/i.test(L.label || ''))) {
       const m = /^F · (.*)$/.exec(L.label || '');
       out.push({ key: 'legacy' + L.label, label: m ? m[1] : L.label, verb: '', icon: /terminal/i.test(L.label) ? '🖥' : /cart/i.test(L.label) ? '🛒' : '🤝', d: 1.5, x: p.x, z: p.z, run: L.run });
     }
